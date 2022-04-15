@@ -226,6 +226,7 @@ Resources:
             python3 setup.py build
             python3 setup.py install
 
+            cd /root/
             # cfn-init
             cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
