@@ -1,0 +1,339 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Kali Linux with NICE DCV (login as kali)
+
+Metadata:
+  License:
+    Description: >
+      Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+      SPDX-License-Identifier: MIT-0
+      
+      Permission is hereby granted, free of charge, to any person obtaining a copy of this
+      software and associated documentation files (the "Software"), to deal in the Software
+      without restriction, including without limitation the rights to use, copy, modify,
+      merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+      permit persons to whom the Software is furnished to do so.
+      
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+      INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+      PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+      HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+      OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+      SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  AWS::CloudFormation::Interface: 
+    ParameterGroups:
+      -
+        Label:
+          default: AMI and instance type. Subscribe before launching ( https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to ) 
+        Parameters:
+          - instanceType
+          - imageId
+      -
+        Label:
+          default: EC2 configuration
+        Parameters:
+          - ec2Name
+          - keyName
+          - vpcID
+          - subnetID
+      -
+        Label:
+          default: Allowed inbound source IP prefixes to NICE DCV port 8443
+        Parameters:
+          - ingressIPv4
+          - ingressIPv6
+
+Parameters:
+  imageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Kali AMI ID ( aws ssm get-parameters-by-path --path /aws/service/marketplace/prod-tsqyof4l3a3aa/ --query "Parameters[].Name" )
+    Default: /aws/service/marketplace/prod-tsqyof4l3a3aa/latest
+  instanceType:
+    Type: String
+    Default: t3.medium
+
+  ec2Name:
+    Description: Name of EC2 instance
+    Type: String
+    Default: Kali Linux-NICE-DCV
+  keyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Enter the key name of the EC2 Key pair you will use to access this EC2 instance"
+  vpcID:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC must have internet connectivity
+    ConstraintDescription: must be an existing VPC
+  subnetID:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet with internet connectivity
+
+  ingressIPv4:
+    Type: String
+    Description: Allowed source prefix (IPv4)
+    Default: 0.0.0.0/0
+  ingressIPv6:
+    Type: String
+    Description: Allowed source prefix (IPv6)
+    Default: ::/0
+
+Resources:
+  securityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound DCV 
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - Description: NICE DCV (IPv4)
+          IpProtocol: "tcp"
+          FromPort: "8443"
+          ToPort: "8443"
+          CidrIp: !Ref ingressIPv4
+        - Description: NICE DCV QUIC (IPv4)
+          IpProtocol: "udp"
+          FromPort: "8443"
+          ToPort: "8443"
+          CidrIp: !Ref ingressIPv4
+        - Description: NICE DCV (IPv6)
+          IpProtocol: "tcp"
+          FromPort: "8443"
+          ToPort: "8443"
+          CidrIpv6: !Ref ingressIPv6
+        - Description: NICE DCV QUIC (IPv6)
+          IpProtocol: "udp"
+          FromPort: "8443"
+          ToPort: "8443"
+          CidrIpv6: !Ref ingressIPv6
+      SecurityGroupEgress:
+        - Description: Allow all outbound traffic (IPv4)
+          IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0          
+        - Description: Allow all outbound traffic (IPv6)
+          IpProtocol: "-1"
+          CidrIpv6: "::/0" 
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: Name
+          Value: !Sub "[${AWS::StackName}] - ${ec2Name}"
+
+  instanceIamRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument: 
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Path: /
+      Policies: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
+      - PolicyName: dcvLicensing
+        PolicyDocument:
+          Version: '2012-10-17'  
+          Statement:
+          - Effect: Allow
+            Action: 
+              - s3:GetObject
+            Resource: !Sub "arn:aws:s3:::dcv-license.${AWS::Region}/*"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+
+  instanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      Path: /
+      Roles: 
+      - !Ref instanceIamRole
+
+  ec2Instance:
+    Type: "AWS::EC2::Instance" 
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT30M      
+    Metadata:
+      Comment: Install Desktop Environment    
+      AWS::CloudFormation::Init:
+        configSets:
+          setup:
+            - 00_setup       
+        00_setup:  # in the following order: packages, groups, users, sources, files, commands, and then services.
+          files:
+            "/home/kali/update-dcv": 
+              content: |
+                #!/bin/bash
+                cd /tmp
+                rm -f /tmp/nice-dcv-ubuntu2004-x86_64.tgz
+                wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
+                tar -xvzf nice-dcv-ubuntu2004-x86_64.tgz && cd nice-dcv-*-ubuntu2004-x86_64
+                sudo apt-get install -y ./nice-dcv-server_*_amd64.ubuntu2004.deb 
+                sudo apt-get install -y ./nice-dcv-web-viewer_*_amd64.ubuntu2004.deb 
+                sudo apt-get install -y ./nice-xdcv_*_amd64.ubuntu2004.deb 
+              mode: "000755"
+              owner: "kali"
+              group: "users"
+            "/home/kali/update-awscli": 
+              content: |
+                #!/bin/bash
+                cd /tmp
+                rm -f awscliv2.zip
+                curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+                unzip -q -o awscliv2.zip
+                sudo ./aws/install --update -b /usr/bin              
+              mode: "000755"
+              owner: "kali"
+              group: "users"
+    Properties:
+      KeyName: !Ref keyName
+      ImageId: !Ref imageId
+      InstanceType: !Ref instanceType
+      IamInstanceProfile: !Ref instanceProfile
+      SubnetId: !Ref subnetID  
+      Monitoring: true      
+      SecurityGroupIds: 
+        - !Ref securityGroup
+      UserData:
+        Fn::Base64: 
+          !Sub |
+            #!/bin/zsh
+            cd /root/
+
+            apt-get update
+            
+            # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
+            wget -nv https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/debian_amd64/amazon-ssm-agent.deb
+            apt-get install -y ./amazon-ssm-agent.deb 
+
+            sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=2/g' /etc/default/grub
+
+            # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
+            export DEBIAN_FRONTEND=noninteractive               
+
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
+            apt-get -q -y install  wget python3-setuptools
+
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
+            # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/
+            wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+            tar xvf ./aws-cfn-bootstrap-py3-latest.tar.gz
+            cd aws-cfn-bootstrap-2.0
+            # https://serverfault.com/questions/1053824/best-way-to-install-cfn-bootstrap-utilities-on-centos-8
+            python3 setup.py build
+            python3 setup.py install
+
+            # cfn-init
+            cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+
+            apt-get -qq install kali-desktop-xfce
+            apt-get -q -y install pulseaudio-utils 
+
+            # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
+            gpg --import NICE-GPG-KEY
+            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
+            tar -xvzf nice-dcv-ubuntu2004-x86_64.tgz && cd nice-dcv-*-ubuntu2004-x86_64
+            
+            # tweaks for installation on Kali
+            ln -s /etc/os-release /etc/lsb-release
+            mkdir -p /etc/lightdm/lightdm.conf.d
+
+            # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
+            apt-get -q -y install ./nice-dcv-server_*_amd64.ubuntu2004.deb
+            apt-get -q -y install ./nice-dcv-web-viewer_*_amd64.ubuntu2004.deb
+            usermod -aG video dcv 
+            # from /etc/lightdm/lightdm.conf.d
+            sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
+
+            # virtual session support
+            apt-get -q -y install ./nice-xdcv_*_amd64.ubuntu2004.deb
+            
+            # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
+            cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
+            sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
+            
+            # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
+            mkdir -p /home/kali/DCV-Storage
+            chown -R kali:kali /home/kali/DCV-Storage
+
+            # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
+            cat << EoF > /etc/systemd/system/dcv-virtual-session.service
+            [Unit]
+            Description=Create DCV virtual session for user kali
+            After=default.target network.target 
+
+            [Service]
+            ExecStart=/opt/dcv-virtual-session.sh 
+
+            [Install]
+            WantedBy=default.target
+            EoF
+
+            cat << EoF > /opt/dcv-virtual-session.sh
+            #!/bin/zsh
+            dcvUser=kali
+            while true;
+            do
+              if (/usr/bin/dcv list-sessions | grep \$dcvUser 1>/dev/null)
+              then
+                sleep 5
+              else
+                /usr/bin/dcv create-session \$dcvUser --owner \$dcvUser --storage-root /home/\$dcvUser/DCV-Storage
+                /usr/bin/dcv list-sessions
+              fi
+            done
+            EoF
+            chmod +x /opt/dcv-virtual-session.sh
+
+            # remove AWSCLI version 1
+            apt-get remove awscli -y
+            apt-get autoremove -y
+            
+            cd /root/
+            # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+            curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+            unzip -q -o awscliv2.zip
+            ./aws/install -b /usr/bin
+            echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/kali/.zshrc
+
+            # text console: DCV virtual sessions only
+            systemctl isolate multi-user.target
+            systemctl set-default multi-user.target
+            
+            systemctl daemon-reload
+            systemctl enable --now dcvserver dcv-virtual-session.service
+
+            # cfn-init completed so signal success or not
+            cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+      Tags:
+        - Key: Name
+          Value: !Ref ec2Name
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        
+Outputs:
+  InstanceID:
+    Description: EC2 Instance ID
+    Value: !Ref ec2Instance
+ 
+  PublicIP:
+    Description: EC2 Public IP
+    Value: !GetAtt ec2Instance.PublicIp
+
+  SSMsessionManager:
+    Description: SSM Session Manager login ("sudo passwd kali" to change password)
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
+
+  DCVwebConsole:
+    Description: DCV web console (login as kali)
+    Value: !Sub "https://${ec2Instance.PublicIp}:8443"
+    
+  DCVdownload:
+    Description: DCV client download
+    Value: https://download.nice-dcv.com/latest.html
