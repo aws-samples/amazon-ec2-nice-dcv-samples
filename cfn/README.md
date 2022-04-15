@@ -50,6 +50,7 @@ The login user name depends on Linux distributions as follows:
 
 \*For templates that support ARM64 architecture, specify a Graviton instance type (e.g. t4g.medium).
 
+The web browser client can be disabled by removing nice-dcv-web-viewer package (e.g. apt remove nice-dcv-web-viewer in Ubuntu)
 
 
 
