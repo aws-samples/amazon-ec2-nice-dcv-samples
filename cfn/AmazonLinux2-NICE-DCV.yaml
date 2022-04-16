@@ -71,7 +71,6 @@ Parameters:
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
-    ConstraintDescription: must be an existing VPC
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
@@ -368,4 +367,4 @@ Outputs:
     
   DCVdownload:
     Description: DCV client download
-    Value: https://download.nice-dcv.com/latest.html
+    Value: https://download.nice-dcv.com
