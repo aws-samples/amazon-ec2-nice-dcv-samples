@@ -295,7 +295,7 @@ Resources:
             cd /root/
             # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html            
             yum remove awscli -y
-            cd
+
             if (uname -a | grep x86 1>/dev/null)
             then
               curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
