@@ -39,7 +39,7 @@ Refer to [NICE DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/
 ## Notes about Windows Server template
 Default Windows AMI is Windows Server 2019 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console) or from [AWS CLI](https://aws.amazon.com/cli/) (e.g. `aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name"`). For more information, refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog post
  
-CloudFormation template was only tested with Windows Server 2016/2019/2022 English Full Base.
+CloudFormation template was only tested with Windows Server 2019 English Full Base.
 
 ## Notes about Linux templates
 As these are not GPU accelerated instances, [virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual) instead of console sessions are used, and system is configured with systemd multi-user.target. To ensure availability of virtual session, a custom daemon processs `dcv-virtual-session.service` polls for existence of virtual session and creates a new session when none are found. 
