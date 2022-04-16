@@ -57,13 +57,11 @@ Parameters:
     Type: String
     Default: Windows Server-NICE-DCV
   keyName:
-    Description: Name of an existing EC2 KeyPair
     Type: AWS::EC2::KeyPair::KeyName
-    ConstraintDescription: must be the name of an existing EC2 KeyPair
+    Description: EC2 Key pair for accessing EC2 instance
   vpcID:
     Type: AWS::EC2::VPC::Id
-    Description: VPC must have internet connectivity
-    ConstraintDescription: must be an existing VPC
+    Description: VPC with internet connectivity
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
@@ -243,9 +241,6 @@ Resources:
             cinst --no-progress -y awscli
             setx /M AWS_CLI_AUTO_PROMPT on-partial
 
-            rem @ install IIS
-            rem powershell -ExecutionPolicy Bypass -Command "Install-WindowsFeature -name Web-Server -IncludeManagementTools"
-
             cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region}        
             </script>       
       Tags:
@@ -275,4 +270,4 @@ Outputs:
 
   DCVdownload:
     Description: DCV client download
-    Value: https://download.nice-dcv.com/latest.html
+    Value: https://download.nice-dcv.com
