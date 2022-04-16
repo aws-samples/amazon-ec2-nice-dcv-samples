@@ -8,7 +8,7 @@ If using a MarketPlace AMI such as [Kali Linux](https://aws.amazon.com/marketpla
 Download desired template file and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Choose **Create Stack**, **Upload a template file**, **Choose File**, select your .YAML file and choose **Next**.
 
 Specify a **Stack name** and specify parameters values. All fields are required. 
-- `imageId`:[System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. 
+- `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. 
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). Due to memory demands of running graphical environment, 4 GB or more RAM instance types are recommended
 - `ec2Name`: name for your EC2 instance
 - `keyName`: [key pair name](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
@@ -39,7 +39,7 @@ Refer to [NICE DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/
 ## Notes about Windows Server template
 Default Windows AMI is Windows Server 2019 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console) or from [AWS CLI](https://aws.amazon.com/cli/) (e.g. `aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name"`). For more information, refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog post
  
-Note that the CloudFormation template was only tested with Windows Server 2016/2019/2022 English Full Base.
+CloudFormation template was only tested with Windows Server 2016/2019/2022 English Full Base.
 
 ## Notes about Linux templates
 As these are not GPU accelerated instances, [virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual) instead of console sessions are used, and system is configured with systemd multi-user.target. To ensure availability of virtual session, a custom daemon processs `dcv-virtual-session.service` polls for existence of virtual session and creates a new session when none are found. 
@@ -48,7 +48,7 @@ The login user name depends on Linux distributions as follows:
 - Ubuntu: ubuntu
 - Kali Linux: kali
 
-\*Some templates support ARM64 architecture. Specify a Graviton instance type (e.g. t4g.medium) if you choose ARM64 option. 
+Some templates support ARM64 architecture. Specify a Graviton instance type (e.g. t4g.medium) if you choose ARM64 option. 
 
 The web browser client can be disabled by removing `nice-dcv-web-viewer` package. This restricts remote access to NICE DCV native clients. 
 
