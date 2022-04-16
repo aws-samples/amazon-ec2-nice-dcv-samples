@@ -57,11 +57,10 @@ Parameters:
     Default: Kali Linux-NICE-DCV
   keyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: Enter the key name of the EC2 Key pair you will use to access this EC2 instance"
+    Description: EC2 Key pair for accessing EC2 instance
   vpcID:
     Type: AWS::EC2::VPC::Id
-    Description: VPC must have internet connectivity
-    ConstraintDescription: must be an existing VPC
+    Description: VPC with internet connectivity
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
@@ -215,7 +214,7 @@ Resources:
             export DEBIAN_FRONTEND=noninteractive               
 
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
-            apt-get -q -y install  wget python3-setuptools
+            apt-get -q -y install python3-setuptools wget tmux unzip tar
 
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
             # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/
@@ -337,4 +336,4 @@ Outputs:
     
   DCVdownload:
     Description: DCV client download
-    Value: https://download.nice-dcv.com/latest.html
+    Value: https://download.nice-dcv.com
