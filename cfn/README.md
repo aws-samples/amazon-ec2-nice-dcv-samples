@@ -27,7 +27,7 @@ Go to **Outputs** tab
 
 Go to `SSMSessionManager` key, open *Value* URL (in the form `https://<REGION>.console.aws.amazon.com/systems-manager/session-manager/<InstanceID>`) in a new browser tab to login via SSM session manager and change the login user password. Password change command is in *Description* field.
 
-Open DCVwebConsole value URL (in the form `https://<EC2 Public IP>:8443/`) to access web browser console and login as the user as specified in Description field. 
+Open `DCVwebConsole` value URL (in the form `https://<EC2 Public IP>:8443/`) to access web browser console and login as the user as specified in *Description* field. 
 
 ## NICE DCV clients
 
