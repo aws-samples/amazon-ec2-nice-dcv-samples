@@ -202,16 +202,22 @@ Resources:
             #!/bin/zsh
             cd /root/
 
+            # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
+            export DEBIAN_FRONTEND=noninteractive   
+
             apt-get update
             
             # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
-            wget -nv https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/debian_amd64/amazon-ssm-agent.deb
-            apt-get install -y ./amazon-ssm-agent.deb 
+            #wget -nv https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/debian_amd64/amazon-ssm-agent.deb
+            #apt-get install -y ./amazon-ssm-agent.deb 
+            apt-get install -y snapd
+            systemctl enable --now snapd
+            systemctl start snapd
+            sleep 2
+            snap install amazon-ssm-agent --classic
+            snap start amazon-ssm-agent
 
-            sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=2/g' /etc/default/grub
-
-            # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
-            export DEBIAN_FRONTEND=noninteractive               
+            sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=2/g' /etc/default/grub          
 
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
             apt-get -q -y install python3-setuptools wget tmux unzip tar curl
