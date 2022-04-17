@@ -216,7 +216,7 @@ Resources:
             #!/bin/bash
             cd /root/
 
-            dnf install -q -y python3 python3-setuptools wget tmux unzip tar
+            dnf install -q -y python3 python3-setuptools wget tmux unzip tar curl
             
             # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
             if (uname -a | grep x86 1>/dev/null); then
@@ -316,7 +316,7 @@ Resources:
             systemctl stop firewalld
             firewall-offline-cmd  --add-port 8443/tcp
             firewall-offline-cmd  --add-port 8443/udp
-            systemctl enable --now firewalld
+            systemctl disable firewalld
 
 
             # text console: DCV virtual sessions only
