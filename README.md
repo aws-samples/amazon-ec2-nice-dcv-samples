@@ -18,7 +18,6 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 ## Deployment and using NICE DCV
 Refer to [cfn](cfn) section for usage instructions.
 
-
 ## Security
 
 See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
@@ -26,3 +25,7 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 ## License
 
 This library is licensed under the MIT-0 License. See the LICENSE file.
+
+## Notice
+Usage indicates acceptance of [NICE DCV EULA](https://www.nice-dcv.com/eula.html). The scripts do not install GPU drivers for [accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics). Some distributions *are not supported* by NICE DCV.  More information is available at [documentation site](https://docs.aws.amazon.com/dcv/index.html). 
+
