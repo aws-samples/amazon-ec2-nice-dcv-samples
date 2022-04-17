@@ -239,11 +239,12 @@ Resources:
             #!/bin/bash
             cd /root/
 
+            # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
+            export DEBIAN_FRONTEND=noninteractive   
+            
             apt-get update            
             # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html#agent-install-ubuntu-tabs
-
-            # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
-            export DEBIAN_FRONTEND=noninteractive               
+            
 
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
             apt-get -q -y install python3-setuptools wget tmux unzip tar curl
