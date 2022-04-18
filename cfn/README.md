@@ -1,7 +1,9 @@
-## About CloudFormation templates
-The CloudFormation templates do not install GPU drivers for [accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics). Some distributions such as Kali Linux and AlmaLinux *are not officially supported* by NICE DCV. Usage of templates indicates acceptance of [NICE DCV EULA](https://www.nice-dcv.com/eula.html). Refer to [documentation site](https://docs.aws.amazon.com/dcv/index.html) for more information.
+## Notice
+Some distributions such as Kali Linux and AlmaLinux *are not officially supported* by NICE DCV. Usage indicates acceptance of [NICE DCV EULA](https://www.nice-dcv.com/eula.html). Refer to [documentation site](https://docs.aws.amazon.com/dcv/index.html) for more information.
 
-When using a MarketPlace AMI such as [Kali Linux](https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to) or [AlmaLinux](https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye?), go to MarketPlace to subscribe before provisioning CloudFormation stack. 
+
+## About CloudFormation templates
+The CloudFormation templates do not install GPU drivers for [accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics). When using a MarketPlace AMI such as [Kali Linux](https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to) or [AlmaLinux](https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye?), go to MarketPlace to subscribe before provisioning CloudFormation stack. 
 
 
 ## Deployment via CloudFormation console
