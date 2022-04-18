@@ -10,7 +10,7 @@ The CloudFormation templates do not install GPU drivers for [accelerated computi
 Download desired template file and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Choose **Create Stack**, **Upload a template file**, **Choose File**, select your .YAML file and choose **Next**.
 
 Specify a **Stack name** and specify parameters values. All fields are required. 
-- `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. For RHEL distributions, you will need to use [AWS CLI](https://aws.amazon.com/cli/) to retrieve AMI IDs available for your AWS [region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions). 
+- `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. For RHEL 8, you will need to use [AWS CLI](https://aws.amazon.com/cli/) to retrieve AMI IDs available for your AWS [region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions). 
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). Due to memory demands of running graphical environment, 4 GB or more RAM instance types are recommended
 - `ec2Name`: name for your EC2 instance
 - `keyName`: [key pair name](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
