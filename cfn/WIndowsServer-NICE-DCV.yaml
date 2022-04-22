@@ -196,7 +196,7 @@ Resources:
             @echo off
             cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets setup
 
-            CD \windows\temp\
+            cd \windows\temp\
             
             @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-win.html
             powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://amazon-ssm-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
@@ -231,16 +231,15 @@ Resources:
 
             @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
             reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
-            
-
-            @echo ** Restarting DCV 
-            net stop dcvserver
-            net start dcvserver
-                
+                          
             @echo ** install AWSCLI
             cinst --no-progress -y awscli
             setx /M AWS_CLI_AUTO_PROMPT on-partial
 
+            @echo ** Restarting DCV 
+            net stop dcvserver
+            net start dcvserver
+            
             cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region}        
             </script>       
       Tags:
