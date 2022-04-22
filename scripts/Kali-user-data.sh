@@ -15,10 +15,10 @@ snap install amazon-ssm-agent --classic
 snap start amazon-ssm-agent
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
-apt-get -q -y install python3-setuptools wget tmux unzip tar curl
+apt-get -q -y install python3-setuptools wget tmux unzip tar curl sed
 
 cd /root/
-apt-get -qq install kali-desktop-xfce
+apt-get -q -y install kali-desktop-xfce
 apt-get -q -y install pulseaudio-utils 
 
 # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
