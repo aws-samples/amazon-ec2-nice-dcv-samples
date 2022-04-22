@@ -9,7 +9,7 @@ apt-get update
 
 
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
-apt-get -q -y install python3-setuptools wget tmux unzip tar curl
+apt-get -q -y install python3-setuptools wget tmux unzip tar curl sed
 
 # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
 systemctl isolate multi-user.target
