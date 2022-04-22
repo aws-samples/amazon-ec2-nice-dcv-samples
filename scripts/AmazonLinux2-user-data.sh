@@ -9,7 +9,7 @@ else
   yum install -q -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_arm64/amazon-ssm-agent.rpm
 fi
 
-yum install -q -y deltarpm wget tmux unzip tar curl
+yum install -q -y deltarpm wget tmux unzip tar curl sed
 # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
 yum install -q -y gdm gnome-session gnome-classic-session gnome-session-xsession
 yum install -q -y xorg-x11-server-Xorg xorg-x11-fonts-Type1 xorg-x11-drivers 
