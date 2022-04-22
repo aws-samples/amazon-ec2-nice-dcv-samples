@@ -205,9 +205,6 @@ Resources:
             @echo ** https://docs.chocolatey.org/en-us/choco/setup
             @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 
-            rem install Curl if not present
-            IF NOT EXIST c:\windows\system32\curl cinst --no-progress -y curl
-
             @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general 
             powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
             msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
