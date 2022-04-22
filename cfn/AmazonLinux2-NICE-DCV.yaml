@@ -244,12 +244,10 @@ Resources:
               yum install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_arm64/amazon-ssm-agent.rpm
             fi
 
-            sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=2/g' /etc/default/grub
-
             # cfn-init
             /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
-            yum install -q -y deltarpm wget tmux unzip tar curl
+            yum install -q -y deltarpm wget tmux unzip tar curl sed
             # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
             yum install -q -y gdm gnome-session gnome-classic-session gnome-session-xsession
             yum install -q -y xorg-x11-server-Xorg xorg-x11-fonts-Type1 xorg-x11-drivers 
