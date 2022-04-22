@@ -1,7 +1,7 @@
 #!/bin/bash
 cd /root/
 
-dnf install -q -y python3 python3-setuptools wget tmux unzip tar curl
+dnf install -q -y python3 python3-setuptools wget tmux unzip tar curl sed
 
 # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
 if (uname -a | grep x86 1>/dev/null); then
