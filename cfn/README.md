@@ -27,9 +27,9 @@ It may take up to 30 minutes to provision the EC2 instance. After your stack has
 Go to **Outputs** tab
 ![CloudFormation Outputs](/images/outputs.png "Outputs")
 
-Go to `SSMSessionManager` key, open *Value* URL (in the form `https://<REGION>.console.aws.amazon.com/systems-manager/session-manager/<InstanceID>`) in a new browser tab to login via SSM session manager and change the login user password. Password change command is in *Description* field.
+Go to `SSMSessionManager` row, open URL (in the form `https://<REGION>.console.aws.amazon.com/systems-manager/session-manager/<InstanceID>`) in a new browser tab to login via SSM Session Manager to change login user password. Password change command is in *Description* field.
 
-Open `DCVwebConsole` value URL (in the form `https://<EC2 Public IP>:8443/`) to access web browser console and login as the user as specified in *Description* field. 
+From `DCVwebConsole` row, open URL (in the form `https://<EC2 Public IP>:8443/`) to access NICE DCV web browser console and login as the user specified in *Description* field. 
 
 ## NICE DCV clients
 
