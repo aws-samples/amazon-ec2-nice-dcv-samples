@@ -9,8 +9,8 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - [Web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) 
 - [Adaptable display resolution](https://docs.aws.amazon.com/dcv/latest/userguide/changing-resolution.html)
 - [QUIC UDP transport protocol](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html)
-- [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html)
-- [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer-native.html)
+- [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html#using-copy-paste-browser)
+- [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer-web.html)
 - [Audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html)
 - [SSM Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) with [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) for secure remote administration and for changing login password
 - [AWS CLI v2](https://aws.amazon.com/blogs/developer/aws-cli-v2-is-now-generally-available/) with [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html)
