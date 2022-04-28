@@ -206,34 +206,29 @@ Resources:
             export DEBIAN_FRONTEND=noninteractive   
 
             apt-get update
-            
+
             # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
-            #wget -nv https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/debian_amd64/amazon-ssm-agent.deb
-            #apt-get install -y ./amazon-ssm-agent.deb 
-            apt-get install -y snapd
-            systemctl enable --now snapd
+            apt-get install -q -y snapd
+            systemctl enable snapd
             systemctl start snapd
             sleep 2
             snap install amazon-ssm-agent --classic
             snap start amazon-ssm-agent
 
+            apt-get install -q -y wget tmux unzip tar curl sed
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
-            apt-get -q -y install python3-setuptools wget tmux unzip tar curl sed
-
-            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-            # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/
-            wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
-            tar xvf ./aws-cfn-bootstrap-py3-latest.tar.gz
-            cd aws-cfn-bootstrap-2.0
-            # https://serverfault.com/questions/1053824/best-way-to-install-cfn-bootstrap-utilities-on-centos-8
-            python3 setup.py build
-            python3 setup.py install
+            apt-get install -q -y python-setuptools 
+            wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
+            tar -xvzf ./aws-cfn-bootstrap-1.4-34.tar.gz
+            cd aws-cfn-bootstrap-1.4
+            python2 setup.py build
+            python2 setup.py install
 
             cd /root/
             # cfn-init
-            cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+            python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
-            apt-get -qq install kali-desktop-xfce
+            apt-get -q -y install kali-desktop-xfce
             apt-get -q -y install pulseaudio-utils 
 
             # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
@@ -312,7 +307,7 @@ Resources:
             systemctl enable --now dcvserver dcv-virtual-session.service
 
             # cfn-init completed so signal success or not
-            cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+            python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
       Tags:
         - Key: Name
           Value: !Ref ec2Name
