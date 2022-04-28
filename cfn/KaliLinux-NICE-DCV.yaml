@@ -94,7 +94,7 @@ Parameters:
     Default: 15
   deviceName:
     Type: String
-    Description: Volume Size in GiBs (must be equal or larger than snapshot size)
+    Description: Device Name
     Default: /dev/sda1
 
 Resources:
