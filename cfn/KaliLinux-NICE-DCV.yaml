@@ -41,6 +41,13 @@ Metadata:
         Parameters:
           - ingressIPv4
           - ingressIPv6
+      -
+        Label:
+          default: EBS volume configuration
+        Parameters:
+          - volumeSize
+          - volumeType
+          - deviceName
 
 Parameters:
   imageId:
@@ -73,6 +80,22 @@ Parameters:
     Type: String
     Description: Allowed source prefix (IPv6)
     Default: ::/0
+
+  volumeType:
+    Type: String
+    Description: Volume Type ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html )
+    AllowedValues:
+      - gp2
+      - gp3
+    Default: gp3
+  volumeSize:
+    Type: Number
+    Description: Volume Size in GiBs (must be equal or larger than snapshot size)
+    Default: 15
+  deviceName:
+    Type: String
+    Description: Volume Size in GiBs (must be equal or larger than snapshot size)
+    Default: /dev/sda1
 
 Resources:
   securityGroup:
@@ -196,15 +219,19 @@ Resources:
       Monitoring: true      
       SecurityGroupIds: 
         - !Ref securityGroup
+      BlockDeviceMappings:
+        - DeviceName: !Ref deviceName
+          Ebs:
+            VolumeType: !Ref volumeType
+            VolumeSize: !Ref volumeSize
+            DeleteOnTermination:  true
       UserData:
         Fn::Base64: 
           !Sub |
             #!/bin/zsh
             cd /root/
 
-            # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
             export DEBIAN_FRONTEND=noninteractive   
-
             apt-get update
 
             # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
@@ -215,9 +242,8 @@ Resources:
             snap install amazon-ssm-agent --classic
             snap start amazon-ssm-agent
 
-            apt-get install -q -y wget tmux unzip tar curl sed
+            apt-get install -q -y python-setuptools wget tmux unzip tar curl sed
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
-            apt-get install -q -y python-setuptools 
             wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
             tar -xvzf ./aws-cfn-bootstrap-1.4-34.tar.gz
             cd aws-cfn-bootstrap-1.4
