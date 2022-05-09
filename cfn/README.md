@@ -1,9 +1,9 @@
 ## Notice
-Some distributions such as Kali Linux and AlmaLinux *are not officially supported* by NICE DCV. Usage indicates acceptance of [NICE DCV EULA](https://www.nice-dcv.com/eula.html). Refer to [documentation site](https://docs.aws.amazon.com/dcv/index.html) for more information.
+Some distributions such as Kali Linux and AlmaLinux *are not officially supported* by NICE DCV. Usage indicates acceptance of [NICE DCV EULA](https://www.nice-dcv.com/eula.html). Refer to [documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for  information.
 
 
 ## About CloudFormation templates
-The CloudFormation templates do not install GPU drivers for [accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics). When using a MarketPlace AMI such as [Kali Linux](https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to) or [AlmaLinux](https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye?), go to MarketPlace to subscribe before provisioning CloudFormation stack. 
+The CloudFormation templates do not install GPU drivers for [accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics). When using a MarketPlace AMI such as [Kali Linux](https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to) or [AlmaLinux](https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye?), subscribe before provisioning CloudFormation stack. 
 
 
 ## Deployment via CloudFormation console
@@ -44,7 +44,7 @@ Default Windows AMI is Windows Server 2019 English-Full-Base. You can retrieve S
 CloudFormation template was only tested with Windows Server 2019 English Full Base.
 
 ## Notes about Linux templates
-As these are not GPU accelerated instances, [virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual) instead of console sessions are used, and system is configured with systemd multi-user.target. To ensure availability of virtual session, a custom daemon processs `dcv-virtual-session.service` polls for existence of virtual session and creates a new session when none are found. 
+As these are not GPU accelerated instances, [virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual) are used instead of console sessions, and system is configured with systemd multi-user.target. To ensure availability of virtual session, a custom daemon processs `dcv-virtual-session.service` polls for virtual session and creates a new session when none are found. 
 The login user name depends on Linux distributions as follows:
 - Amazon Linux 2, AlmaLinux, RHEL : ec2-user
 - Ubuntu: ubuntu
