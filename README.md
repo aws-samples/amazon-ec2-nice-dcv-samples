@@ -27,5 +27,5 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 This library is licensed under the MIT-0 License. See the LICENSE file.
 
 ## Notice
-Usage indicates acceptance of [NICE DCV EULA](https://www.nice-dcv.com/eula.html). Some distributions *are not supported* by NICE DCV.  Refer to [documentation site](https://docs.aws.amazon.com/dcv/index.html) for more information.
+Usage indicates acceptance of [NICE DCV EULA](https://www.nice-dcv.com/eula.html). Some distributions *are not supported* by NICE DCV.  Refer to [documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for information.
 
