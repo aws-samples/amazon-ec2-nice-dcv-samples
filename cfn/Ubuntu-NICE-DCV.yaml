@@ -45,11 +45,13 @@ Metadata:
         Label:
           default: Ubuntu AMI IDs
         Parameters:
+          - ubuntu2204amd64
           - ubuntu2004amd64
           - ubuntu1804arm64
           - ubuntu1804amd64
 
 Conditions:
+  useUbuntu2204amd64: !Equals [ !Ref ubuntuVersion, "Ubuntu 22.04 (x86_64)"]
   useUbuntu2004amd64: !Equals [ !Ref ubuntuVersion, "Ubuntu 20.04 (x86_64)"]
   useUbuntu1804amd64: !Equals [ !Ref ubuntuVersion, "Ubuntu 18.04 (x86_64)"]
 
@@ -62,6 +64,7 @@ Parameters:
     Type: String
     Description: Select appropriate Graviton instanceType (e.g. tg4.medium ) if using ARCH64 Ubuntu
     AllowedValues:
+      - Ubuntu 22.04 (x86_64)
       - Ubuntu 20.04 (x86_64)
       - Ubuntu 18.04 (x86_64)
       - Ubuntu 18.04 (aarch64)
@@ -91,6 +94,10 @@ Parameters:
     Default: ::/0
 
   # https://ubuntu.com/server/docs/cloud-images/amazon-ec2
+  ubuntu2204amd64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>  
+    Description: Ubuntu 22.04 (x86_64)
+    Default: /aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id
   ubuntu2004amd64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>  
     Description: Ubuntu 20.04 (x86_64)
@@ -190,7 +197,11 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp 
-                if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 18.04 1>/dev/null)); then
+                if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
+                  rm -f /tmp/nice-dcv-ubuntu1804-x86_64.tgz
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
+                  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+                elif ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 18.04 1>/dev/null)); then
                   rm -f /tmp/nice-dcv-ubuntu1804-x86_64.tgz
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-x86_64.tgz
                   tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
@@ -226,7 +237,7 @@ Resources:
               group: "users"
     Properties:
       KeyName: !Ref keyName
-      ImageId: !If [useUbuntu2004amd64, !Ref ubuntu2004amd64, !If [useUbuntu1804amd64, !Ref ubuntu1804amd64, !Ref ubuntu1804arm64]] 
+      ImageId: !If [useUbuntu2204amd64, !Ref ubuntu2204amd64, !If [useUbuntu2004amd64, !Ref ubuntu2004amd64, !If [useUbuntu1804amd64, !Ref ubuntu1804amd64, !Ref ubuntu1804arm64] ]] 
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       SubnetId: !Ref subnetID  
@@ -245,17 +256,16 @@ Resources:
             apt-get update            
             # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html#agent-install-ubuntu-tabs
             
-
+            apt-get install -q -y python-setuptools wget tmux unzip tar curl sed
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
-            apt-get -q -y install python3-setuptools wget tmux unzip tar curl sed
-
-            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-            # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/
-            wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
-            python3 -m easy_install --script-dir /opt/aws/bin aws-cfn-bootstrap-py3-latest.tar.gz
+            wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
+            tar -xvzf ./aws-cfn-bootstrap-1.4-34.tar.gz
+            cd aws-cfn-bootstrap-1.4
+            python2 setup.py build
+            python2 setup.py install
 
             # cfn-init
-            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+            python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
             # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
             systemctl isolate multi-user.target
@@ -274,7 +284,10 @@ Resources:
             gpg --import NICE-GPG-KEY
 
             # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
-            if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 18.04 1>/dev/null)); then
+            if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
+              wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
+              tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+            elif ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 18.04 1>/dev/null)); then
               wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-x86_64.tgz
               tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
             elif (cat /etc/os-release | grep 18.04 1>/dev/null); then
@@ -346,7 +359,7 @@ Resources:
             systemctl enable --now dcvserver dcv-virtual-session.service
 
             # cfn-init completed so signal success or not
-            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}        
+            python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}        
       Tags:
         - Key: Name
           Value: !Ref ec2Name
