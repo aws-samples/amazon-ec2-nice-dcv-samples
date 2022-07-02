@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: RockyLinux 8 with NICE DCV (login as ec2-user)
+Description: RockyLinux 8 with NICE DCV (login as rocky)
+
+# NOTE: (2022-07-01): No ARM64 support as MarketPlace version was last updated July 2021 (https://aws.amazon.com/marketplace/server/configuration?productId=8442d1b8-f10f-46f6-8440-d8f7dc722e7d)
 
 Metadata:
   License:
@@ -25,7 +27,7 @@ Metadata:
         Label:
           default: CPU architecture and instance type. Subscribe before launching ( https://aws.amazon.com/marketplace/search/results?searchTerms=Rockylinux )
         Parameters:
-          - cpuArchitecture
+#          - cpuArchitecture
           - instanceType
       -
         Label:
@@ -66,7 +68,7 @@ Parameters:
   instanceType:
     Type: String
 #    Description: Instance Type (x86_64 or arm64) (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
-    Description: Instance Type (x86_64 or arm64) (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
+    Description: Instance Type (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
     Default: t3.medium
 
   ec2Name:
@@ -209,7 +211,7 @@ Resources:
             - 00_setup       
         00_setup:  # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
-            "/home/ec2-user/update-dcv": 
+            "/home/rocky/update-dcv": 
               content: |
                 #!/bin/bash
                 cd /tmp
@@ -227,9 +229,9 @@ Resources:
                 sudo yum install -y nice-dcv-web-viewer-*.rpm
                 sudo yum install -y nice-xdcv-*.rpm
               mode: "000755"
-              owner: "ec2-user"
+              owner: "rocky"
               group: "users"
-            "/home/ec2-user/update-awscli": 
+            "/home/rocky/update-awscli": 
               content: |
                 #!/bin/bash
                 cd /tmp
@@ -243,7 +245,7 @@ Resources:
                 unzip -q -o awscliv2.zip
                 sudo ./aws/install --update -b /usr/bin              
               mode: "000755"
-              owner: "ec2-user"
+              owner: "rocky"
               group: "users"              
     Properties:
       KeyName: !Ref keyName
@@ -312,8 +314,8 @@ Resources:
             sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
 
             # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
-            mkdir -p /home/ec2-user/DCV-Storage
-            chown -R ec2-user:users /home/ec2-user/DCV-Storage
+            mkdir -p /home/rocky/DCV-Storage
+            chown -R rocky:users /home/rocky/DCV-Storage
 
             # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
             cat << EoF > /etc/systemd/system/dcv-virtual-session.service
@@ -355,7 +357,7 @@ Resources:
             fi
             unzip -q -o awscliv2.zip
             ./aws/install -b /usr/bin
-            echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
+            echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/rocky/.bashrc
 
             # yum-cron            
             yum install -q -y dnf-automatic
