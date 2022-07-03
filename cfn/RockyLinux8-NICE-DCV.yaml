@@ -1,7 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: RockyLinux 8 with NICE DCV (login as rocky)
-
-# NOTE: (2022-07-01): No ARM64 support as MarketPlace version was last updated July 2021 (https://aws.amazon.com/marketplace/server/configuration?productId=8442d1b8-f10f-46f6-8440-d8f7dc722e7d)
+Description: Rocky Linux 8 with NICE DCV (login as rocky)
 
 Metadata:
   License:
@@ -25,9 +23,9 @@ Metadata:
     ParameterGroups:
       -
         Label:
-          default: CPU architecture and instance type. Subscribe before launching ( https://aws.amazon.com/marketplace/search/results?searchTerms=Rockylinux )
+          default: AMI and instance type 
         Parameters:
-#          - cpuArchitecture
+          - imageId
           - instanceType
       -
         Label:
@@ -50,31 +48,21 @@ Metadata:
           - volumeSize
           - volumeType
           - deviceName
-      -
-        Label:
-          default: RockyLinux AMI IDs. Accept terms and subscribe before launching
-        Parameters:
-          - RockyLinux8amd64
-#          - RockyLinux8arm64 
           
 Parameters:
-#  cpuArchitecture:
-#    Type: String
-#    Description: Instruction set architecture (x86_64 or arm64)
-#    AllowedValues:
-#      - RockyLinux OS 8 (x86_64)
-#      - RockyLinux OS 8 (arm64)
-#    Default: RockyLinux OS 8 (x86_64)
+  imageId:
+    Type: String
+    Description: AMI ID ( Get ID for your region from https://rockylinux.org/cloud-images/ )
+    AllowedPattern: ^ami\-
   instanceType:
     Type: String
-#    Description: Instance Type (x86_64 or arm64) (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
-    Description: Instance Type (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
+    Description: Instance Type (x86_64 or arm64) (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
     Default: t3.medium
 
   ec2Name:
     Description: EC2 instance name
     Type: String
-    Default: RockyLinux OS 8-NICE-DCV
+    Default: Rocky Linux 8-NICE-DCV
   keyName:
     Type: AWS::EC2::KeyPair::KeyName
     Description: EC2 Key pair for accessing EC2 instance
@@ -109,18 +97,6 @@ Parameters:
     Type: String
     Description: Device Name
     Default: /dev/sda1
-
-  RockyLinux8amd64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: RockyLinux OS 8 (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-2otariyxb3mqu
-    Default: /aws/service/marketplace/prod-hij7xr5pvhcuk/latest
-#  RockyLinux8arm64:
-#    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-#    Description: RockyLinux OS 8 (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-zgsymdwitnxmm
-#    Default: /aws/service/marketplace/prod-ee3jipi4asbr6/latest
-
-#Conditions:
-  #useAMD64: !Equals [ !Ref cpuArchitecture, "RockyLinux OS 8 (x86_64)" ]
 
 Resources:
   securityGroup:
@@ -249,8 +225,7 @@ Resources:
               group: "users"              
     Properties:
       KeyName: !Ref keyName
-      #ImageId: !If [useAMD64, !Ref RockyLinux8amd64, !Ref RockyLinux8arm64 ]
-      ImageId: !Ref RockyLinux8amd64
+      ImageId: !Ref imageId
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       SubnetId: !Ref subnetID
