@@ -47,6 +47,7 @@ CloudFormation template was only tested with Windows Server 2019 English Full Ba
 As these are not GPU accelerated instances, [virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual) are used instead of console sessions, and system is configured with systemd multi-user.target. To ensure availability of virtual session, a custom daemon processs `dcv-virtual-session.service` polls for virtual session and creates a new session when none are found. 
 The login user name depends on Linux distributions as follows:
 - Amazon Linux 2, AlmaLinux, RHEL : ec2-user
+- Rocky Linux : rocky
 - Ubuntu: ubuntu
 - Kali Linux: kali
 
