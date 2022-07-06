@@ -34,13 +34,20 @@ Metadata:
           - ec2Name
           - keyName
           - vpcID
-          - subnetID
+          - subnetID         
       -
         Label:
           default: Allowed inbound source IP prefixes to NICE DCV port 8443
         Parameters:
           - ingressIPv4
           - ingressIPv6
+      -
+        Label:
+          default: EBS volume configuration
+        Parameters:
+          - volumeSize
+          - volumeType
+          - deviceName
       -
         Label:
           default: Aamzon Linux 2 AMI IDs 
@@ -83,6 +90,22 @@ Parameters:
     Type: String
     Description: Allowed source prefix (IPv6)
     Default: ::/0
+
+  volumeType:
+    Type: String
+    Description: Volume Type ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html )
+    AllowedValues:
+      - gp2
+      - gp3
+    Default: gp3
+  volumeSize:
+    Type: Number
+    Description: Volume Size in GiBs (must be equal or larger than snapshot size)
+    Default: 8
+  deviceName:
+    Type: String
+    Description: Device Name
+    Default: /dev/xvda
 
   amazonLinux2amd64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
@@ -230,6 +253,12 @@ Resources:
       Monitoring: true      
       SecurityGroupIds: 
         - !Ref securityGroup
+      BlockDeviceMappings:
+        - DeviceName: !Ref deviceName
+          Ebs:
+            VolumeType: !Ref volumeType
+            VolumeSize: !Ref volumeSize
+            DeleteOnTermination:  true          
       UserData:
         Fn::Base64: 
           !Sub |
