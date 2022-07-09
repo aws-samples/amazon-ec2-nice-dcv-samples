@@ -58,7 +58,7 @@ Metadata:
 Parameters:
   cpuArchitecture:
     Type: String
-    Description: Instruction set architecture (x86_64 or arm64)
+    Description: Instruction set architecture (x86_64 or arm64). Select appropriate Graviton instanceType (e.g. tg4.medium ) if using arm64
     AllowedValues:
       - Amazon Linux 2 (x86_64)
       - Amazon Linux 2 (arm64)
@@ -74,13 +74,19 @@ Parameters:
     Default: Amazon Linux 2-NICE-DCV
   keyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: EC2 Key pair for accessing EC2 instance
+    Description: EC2 Key pair for accessing EC2 instance (Create one at https://console.aws.amazon.com/ec2/#KeyPairs if necessary)
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
 
   ingressIPv4:
     Type: String
