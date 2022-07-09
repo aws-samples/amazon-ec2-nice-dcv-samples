@@ -52,7 +52,7 @@ Metadata:
 Parameters:
   imageId:
     Type: String
-    Description: AMI ID ( Get ID for your region from https://rockylinux.org/cloud-images/ )
+    Description: AMI ID ( Get ID for your region from https://rockylinux.org/cloud-images/ ). Select appropriate Graviton instanceType (e.g. tg4.medium ) if using arm64
     AllowedPattern: ^ami\-
   instanceType:
     Type: String
@@ -65,14 +65,20 @@ Parameters:
     Default: Rocky Linux 8-NICE-DCV
   keyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: EC2 Key pair for accessing EC2 instance
+    Description: EC2 Key pair for accessing EC2 instance (Create one at https://console.aws.amazon.com/ec2/#KeyPairs if necessary)
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
-
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
+    
   ingressIPv4:
     Type: String
     Description: Allowed source prefix (IPv4)
