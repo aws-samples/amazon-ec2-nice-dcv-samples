@@ -64,13 +64,17 @@ Parameters:
     Default: Kali Linux-NICE-DCV
   keyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: EC2 Key pair for accessing EC2 instance
+    Description: EC2 Key pair for accessing EC2 instance (Create one at https://console.aws.amazon.com/ec2/#KeyPairs if necessary)
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
+    AllowedPattern: ".+"  subnetID:
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
+    AllowedPattern: ".+"  subnetID:
 
   ingressIPv4:
     Type: String
