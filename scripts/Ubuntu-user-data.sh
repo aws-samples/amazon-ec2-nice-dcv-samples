@@ -28,7 +28,10 @@ wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
 gpg --import NICE-GPG-KEY
 
 # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
-if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 18.04 1>/dev/null)); then
+if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
+  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
+  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+elif ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 18.04 1>/dev/null)); then
   wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-x86_64.tgz
   tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
 elif (cat /etc/os-release | grep 18.04 1>/dev/null); then
