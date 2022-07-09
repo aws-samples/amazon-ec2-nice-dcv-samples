@@ -23,7 +23,7 @@ Metadata:
     ParameterGroups:
       -
         Label:
-          default: AMI and instance type. ( https://access.redhat.com/solutions/15356 )
+          default: AMI and instance type ( https://access.redhat.com/solutions/15356 )
         Parameters:
           - imageId
           - instanceType
@@ -41,12 +41,20 @@ Metadata:
         Parameters:
           - ingressIPv4
           - ingressIPv6
+      -
+        Label:
+          default: EBS volume configuration
+        Parameters:
+          - volumeSize
+          - volumeType
+          - deviceName
 
 Parameters:
   imageId:
     Type: String
-    Description: AMI ID ( aws ec2 describe-images --owners 309956199498 --query "sort_by(Images, &CreationDate)[*].[CreationDate,Name,ImageId]" --filters "Name=name,Values=RHEL-8*"  --output table --region [REGION] )
-    Default: ami-0cebc9110ef246a50
+    Description: AMI ID ( aws ec2 describe-images --owners 309956199498 --query "sort_by(Images, &CreationDate)[*].[CreationDate,Name,ImageId]" --filters "Name=name,Values=RHEL-8*"  --output table --region [REGION] ) Select appropriate Graviton instanceType (e.g. tg4.medium ) if using arm64
+    ConstraintDescription: Do specify a valid Image ID
+    AllowedPattern: "ami.+"
   instanceType:
     Type: String
     Description: Instance Type (x86_64 or arm64) (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
@@ -58,13 +66,19 @@ Parameters:
     Default: RHEL 8-NICE-DCV
   keyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: EC2 Key pair for accessing EC2 instance
+    Description: EC2 Key pair for accessing EC2 instance (Create one at https://console.aws.amazon.com/ec2/#KeyPairs if necessary)
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"    
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
 
   ingressIPv4:
     Type: String
@@ -75,6 +89,21 @@ Parameters:
     Description: Allowed source prefix (IPv6)
     Default: ::/0
 
+  volumeType:
+    Type: String
+    Description: Volume Type ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html )
+    AllowedValues:
+      - gp2
+      - gp3
+    Default: gp3
+  volumeSize:
+    Type: Number
+    Description: Volume Size in GiBs (must be equal or larger than snapshot size)
+    Default: 10
+  deviceName:
+    Type: String
+    Description: Device Name
+    Default: /dev/sda1
 
 Resources:
   securityGroup:
@@ -210,6 +239,12 @@ Resources:
       Monitoring: true      
       SecurityGroupIds: 
         - !Ref securityGroup
+      BlockDeviceMappings:
+        - DeviceName: !Ref deviceName
+          Ebs:
+            VolumeType: !Ref volumeType
+            VolumeSize: !Ref volumeSize
+            DeleteOnTermination:  true        
       UserData:
         Fn::Base64: 
           !Sub |
@@ -317,7 +352,6 @@ Resources:
             firewall-offline-cmd  --add-port 8443/tcp
             firewall-offline-cmd  --add-port 8443/udp
             systemctl disable firewalld
-
 
             # text console: DCV virtual sessions only
             systemctl isolate multi-user.target
