@@ -58,7 +58,7 @@ Metadata:
 Parameters:
   cpuArchitecture:
     Type: String
-    Description: Instruction set architecture (x86_64 or arm64)
+    Description: Instruction set architecture (x86_64 or arm64). Select appropriate Graviton instanceType (e.g. tg4.medium ) if using arm64
     AllowedValues:
       - AlmaLinux OS 8 (x86_64)
       - AlmaLinux OS 8 (arm64)
@@ -74,13 +74,19 @@ Parameters:
     Default: AlmaLinux OS 8-NICE-DCV
   keyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: EC2 Key pair for accessing EC2 instance
+    Description: EC2 Key pair for accessing EC2 instance (Create one at https://console.aws.amazon.com/ec2/#KeyPairs if necessary)
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
 
   ingressIPv4:
     Type: String
@@ -316,7 +322,7 @@ Resources:
             # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
             cat << EoF > /etc/systemd/system/dcv-virtual-session.service
             [Unit]
-            Description=Create DCV virtual session for user $DCV-USER
+            Description=Create DCV virtual session for ec2-user 
             After=default.target network.target 
 
             [Service]
