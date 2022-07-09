@@ -58,13 +58,19 @@ Parameters:
     Default: Windows Server-NICE-DCV
   keyName:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: EC2 Key pair for accessing EC2 instance
+    Description: EC2 Key pair for accessing EC2 instance (Create one at https://console.aws.amazon.com/ec2/#KeyPairs if necessary)
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
+    ConstraintDescription: Do specify a valid value
+    AllowedPattern: ".+"
 
   ingressIPv4:
     Type: String
@@ -228,7 +234,7 @@ Resources:
 
             @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
             reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
-                          
+          
             @echo ** install AWSCLI
             cinst --no-progress -y awscli
             setx /M AWS_CLI_AUTO_PROMPT on-partial
@@ -236,7 +242,7 @@ Resources:
             @echo ** Restarting DCV 
             net stop dcvserver
             net start dcvserver
-            
+                
             cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region}        
             </script>       
       Tags:
