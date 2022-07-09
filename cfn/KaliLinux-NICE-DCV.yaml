@@ -70,11 +70,11 @@ Parameters:
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
-    AllowedPattern: ".+"  subnetID:
+    AllowedPattern: ".+"
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: Subnet with internet connectivity
-    AllowedPattern: ".+"  subnetID:
+    AllowedPattern: ".+"
 
   ingressIPv4:
     Type: String
