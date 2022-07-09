@@ -13,7 +13,7 @@ Specify a **Stack name** and specify parameters values. All fields are required.
 - `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. For RHEL 8, you will need to use [AWS CLI](https://aws.amazon.com/cli/) to retrieve AMI IDs available for your AWS [region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions). 
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). Due to memory demands of running graphical environment, 4 GB or more RAM instance types are recommended
 - `ec2Name`: name for your EC2 instance
-- `keyName`: [key pair name](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
+- `keyName`: [key pair name](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). [Create one](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html) if you do not have any
 - `vpcID`: [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select your [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
 - `subnetID`: subnet with internet connectivity. Select subnet in your default VPC if unsure
 - `ingressIPv4`: allowed IPv4 source prefixes to NICE DCV listening ports at 8443
