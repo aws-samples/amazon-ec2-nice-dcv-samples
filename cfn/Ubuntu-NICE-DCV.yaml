@@ -213,7 +213,7 @@ Resources:
     Type: "AWS::EC2::Instance" 
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT60M      
+        Timeout: PT90M      
     Metadata:
       Comment: Install Desktop Environment    
       AWS::CloudFormation::Init:
