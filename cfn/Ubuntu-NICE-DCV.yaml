@@ -32,7 +32,6 @@ Metadata:
           default: EC2 configuration
         Parameters:
           - ec2Name
-          - keyName
           - vpcID
           - subnetID
       -
@@ -81,11 +80,6 @@ Parameters:
     Description: EC2 instance name
     Type: String
     Default: Ubuntu-NICE-DCV
-  keyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: EC2 Key pair for accessing EC2 instance (Create one at https://console.aws.amazon.com/ec2/#KeyPairs if necessary)
-    ConstraintDescription: Do specify a valid value
-    AllowedPattern: ".+"    
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
@@ -265,7 +259,6 @@ Resources:
               owner: "ubuntu"
               group: "users"
     Properties:
-      KeyName: !Ref keyName
       ImageId: !If [useUbuntu2204amd64, !Ref ubuntu2204amd64, !If [useUbuntu2004amd64, !Ref ubuntu2004amd64, !If [useUbuntu1804amd64, !Ref ubuntu1804amd64, !Ref ubuntu1804arm64] ]]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
@@ -302,9 +295,12 @@ Resources:
             # cfn-init
             python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
+            # install firefox browser
+            apt-get -q -y install firefox
+            
             # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
             systemctl isolate multi-user.target
-
+            
             apt-get -q -y install ubuntu-desktop 
             apt-get -q -y install gdm3
 
