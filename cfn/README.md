@@ -15,8 +15,8 @@ Specify a **Stack name** and specify parameters values. All fields are required.
 - `ec2Name`: name for your EC2 instance
 - `vpcID`: [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select your [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
 - `subnetID`: subnet with internet connectivity. Select subnet in your default VPC if unsure
-- `ingressIPv4`: allowed IPv4 source prefixes to NICE DCV listening ports at 8443
-- `ingressIPv6`: allowed IPv6 source prefixes to NICE DCV listening ports at 8443
+- `ingressIPv4`: allowed IPv4 source prefix to NICE DCV listening ports at 8443. You can get your IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com)
+- `ingressIPv6`: allowed IPv6 source prefix to NICE DCV listening ports at 8443
 
 ![CloudFormation parameters](/images/parameters.png "Parameters")
 
