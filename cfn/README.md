@@ -50,7 +50,9 @@ The login user name depends on Linux distributions as follows:
 - Ubuntu: ubuntu
 - Kali Linux: kali
 
-Some templates support ARM64 architecture. Specify a Graviton instance type (e.g. t4g.medium) if you choose ARM64 option. 
+As the provisioning process install graphical desktop and other libraries, you may want to [reboot the EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-reboot.html) before logging in. 
+
+Some templates support ARM64 architecture. Specify a [Graviton](https://aws.amazon.com/ec2/graviton/) instance type (e.g. t4g.medium) if you choose ARM64 option. 
 
 The web browser client can be disabled by removing `nice-dcv-web-viewer` package. This restricts remote access to NICE DCV native clients. 
 
