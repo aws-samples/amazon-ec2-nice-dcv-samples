@@ -32,7 +32,6 @@ Metadata:
           default: EC2 configuration
         Parameters:
           - ec2Name
-          - keyName
           - vpcID
           - subnetID
       -
@@ -62,11 +61,6 @@ Parameters:
     Description: Name of EC2 instance
     Type: String
     Default: Kali Linux-NICE-DCV
-  keyName:
-    Type: AWS::EC2::KeyPair::KeyName
-    Description: EC2 Key pair for accessing EC2 instance (Create one at https://console.aws.amazon.com/ec2/#KeyPairs if necessary)
-    ConstraintDescription: Do specify a valid value
-    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
@@ -215,7 +209,6 @@ Resources:
               owner: "kali"
               group: "users"
     Properties:
-      KeyName: !Ref keyName
       ImageId: !Ref imageId
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
