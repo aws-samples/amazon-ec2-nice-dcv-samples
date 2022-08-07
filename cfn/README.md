@@ -10,12 +10,12 @@ The CloudFormation templates do not install GPU drivers for [accelerated computi
 Download desired template file and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Choose **Create Stack**, **Upload a template file**, **Choose File**, select your .YAML file and choose **Next**.
 
 Specify a **Stack name** and specify parameters values. All fields are required. 
-- `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. For RHEL 8, you will need to use [AWS CLI](https://aws.amazon.com/cli/) to retrieve AMI IDs available for your AWS [region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions). 
+- `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. For RHEL 8, use [AWS CLI](https://aws.amazon.com/cli/) to retrieve AMI IDs available for your AWS [region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions). 
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). Due to memory demands of running graphical environment, 4 GB or more RAM instance types are recommended
-- `ec2Name`: name for your EC2 instance
-- `vpcID`: [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select your [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
-- `subnetID`: subnet with internet connectivity. Select subnet in your default VPC if unsure
-- `ingressIPv4`: allowed IPv4 source prefix to NICE DCV listening ports at 8443. You can get your IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com)
+- `ec2Name`: name of EC2 instance
+- `vpcID`: [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
+- `subnetID`: subnet with internet connectivity. Select subnet in default VPC if unsure
+- `ingressIPv4`: allowed IPv4 source prefix to NICE DCV listening ports at 8443. Get source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com)
 - `ingressIPv6`: allowed IPv6 source prefix to NICE DCV listening ports at 8443
 
 ![CloudFormation parameters](/images/parameters.png "Parameters")
@@ -38,7 +38,7 @@ Besides web browser client, NICE DCV offers Windows, Linux, and macOS native cli
 Refer to [NICE DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getting-started.html)
 
 ## Notes about Windows Server template
-Default Windows AMI is Windows Server 2019 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console) or from [AWS CLI](https://aws.amazon.com/cli/) (e.g. `aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name"`). For more information, refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog post
+Default Windows AMI is Windows Server 2019 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console) or from [AWS CLI](https://aws.amazon.com/cli/) (e.g. `aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name"`). Refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog for more information.
  
 CloudFormation template was only tested with Windows Server 2019 English Full Base.
 
