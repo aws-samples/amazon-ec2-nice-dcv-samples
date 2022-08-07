@@ -64,7 +64,7 @@ Parameters:
     Default: Amazon Linux 2 (x86_64)
   instanceType:
     Type: String
-    Description: Instance Type (x86_64 or arm64) (see https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
+    Description: Instance Type (x86_64 or arm64) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
     Default: t3.medium
 
   ec2Name:
@@ -84,7 +84,7 @@ Parameters:
 
   ingressIPv4:
     Type: String
-    Description: Allowed source prefix (IPv4)
+    Description: Allowed source prefix (IPv4) ( https://checkip.amazonaws.com )
     Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
@@ -160,6 +160,8 @@ Resources:
           Value: !Sub ${AWS::StackId}
         - Key: Name
           Value: !Sub "[${AWS::StackName}] - ${ec2Name}"
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
   instanceIamRole:
     Type: AWS::IAM::Role
@@ -179,14 +181,16 @@ Resources:
           - Effect: Allow
             Action: 
               - s3:GetObject
-            Resource: !Sub "arn:aws:s3:::dcv-license.${AWS::Region}/*"
+            Resource: !Sub "arn:${AWS::Partition}:s3:::dcv-license.${AWS::Region}/*"
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub 'arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore'
       Tags:
         - Key: StackName
           Value: !Sub ${AWS::StackName}
         - Key: StackId
           Value: !Sub ${AWS::StackId}
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
   instanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -373,6 +377,8 @@ Resources:
           Value: !Sub ${AWS::StackName}
         - Key: StackId
           Value: !Sub ${AWS::StackId}
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
         
 Outputs:
   InstanceID:
