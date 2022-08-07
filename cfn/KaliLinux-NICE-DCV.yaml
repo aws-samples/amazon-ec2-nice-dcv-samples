@@ -54,6 +54,7 @@ Parameters:
     Description: Kali AMI ID ( aws ssm get-parameters-by-path --path /aws/service/marketplace/prod-tsqyof4l3a3aa/ --query "Parameters[].Name" )
     Default: /aws/service/marketplace/prod-tsqyof4l3a3aa/latest
   instanceType:
+    Description: Instance type ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
     Type: String
     Default: t3.medium
 
