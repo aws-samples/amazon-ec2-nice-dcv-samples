@@ -68,7 +68,7 @@ Parameters:
     Default: t3.medium
   ubuntuVersion:
     Type: String
-    Description: Select appropriate Graviton instanceType (e.g. tg4.medium ) if using ARCH64 Ubuntu
+    Description: Select appropriate Graviton instanceType (e.g. t4g.medium ) if using aarch64
     AllowedValues:
       - Ubuntu 22.04 (x86_64)
       - Ubuntu 20.04 (x86_64)
