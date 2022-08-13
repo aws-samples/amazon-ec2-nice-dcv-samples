@@ -51,7 +51,7 @@ Metadata:
 Parameters:
   imageId:
     Type: String
-    Description: AMI ID ( Get ID for your region from https://rockylinux.org/cloud-images/ ). Select appropriate Graviton instanceType (e.g. tg4.medium ) if using arm64
+    Description: AMI ID ( Get ID for your region from https://rockylinux.org/cloud-images/ ). Select appropriate Graviton instanceType (e.g. t4g.medium ) if using arm64
     ConstraintDescription: Do specify a valid Image ID
     AllowedPattern: "ami.+"
   instanceType:
