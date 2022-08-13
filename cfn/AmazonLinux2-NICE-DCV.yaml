@@ -57,7 +57,7 @@ Metadata:
 Parameters:
   cpuArchitecture:
     Type: String
-    Description: Instruction set architecture (x86_64 or arm64). Select appropriate Graviton instanceType (e.g. tg4.medium ) if using arm64
+    Description: Instruction set architecture (x86_64 or arm64). Select appropriate Graviton instanceType (e.g. t4g.medium ) if using arm64
     AllowedValues:
       - Amazon Linux 2 (x86_64)
       - Amazon Linux 2 (arm64)
