@@ -244,17 +244,19 @@ Resources:
             snap install amazon-ssm-agent --classic
             snap start amazon-ssm-agent
 
-            apt-get install -q -y python-setuptools wget tmux unzip tar curl sed
+            apt-get install -q -y wget tmux unzip tar curl sed
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
-            wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
-            tar -xvzf ./aws-cfn-bootstrap-1.4-34.tar.gz
-            cd aws-cfn-bootstrap-1.4
-            python2 setup.py build
-            python2 setup.py install
+            # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/        
+            apt-get install -q -y python3 python3-setuptools
+            wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+            tar -xvf aws-cfn-bootstrap-py3-latest.tar.gz
+            cd aws-cfn-bootstrap-2.0
+            python3 setup.py build
+            python3 setup.py install
 
             cd /root/
             # cfn-init
-            python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+            python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
             apt-get -q -y install kali-desktop-xfce
             apt-get -q -y install pulseaudio-utils 
@@ -335,7 +337,7 @@ Resources:
             systemctl enable --now dcvserver dcv-virtual-session.service
 
             # cfn-init completed so signal success or not
-            python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+            python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
       Tags:
         - Key: Name
           Value: !Ref ec2Name
