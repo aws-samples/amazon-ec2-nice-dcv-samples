@@ -247,7 +247,7 @@ Resources:
             apt-get install -q -y wget tmux unzip tar curl sed
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
             # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/        
-            apt-get install -q -y python3 python3-setuptools
+            apt-get install -q -y python3 python3-setuptools python3-docutils python3-daemon
             wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
             tar -xvf aws-cfn-bootstrap-py3-latest.tar.gz
             cd aws-cfn-bootstrap-2.0
