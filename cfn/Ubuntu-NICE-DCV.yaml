@@ -309,16 +309,6 @@ Resources:
             apt-get -q -y install gdm3
             apt-get -q -y install pulseaudio-utils
 
-            # Fix "Authentication Required to Create Managed Color Device" error (http://c-nergy.be/blog/?p=12043)
-            cat <<EOF | sudo tee /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla
-            [Allow Colord all Users]
-            Identity=unix-user:*
-            Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
-            ResultAny=no
-            ResultInactive=no
-            ResultActive=yes
-            EOF
-
             # resolve "/var/lib/dpkg/info/nice-dcv-server.postinst: 8: dpkg-architecture: not found" when installing dcv-server
             apt-get -q -y install dpkg-dev
 
