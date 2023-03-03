@@ -182,7 +182,7 @@ Resources:
       ResourceSignal:
         Timeout: PT90M      
     Metadata:
-      Comment: Install Desktop Environment    
+      Comment: Update scripts   
       AWS::CloudFormation::Init:
         configSets:
           setup:
@@ -196,9 +196,11 @@ Resources:
                 rm -f /tmp/nice-dcv-ubuntu2004-x86_64.tgz
                 wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
                 tar -xvzf nice-dcv-ubuntu2004-x86_64.tgz && cd nice-dcv-*-ubuntu2004-x86_64
+                sudo systemctl stop dcvserver
                 sudo apt-get install -y ./nice-dcv-server_*_amd64.ubuntu2004.deb 
                 sudo apt-get install -y ./nice-dcv-web-viewer_*_amd64.ubuntu2004.deb 
                 sudo apt-get install -y ./nice-xdcv_*_amd64.ubuntu2004.deb 
+                sudo systemctl restart dcvserver
               mode: "000755"
               owner: "kali"
               group: "users"
@@ -286,9 +288,6 @@ Resources:
             sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
             
             # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
-            mkdir -p /home/kali/DCV-Storage
-            chown -R kali:kali /home/kali/DCV-Storage
-
             # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
             cat << EoF > /etc/systemd/system/dcv-virtual-session.service
             [Unit]
@@ -311,7 +310,7 @@ Resources:
               then
                 sleep 5
               else
-                /usr/bin/dcv create-session \$dcvUser --owner \$dcvUser --storage-root /home/\$dcvUser/DCV-Storage
+                /usr/bin/dcv create-session \$dcvUser --owner \$dcvUser --storage-root /home/\$dcvUser
                 /usr/bin/dcv list-sessions
               fi
             done
