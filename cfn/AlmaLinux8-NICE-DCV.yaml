@@ -57,7 +57,7 @@ Metadata:
 Parameters:
   cpuArchitecture:
     Type: String
-    Description: Instruction set architecture (x86_64 or arm64). Select appropriate Graviton instanceType (e.g. t4g.medium ) if using arm64
+    Description: Instruction set architecture (x86_64 or arm64). Select appropriate Graviton instanceType (e.g. tg4.medium ) if using arm64
     AllowedValues:
       - AlmaLinux OS 8 (x86_64)
       - AlmaLinux OS 8 (arm64)
@@ -205,7 +205,7 @@ Resources:
       ResourceSignal:
         Timeout: PT90M      
     Metadata:
-      Comment: Install Desktop Environment    
+      Comment: Update scripts  
       AWS::CloudFormation::Init:
         configSets:
           setup:
@@ -226,9 +226,11 @@ Resources:
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
                   tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64                
                 fi
+                sudo systemctl stop dcvserver
                 sudo yum install -y nice-dcv-server-*.rpm
                 sudo yum install -y nice-dcv-web-viewer-*.rpm
                 sudo yum install -y nice-xdcv-*.rpm
+                sudo systemctl restart dcvserver
               mode: "000755"
               owner: "ec2-user"
               group: "users"
@@ -313,9 +315,6 @@ Resources:
             sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
 
             # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
-            mkdir -p /home/ec2-user/DCV-Storage
-            chown -R ec2-user:users /home/ec2-user/DCV-Storage
-
             # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
             cat << EoF > /etc/systemd/system/dcv-virtual-session.service
             [Unit]
@@ -337,7 +336,7 @@ Resources:
               if (/usr/bin/dcv list-sessions | grep \$dcvUser 1>/dev/null); then
                 sleep 5
               else
-                /usr/bin/dcv create-session \$dcvUser --owner \$dcvUser --storage-root /home/\$dcvUser/DCV-Storage
+                /usr/bin/dcv create-session \$dcvUser --owner \$dcvUser --storage-root /home/\$dcvUser
                 /usr/bin/dcv list-sessions
               fi
             done
