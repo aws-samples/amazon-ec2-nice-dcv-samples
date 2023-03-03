@@ -3,7 +3,7 @@ Some distributions such as Kali Linux and AlmaLinux *are not officially supporte
 
 
 ## About CloudFormation templates
-The CloudFormation templates do not install GPU drivers for [accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics). When using a MarketPlace AMI such as [Kali Linux](https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to) or [AlmaLinux](https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye?), subscribe before provisioning CloudFormation stack. 
+The CloudFormation templates do not install GPU drivers for [accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics). When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/pp/prodview-2otariyxb3mqu), [Kali Linux](https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to) or [AlmaLinux](https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye?), subscribe before provisioning CloudFormation stack. 
 
 
 ## Deployment via CloudFormation console
