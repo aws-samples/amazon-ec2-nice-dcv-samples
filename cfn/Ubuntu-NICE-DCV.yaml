@@ -68,7 +68,7 @@ Parameters:
     Default: t3.medium
   ubuntuVersion:
     Type: String
-    Description: Select appropriate Graviton instanceType (e.g. t4g.medium ) if using aarch64
+    Description: Select appropriate Graviton instanceType (e.g. tg4.medium ) if using aarch64
     AllowedValues:
       - Ubuntu 22.04 (x86_64)
       - Ubuntu 20.04 (x86_64)
@@ -211,7 +211,7 @@ Resources:
       ResourceSignal:
         Timeout: PT90M      
     Metadata:
-      Comment: Install Desktop Environment    
+      Comment: Update scripts    
       AWS::CloudFormation::Init:
         configSets:
           setup:
@@ -238,10 +238,12 @@ Resources:
                   rm -f /tmp/nice-dcv-ubuntu2004-x86_64.tgz
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
                   tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64  
-                fi                                     
+                fi
+                sudo systemctl stop dcvserver                       
                 sudo apt-get install -y ./nice-dcv-server_*.deb 
                 sudo apt-get install -y ./nice-dcv-web-viewer_*.deb 
                 sudo apt-get install -y ./nice-xdcv_*.deb 
+                sudo systemctl restart dcvserver
               mode: "000755"
               owner: "ubuntu"
               group: "users"
@@ -305,8 +307,18 @@ Resources:
             
             apt-get -q -y install ubuntu-desktop 
             apt-get -q -y install gdm3
-
             apt-get -q -y install pulseaudio-utils
+
+            # Fix "Authentication Required to Create Managed Color Device" error (http://c-nergy.be/blog/?p=12043)
+            cat <<EOF | sudo tee /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla
+            [Allow Colord all Users]
+            Identity=unix-user:*
+            Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
+            ResultAny=no
+            ResultInactive=no
+            ResultActive=yes
+            EOF
+
             # resolve "/var/lib/dpkg/info/nice-dcv-server.postinst: 8: dpkg-architecture: not found" when installing dcv-server
             apt-get -q -y install dpkg-dev
 
@@ -340,9 +352,6 @@ Resources:
             sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
 
             # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
-            mkdir -p /home/ubuntu/DCV-Storage
-            chown -R ubuntu:ubuntu /home/ubuntu/DCV-Storage
-
             # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
             cat << EoF > /etc/systemd/system/dcv-virtual-session.service
             [Unit]
@@ -365,7 +374,7 @@ Resources:
               then
                 sleep 5
               else
-                /usr/bin/dcv create-session \$dcvUser --owner \$dcvUser --storage-root /home/\$dcvUser/DCV-Storage
+                /usr/bin/dcv create-session \$dcvUser --owner \$dcvUser --storage-root /home/\$dcvUser
                 /usr/bin/dcv list-sessions
               fi
             done
