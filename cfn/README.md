@@ -50,6 +50,8 @@ The login user name depends on Linux distributions as follows:
 - Ubuntu: ubuntu
 - Kali Linux: kali
 
+You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder via SSM Session Manager session to update NICE DCV and AWS CLI. 
+
 As the provisioning process install graphical desktop and other libraries, you may want to [reboot the EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-reboot.html) before logging in. 
 
 Some templates support ARM64 architecture. Specify a [Graviton](https://aws.amazon.com/ec2/graviton/) instance type (e.g. t4g.medium) if you choose ARM64 option. 
