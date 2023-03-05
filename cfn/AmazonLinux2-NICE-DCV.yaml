@@ -305,9 +305,8 @@ Resources:
             yum install -q -y nice-dcv-web-viewer-*.rpm
             yum install -q -y nice-xdcv-*.rpm
 
-            # EPEL
-            amazon-linux-extras install -y epel
-            yum install -q -y chromium
+            # Firefox
+            amazon-linux-extras install -y firefox
 
             # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
             cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
