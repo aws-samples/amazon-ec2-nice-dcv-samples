@@ -40,7 +40,14 @@ Metadata:
         Parameters:
           - ingressIPv4
           - ingressIPv6
-
+      -
+        Label:
+          default: EBS volume configuration
+        Parameters:
+          - volumeSize
+          - volumeType
+          - deviceName
+          
 Parameters: 
   imageId:
     Description: Windows Server AMI ID ( aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name" )
@@ -74,6 +81,22 @@ Parameters:
     Type: String
     Description: Allowed source prefix (IPv6)
     Default: ::/0
+
+  volumeType:
+    Type: String
+    Description: Volume Type ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html )
+    AllowedValues:
+      - gp2
+      - gp3
+    Default: gp3
+  volumeSize:
+    Type: Number
+    Description: Volume Size in GiBs (must be equal or larger than snapshot size)
+    Default: 30
+  deviceName:
+    Type: String
+    Description: Device Name
+    Default: /dev/sda1
 
 Resources: 
   securityGroup:
@@ -191,6 +214,12 @@ Resources:
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
+      BlockDeviceMappings:
+        - DeviceName: !Ref deviceName
+          Ebs:
+            VolumeType: !Ref volumeType
+            VolumeSize: !Ref volumeSize
+            DeleteOnTermination:  true         
       UserData: 
         Fn::Base64:
           !Sub |
