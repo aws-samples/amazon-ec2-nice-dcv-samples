@@ -46,9 +46,6 @@ cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
 sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
 
 # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
-mkdir -p /home/kali/DCV-Storage
-chown -R kali:kali /home/kali/DCV-Storage
-
 # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
 cat << EoF > /etc/systemd/system/dcv-virtual-session.service
 [Unit]
@@ -71,7 +68,7 @@ do
   then
     sleep 5
   else
-    /usr/bin/dcv create-session \$dcvUser --owner \$dcvUser --storage-root /home/\$dcvUser/DCV-Storage
+    /usr/bin/dcv create-session \$dcvUser --owner \$dcvUser --storage-root /home/\$dcvUser
     /usr/bin/dcv list-sessions
   fi
 done
