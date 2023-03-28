@@ -26,9 +26,8 @@ reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-mana
 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
 
 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-storage.html
-mkdir C:\DCV-Storage\
-reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/DCV-Storage/ /f 
-powershell -command "$shortcut=(New-Object -ComObject WScript.Shell).CreateShortcut('C:\Users\Administrator\Desktop\DCV-Storage.lnk');$shortcut.TargetPath='C:\DCV-Storage\';$shortcut.Save()"
+reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f 
+rem powershell -command "$shortcut=(New-Object -ComObject WScript.Shell).CreateShortcut('C:\Users\Administrator\Desktop\DCV-Storage.lnk');$shortcut.TargetPath='C:\Users\Administrator\';$shortcut.Save()"
 
 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
