@@ -21,15 +21,17 @@ yum install -q -y pulseaudio pulseaudio-utils
 # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
 
-# https://docs.aws.amazon.com/dcv/latest/userguide/client-linux.html
-if (uname -a | grep x86 1>/dev/null)
-then
+if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then            
   wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
   tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
-else
+elif ((uname -a | grep aarch64 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
   wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
   tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
+else
+  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
+  tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64       
 fi
+
 yum install -y nice-dcv-server-*.rpm
 yum install -y nice-dcv-web-viewer-*.rpm
 yum install -y nice-xdcv-*.rpm
