@@ -31,11 +31,11 @@ Parameters:
     Default: EC2-DCV-SecurityGroup
   ingressIPv4:
     Type: String
-    Description: Source IPv4 prefix
+    Description: Source IPv4 prefix ( https://checkip.amazonaws.com )
     Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
-    Description: Source IPv4 prefix
+    Description: Source IPv6 prefix
     Default: ::/0
   vpcID:
     Type: AWS::EC2::VPC::Id
@@ -51,23 +51,23 @@ Resources:
       SecurityGroupIngress:
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
-          FromPort: "8443"
-          ToPort: "8443"
+          FromPort: 8443
+          ToPort: 8443
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV (IPv6)
           IpProtocol: "tcp"
-          FromPort: "8443"
-          ToPort: "8443"
+          FromPort: 8443
+          ToPort: 8443
           CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV QUIC (IPv4)
           IpProtocol: "udp"
-          FromPort: "8443"
-          ToPort: "8443"
+          FromPort: 8443
+          ToPort: 8443
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV QUIC (IPv6)
           IpProtocol: "udp"
-          FromPort: "8443"
-          ToPort: "8443"
+          FromPort: 8443
+          ToPort: 8443
           CidrIpv6: !Ref ingressIPv6
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
@@ -83,6 +83,8 @@ Resources:
           Value: !Sub ${AWS::StackId}
         - Key: Name
           Value: !Ref securityGroupName
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
   instanceIamRole:
     Type: AWS::IAM::Role
@@ -110,6 +112,8 @@ Resources:
           Value: !Sub ${AWS::StackName}
         - Key: StackId
           Value: !Sub ${AWS::StackId}
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
   instanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -131,7 +135,3 @@ Outputs:
     Value: !Ref instanceProfile
     Export: 
       Name: !Sub "${AWS::StackName}-InstanceProfile"
-      
-  DCVdownload:
-    Description: DCV client download
-    Value: https://download.nice-dcv.com/latest.html
