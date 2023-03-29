@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: RHEL 8 with NICE DCV (login as ec2-user)
+Description: RHEL 8/9 with NICE DCV (login as ec2-user)
 
 Metadata:
   License:
@@ -62,7 +62,7 @@ Parameters:
   ec2Name:
     Description: EC2 instance name
     Type: String
-    Default: RHEL 8-NICE-DCV
+    Default: RHEL 8/9-NICE-DCV
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: VPC with internet connectivity
@@ -108,23 +108,23 @@ Resources:
       SecurityGroupIngress:
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
-          FromPort: "8443"
-          ToPort: "8443"
+          FromPort: 8443
+          ToPort: 8443
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV QUIC (IPv4)
           IpProtocol: "udp"
-          FromPort: "8443"
-          ToPort: "8443"
+          FromPort: 8443
+          ToPort: 8443
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV (IPv6)
           IpProtocol: "tcp"
-          FromPort: "8443"
-          ToPort: "8443"
+          FromPort: 8443
+          ToPort: 8443
           CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV QUIC (IPv6)
           IpProtocol: "udp"
-          FromPort: "8443"
-          ToPort: "8443"
+          FromPort: 8443
+          ToPort: 8443
           CidrIpv6: !Ref ingressIPv6
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
@@ -196,15 +196,18 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp
-                if (uname -a | grep x86 1>/dev/null)
-                then
-                  rm -f /tmp/nice-dcv-el8-x86_64.tgz
-                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+                if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then            
+                  rm -f nice-dcv-el8-x86_64.tgz
+                  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
                   tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+                elif ((uname -a | grep aarch64 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
+                  rm -f nice-dcv-el8-aarch64.tgz
+                  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
+                  tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
                 else
-                  rm -f /tmp/nice-dcv-el8-aarch64.tgz
-                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
-                  tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64                
+                  rm -f nice-dcv-el9-x86_64.tgz 
+                  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz                  
+                  tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64       
                 fi
                 sudo systemctl stop dcvserver
                 sudo yum install -y nice-dcv-server-*.rpm
@@ -263,9 +266,12 @@ Resources:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
             # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/
             wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
-            python3 -m easy_install --script-dir /opt/aws/bin aws-cfn-bootstrap-py3-latest.tar.gz
+            tar -xvf aws-cfn-bootstrap-py3-latest.tar.gz
+            cd aws-cfn-bootstrap-2.0
+            python3 setup.py build
+            python3 setup.py install
             
-            /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+            python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
             # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
             yum groupinstall -q -y 'Server with GUI'
@@ -277,14 +283,15 @@ Resources:
             # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
             rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
 
-            # https://docs.aws.amazon.com/dcv/latest/userguide/client-linux.html
-            if (uname -a | grep x86 1>/dev/null)
-            then
+            if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then            
               wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
               tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
-            else
+            elif ((uname -a | grep aarch64 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
               wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
               tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
+            else
+              wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
+              tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64       
             fi
             yum install -y nice-dcv-server-*.rpm
             yum install -y nice-dcv-web-viewer-*.rpm
@@ -357,7 +364,7 @@ Resources:
             systemctl enable --now dcvserver dcv-virtual-session.service
 
             # cfn-init completed so signal success or not
-            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+            python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
       Tags:
         - Key: Name
           Value: !Ref ec2Name
