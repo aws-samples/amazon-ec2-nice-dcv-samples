@@ -3,7 +3,6 @@ cd /root/
 
 # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
 export DEBIAN_FRONTEND=noninteractive   
-
 apt-get update
 
 # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
