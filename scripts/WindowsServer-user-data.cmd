@@ -17,10 +17,6 @@ msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.lo
 powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
 msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
 
-@echo ** https://docs.aws.amazon.com/dcv/latest/userguide/client-windows.html
-powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-client-Release.msi', 'nice-dcv-client-Release.msi')"
-msiexec.exe /i nice-dcv-client-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_client_install_msi.log
-
 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-auto
 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f 
 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
@@ -39,4 +35,4 @@ setx /M AWS_CLI_AUTO_PROMPT on-partial
 @echo ** Restarting DCV 
 net stop dcvserver
 net start dcvserver    
-</script>  
+</script>
