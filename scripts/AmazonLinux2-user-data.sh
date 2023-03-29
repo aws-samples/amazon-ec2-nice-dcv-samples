@@ -20,7 +20,6 @@ yum install -q -y pulseaudio pulseaudio-utils
 # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
 
-# https://docs.aws.amazon.com/dcv/latest/userguide/client-linux.html
 if (uname -a | grep x86 1>/dev/null)
 then
   wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
@@ -33,7 +32,7 @@ yum install -q -y nice-dcv-server-*.rpm
 yum install -q -y nice-dcv-web-viewer-*.rpm
 yum install -q -y nice-xdcv-*.rpm
 
-# EPEL
+# Firefox
 amazon-linux-extras install -y firefox
 
 # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
