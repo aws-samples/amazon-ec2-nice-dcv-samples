@@ -52,12 +52,14 @@ Metadata:
           default: Ubuntu AMI IDs
         Parameters:
           - ubuntu2204amd64
+          - ubuntu2204arm64          
           - ubuntu2004amd64
           - ubuntu1804arm64
           - ubuntu1804amd64
 
 Conditions:
   useUbuntu2204amd64: !Equals [ !Ref ubuntuVersion, "Ubuntu 22.04 (x86_64)"]
+  useUbuntu2204arm64: !Equals [ !Ref ubuntuVersion, "Ubuntu 22.04 (aarch64)"]
   useUbuntu2004amd64: !Equals [ !Ref ubuntuVersion, "Ubuntu 20.04 (x86_64)"]
   useUbuntu1804amd64: !Equals [ !Ref ubuntuVersion, "Ubuntu 18.04 (x86_64)"]
 
@@ -71,6 +73,7 @@ Parameters:
     Description: Select appropriate Graviton instanceType (e.g. tg4.medium ) if using aarch64
     AllowedValues:
       - Ubuntu 22.04 (x86_64)
+      - Ubuntu 22.04 (aarch64)      
       - Ubuntu 20.04 (x86_64)
       - Ubuntu 18.04 (x86_64)
       - Ubuntu 18.04 (aarch64)
@@ -121,6 +124,10 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>  
     Description: Ubuntu 22.04 (x86_64)
     Default: /aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id
+  ubuntu2204arm64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>  
+    Description: Ubuntu 22.04 (aarch64)
+    Default: /aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id
   ubuntu2004amd64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>  
     Description: Ubuntu 20.04 (x86_64)
@@ -225,7 +232,11 @@ Resources:
                 if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
                   rm -f /tmp/nice-dcv-ubuntu1804-x86_64.tgz
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
-                  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64             
+                  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+                elif ((uname -a | grep aarch 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
+                  rm -f /tmp/nice-dcv-ubuntu2204-aarch64.tgz
+                  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-aarch64.tgz
+                  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64                  
                 elif ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 18.04 1>/dev/null)); then
                   rm -f /tmp/nice-dcv-ubuntu1804-x86_64.tgz
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-x86_64.tgz
@@ -263,7 +274,7 @@ Resources:
               owner: "ubuntu"
               group: "users"
     Properties:
-      ImageId: !If [useUbuntu2204amd64, !Ref ubuntu2204amd64, !If [useUbuntu2004amd64, !Ref ubuntu2004amd64, !If [useUbuntu1804amd64, !Ref ubuntu1804amd64, !Ref ubuntu1804arm64] ]]
+      ImageId: !If [useUbuntu2204amd64, !Ref ubuntu2204amd64, !If [useUbuntu2204arm64, !Ref ubuntu2204arm64, !If [useUbuntu2004amd64, !Ref ubuntu2004amd64, !If [useUbuntu1804amd64, !Ref ubuntu1804amd64, !Ref ubuntu1804arm64] ] ] ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       SubnetId: !Ref subnetID  
@@ -322,6 +333,9 @@ Resources:
             if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
               wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
               tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+            elif ((uname -a | grep aarch 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
+              wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-aarch64.tgz
+              tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
             elif ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 18.04 1>/dev/null)); then
               wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-x86_64.tgz
               tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
