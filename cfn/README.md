@@ -9,7 +9,7 @@ The CloudFormation templates do not install GPU drivers for GPU graphics instanc
 ## Deployment via CloudFormation console
 Download desired template file and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Choose **Create Stack**, **Upload a template file**, **Choose File**, select your .YAML file and choose **Next**.
 
-Specify a **Stack name** and specify parameters values. All fields are required. 
+Specify a **Stack name** and specify parameters values. In most cases, the default values are sufficient. You will need to specify a VPC and subnet to provision EC2 instance in.  
 - `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. For [RHEL 8/9](https://access.redhat.com/solutions/15356) and [Rocky Linux 8/9](https://rockylinux.org/cloud-images/), go to indicated web page to retrieve AMI ID for your AWS Region
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). Due to memory demands of running graphical environment, 4 GB or more RAM instance types are recommended
 - `ec2Name`: name of EC2 instance
@@ -24,12 +24,14 @@ Specify a **Stack name** and specify parameters values. All fields are required.
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html) settings, and click **Create Stack** to launch your stack. 
 
-It may up to 60 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
+It may take up to 60 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
 Go to **Outputs** tab
 
-Open `SSMSessionManager` value (URL in the form `https://<REGION>.console.aws.amazon.com/systems-manager/session-manager/<InstanceID>`) in a new browser tab to login via SSM Session Manager to change login user password. Password change command is in *Description* field.
+Open `SSMSessionManager` URL link (in the format `https://<REGION>.console.aws.amazon.com/systems-manager/session-manager/<InstanceID>`) in a new browser tab to login via SSM Session Manager to change login user password. Password change command is in *Description* field.
 
-Open `DCVwebConsole` value (URL in the form `https://<EC2 Public IP>:8443/`) to access NICE DCV web browser console and login as the user specified in *Description* field. 
+Open `DCVwebConsole` URL link (in the format `https://<EC2 Public IP>:8443/`) to access NICE DCV web browser console and login as the user specified in *Description* field. 
+
+Use `EC2Instance` URL link to navigate to EC2 console to start/stop your EC2 instance or to get the latest IPv4 (or IPv6 if enabled) address.  
 
 ## NICE DCV clients
 
@@ -40,8 +42,6 @@ Refer to [NICE DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/
 
 ## Notes about Windows Server template
 Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console) or from [AWS CLI](https://aws.amazon.com/cli/) (e.g. `aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name"`). Refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog for more information.
- 
-CloudFormation template was only tested with Windows Server 2022 English Full Base.
 
 If you provision a [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), you can use `C:\Users\Administrator\download-gpu-drivers.cmd` helper batch file to download GPU drivers. Note that the drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for driver installation instructions. 
 
@@ -59,7 +59,3 @@ You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}
 As the provisioning process install graphical desktop and other libraries, you may want to [reboot the EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-reboot.html) before logging in. Some templates support ARM64 architecture; specify a [Graviton](https://aws.amazon.com/ec2/graviton/) instance type (e.g. t4g.medium) if you choose ARM64 option. The web browser client can be disabled by removing `nice-dcv-web-viewer` package; this will restrict remote access to NICE DCV native clients. 
 
 If you provision a [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances), you can use helper script */home/{user name}/download-gpu-drivers* to download GPU drivers.  Note that the drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html) and [Install AMD drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html). Refer to [Prerequisites for Linux NICE DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html) for driver installation instructions. 
-
-
-
-
