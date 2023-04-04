@@ -59,7 +59,7 @@ Parameters:
     Default: t3.medium
 
   ec2Name:
-    Description: Name of EC2 instance
+    Description: EC2 instance name
     Type: String
     Default: Kali Linux-NICE-DCV
   vpcID:
@@ -100,7 +100,7 @@ Resources:
   securityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow inbound DCV 
+      GroupDescription: Allow inbound DCV
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: NICE DCV (IPv4)
@@ -126,10 +126,10 @@ Resources:
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/0          
+          CidrIp: 0.0.0.0/0
         - Description: Allow all outbound traffic (IPv6)
           IpProtocol: "-1"
-          CidrIpv6: "::/0" 
+          CidrIpv6: "::/0"
       Tags:
         - Key: StackName
           Value: !Sub ${AWS::StackName}
@@ -159,6 +159,21 @@ Resources:
             Action: 
               - s3:GetObject
             Resource: !Sub "arn:${AWS::Partition}:s3:::dcv-license.${AWS::Region}/*"
+      - PolicyName: gpuDrivers
+        PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
+          Version: '2012-10-17' 
+          Statement:
+          - Effect: Allow
+            Action: 
+              - s3:Get*
+              - s3:List*
+            Resource: 
+              - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming"
+              - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming/*"
+              - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers"
+              - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers/*"
+              - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers"
+              - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers/*"
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
       Tags:
@@ -177,51 +192,17 @@ Resources:
       - !Ref instanceIamRole
 
   ec2Instance:
-    Type: "AWS::EC2::Instance" 
+    Type: AWS::EC2::Instance
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT90M      
-    Metadata:
-      Comment: Update scripts   
-      AWS::CloudFormation::Init:
-        configSets:
-          setup:
-            - 00_setup       
-        00_setup:  # in the following order: packages, groups, users, sources, files, commands, and then services.
-          files:
-            "/home/kali/update-dcv": 
-              content: |
-                #!/bin/bash
-                cd /tmp
-                rm -f /tmp/nice-dcv-ubuntu2004-x86_64.tgz
-                wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
-                tar -xvzf nice-dcv-ubuntu2004-x86_64.tgz && cd nice-dcv-*-ubuntu2004-x86_64
-                sudo systemctl stop dcvserver
-                sudo apt-get install -y ./nice-dcv-server_*_amd64.ubuntu2004.deb 
-                sudo apt-get install -y ./nice-dcv-web-viewer_*_amd64.ubuntu2004.deb 
-                sudo apt-get install -y ./nice-xdcv_*_amd64.ubuntu2004.deb 
-                sudo systemctl restart dcvserver
-              mode: "000755"
-              owner: "kali"
-              group: "users"
-            "/home/kali/update-awscli": 
-              content: |
-                #!/bin/bash
-                cd /tmp
-                rm -f awscliv2.zip
-                curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
-                unzip -q -o awscliv2.zip
-                sudo ./aws/install --update -b /usr/bin              
-              mode: "000755"
-              owner: "kali"
-              group: "users"
+        Timeout: PT90M
     Properties:
       ImageId: !Ref imageId
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
-      SubnetId: !Ref subnetID  
-      Monitoring: true      
-      SecurityGroupIds: 
+      SubnetId: !Ref subnetID
+      Monitoring: true
+      SecurityGroupIds:
         - !Ref securityGroup
       BlockDeviceMappings:
         - DeviceName: !Ref deviceName
@@ -235,7 +216,7 @@ Resources:
             #!/bin/zsh
             cd /root/
 
-            export DEBIAN_FRONTEND=noninteractive   
+            export DEBIAN_FRONTEND=noninteractive
             apt-get update
 
             # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
@@ -250,7 +231,7 @@ Resources:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
             # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/        
             apt-get install -q -y python3 python3-setuptools python3-docutils python3-daemon
-            wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+            wget -4 -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
             tar -xvf aws-cfn-bootstrap-py3-latest.tar.gz
             cd aws-cfn-bootstrap-2.0
             python3 setup.py build
@@ -258,10 +239,10 @@ Resources:
 
             cd /root/
             # cfn-init
-            python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+            python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
             apt-get -q -y install kali-desktop-xfce
-            apt-get -q -y install pulseaudio-utils 
+            apt-get -q -y install pulseaudio-utils
 
             # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
@@ -282,16 +263,16 @@ Resources:
 
             # virtual session support
             apt-get -q -y install ./nice-xdcv_*_amd64.ubuntu2004.deb
-            
+
             # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
             cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
-            sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
-            
+            sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
+
             # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
             # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
             cat << EoF > /etc/systemd/system/dcv-virtual-session.service
             [Unit]
-            Description=Create DCV virtual session for user kali
+            Description=Create DCV virtual session
             After=default.target network.target 
 
             [Service]
@@ -328,10 +309,66 @@ Resources:
             ./aws/install -b /usr/bin
             echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/kali/.zshrc
 
+            # DCV update script
+            cat << EoF > /home/kali/update-dcv
+            #!/bin/zsh
+            cd /tmp
+            rm -f /tmp/nice-dcv-ubuntu2004-x86_64.tgz
+            wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
+            tar -xvzf nice-dcv-ubuntu2004-x86_64.tgz && cd nice-dcv-*-ubuntu2004-x86_64
+            sudo dcv close-session kali
+            sudo systemctl stop dcvserver dcv-virtual-session
+            sudo apt-get install -y ./nice-dcv-server_*_amd64.ubuntu2004.deb 
+            sudo apt-get install -y ./nice-dcv-web-viewer_*_amd64.ubuntu2004.deb 
+            sudo apt-get install -y ./nice-xdcv_*_amd64.ubuntu2004.deb 
+            sudo sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
+            sudo systemctl restart dcvserver dcv-virtual-session
+            EoF
+            chmod +x /home/kali/update-dcv
+            chown kali:kali /home/kali/update-dcv           
+
+            # AWS CLI update script
+            cat << EoF > /home/kali/update-awscli
+            #!/bin/zsh
+            cd /tmp
+            rm -f awscliv2.zip
+            curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+            unzip -q -o awscliv2.zip
+            sudo ./aws/install --update -b /usr/bin
+            EoF
+            chmod +x /home/kali/update-awscli
+            chown kali:kali /home/kali/update-awscli             
+
+            # GPU drivers download script
+            cat << EoF > /home/kali/download-gpu-drivers
+            #!/bin/zsh
+            clear
+            echo  
+            echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only. 
+            echo  
+            echo By downloading, you agree to conditions and are bound by license terms as stated on 
+            echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html and
+            echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
+            echo 
+            sudo mkdir -p /home/kali/Downloads/Drivers
+            sudo chown kali:users /home/kali/Downloads/Drivers
+            cd /home/kali/Downloads/Drivers
+            pwd
+            aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+            chmod +x /home/kali/Downloads/Drivers/*.run
+            aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
+            sudo mkdir -p /etc/nvidia
+            sudo curl -s -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2021_10_2.cert"
+            aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ .
+            pwd
+            EoF
+            chmod +x /home/kali/download-gpu-drivers
+            chown kali:kali /home/kali/download-gpu-drivers
+
             # text console: DCV virtual sessions only
             systemctl isolate multi-user.target
             systemctl set-default multi-user.target
-            
+
             systemctl daemon-reload
             systemctl enable --now dcvserver dcv-virtual-session.service
 
@@ -346,15 +383,11 @@ Resources:
           Value: !Sub ${AWS::StackId}
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
-        
+
 Outputs:
-  InstanceID:
-    Description: EC2 Instance ID
-    Value: !Ref ec2Instance
- 
-  PublicIP:
-    Description: EC2 Public IP
-    Value: !GetAtt ec2Instance.PublicIp
+  EC2Instance:
+    Description: EC2 instance console
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 
   SSMsessionManager:
     Description: SSM Session Manager login ("sudo passwd kali" to change password)
@@ -363,7 +396,3 @@ Outputs:
   DCVwebConsole:
     Description: DCV web console (login as kali)
     Value: !Sub "https://${ec2Instance.PublicIp}:8443"
-    
-  DCVdownload:
-    Description: DCV client download
-    Value: https://download.nice-dcv.com
