@@ -21,13 +21,11 @@ Specify a **Stack name** and specify parameters values. All fields are required.
 - `volumeType` : GP2 or GP3. Default is [GP3](https://aws.amazon.com/ebs/general-purpose/)
 - `deviceName` : [device name](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/device_naming.html)
 
-![CloudFormation parameters](/images/parameters.png "Parameters")
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html) settings, and click **Create Stack** to launch your stack. 
 
 It may up to 60 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
 Go to **Outputs** tab
-![CloudFormation Outputs](/images/outputs.png "Outputs")
 
 Open `SSMSessionManager` value (URL in the form `https://<REGION>.console.aws.amazon.com/systems-manager/session-manager/<InstanceID>`) in a new browser tab to login via SSM Session Manager to change login user password. Password change command is in *Description* field.
 
