@@ -52,8 +52,8 @@ Metadata:
           default: AlmaLinux AMI IDs. Accept terms and subscribe before launching
         Parameters:
           - almaLinux8amd64
-          - almaLinux8arm64 
-          - almaLinux9amd64  
+          - almaLinux8arm64
+          - almaLinux9amd64
 
 Conditions:
   useAlmaLinux8amd64: !Equals [ !Ref almaLinuxVersion, "AlmaLinux OS 8 (x86_64)"]
@@ -66,7 +66,7 @@ Parameters:
     AllowedValues:
       - AlmaLinux OS 8 (x86_64)
       - AlmaLinux OS 8 (arm64)
-      - AlmaLinux OS 9 (x86_64)            
+      - AlmaLinux OS 9 (x86_64)
     Default: AlmaLinux OS 8 (x86_64)
   instanceType:
     Type: String
@@ -130,7 +130,7 @@ Resources:
   securityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow inbound DCV 
+      GroupDescription: Allow inbound DCV
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: NICE DCV (IPv4)
@@ -156,10 +156,10 @@ Resources:
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/0          
+          CidrIp: 0.0.0.0/0
         - Description: Allow all outbound traffic (IPv6)
           IpProtocol: "-1"
-          CidrIpv6: "::/0" 
+          CidrIpv6: "::/0"
       Tags:
         - Key: StackName
           Value: !Sub ${AWS::StackName}
@@ -189,6 +189,21 @@ Resources:
             Action: 
               - s3:GetObject
             Resource: !Sub "arn:${AWS::Partition}:s3:::dcv-license.${AWS::Region}/*"
+      - PolicyName: gpuDrivers
+        PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
+          Version: '2012-10-17' 
+          Statement:
+          - Effect: Allow
+            Action: 
+              - s3:Get*
+              - s3:List*
+            Resource: 
+              - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming"
+              - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming/*"
+              - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers"
+              - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers/*"
+              - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers"
+              - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers/*"
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
       Tags:
@@ -207,98 +222,49 @@ Resources:
       - !Ref instanceIamRole
 
   ec2Instance:
-    Type: "AWS::EC2::Instance" 
+    Type: AWS::EC2::Instance
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT90M      
-    Metadata:
-      Comment: Update scripts  
-      AWS::CloudFormation::Init:
-        configSets:
-          setup:
-            - 00_setup       
-        00_setup:  # in the following order: packages, groups, users, sources, files, commands, and then services.
-          files:
-            "/home/ec2-user/update-dcv": 
-              content: |
-                #!/bin/bash
-                cd /tmp
-                if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then            
-                  rm -f nice-dcv-el8-x86_64.tgz
-                  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
-                  tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
-                elif ((uname -a | grep aarch64 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
-                  rm -f nice-dcv-el8-aarch64.tgz
-                  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
-                  tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
-                else
-                  rm -f nice-dcv-el9-x86_64.tgz 
-                  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz                  
-                  tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64       
-                fi              
-                sudo systemctl stop dcvserver
-                sudo yum install -y nice-dcv-server-*.rpm
-                sudo yum install -y nice-dcv-web-viewer-*.rpm
-                sudo yum install -y nice-xdcv-*.rpm
-                sudo systemctl restart dcvserver
-              mode: "000755"
-              owner: "ec2-user"
-              group: "users"
-            "/home/ec2-user/update-awscli": 
-              content: |
-                #!/bin/bash
-                cd /tmp
-                rm -f awscliv2.zip
-                if (uname -a | grep x86 1>/dev/null)
-                then
-                  curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
-                else
-                  curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
-                fi
-                unzip -q -o awscliv2.zip
-                sudo ./aws/install --update -b /usr/bin              
-              mode: "000755"
-              owner: "ec2-user"
-              group: "users"              
+        Timeout: PT90M
     Properties:
       ImageId: !If [ useAlmaLinux8amd64, !Ref almaLinux8amd64, !If [useAlmaLinux8arm64, !Ref almaLinux8arm64,  !Ref almaLinux9amd64] ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       SubnetId: !Ref subnetID
-      Monitoring: true      
-      SecurityGroupIds: 
+      Monitoring: true
+      SecurityGroupIds:
         - !Ref securityGroup
       BlockDeviceMappings:
         - DeviceName: !Ref deviceName
           Ebs:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
-            DeleteOnTermination:  true        
+            DeleteOnTermination:  true
       UserData:
-        Fn::Base64: 
+        Fn::Base64:
           !Sub |
             #!/bin/bash
             cd /root/
 
             dnf install -q -y python3 python3-setuptools wget tmux unzip tar curl sed
-            
+
             # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
             if (uname -a | grep x86 1>/dev/null); then
-              sudo dnf install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
+              dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
             else
-              sudo dnf install -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_arm64/amazon-ssm-agent.rpm
+              dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_arm64/amazon-ssm-agent.rpm
             fi
             systemctl enable --now amazon-ssm-agent
 
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
             # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/
-            wget -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+            wget -4 -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
             tar -xvf aws-cfn-bootstrap-py3-latest.tar.gz
             cd aws-cfn-bootstrap-2.0
             python3 setup.py build
             python3 setup.py install
 
-            python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+            python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
             # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
             yum groupinstall -q -y 'Server with GUI'
@@ -320,19 +286,19 @@ Resources:
               wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
               tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64       
             fi
-            yum install -y nice-dcv-server-*.rpm
-            yum install -y nice-dcv-web-viewer-*.rpm
-            yum install -y nice-xdcv-*.rpm
+            yum install -y ./nice-dcv-server-*.rpm
+            yum install -y ./nice-dcv-web-viewer-*.rpm
+            yum install -y ./nice-xdcv-*.rpm
 
             # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
             cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
-            sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
+            sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
 
             # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
             # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
             cat << EoF > /etc/systemd/system/dcv-virtual-session.service
             [Unit]
-            Description=Create DCV virtual session for ec2-user 
+            Description=Create DCV virtual session
             After=default.target network.target 
 
             [Service]
@@ -360,9 +326,7 @@ Resources:
             cd /root/
             # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html            
             yum remove awscli -y
-
-            if (uname -a | grep x86 1>/dev/null)
-            then
+            if (uname -a | grep x86 1>/dev/null); then
               curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
             else
               curl -s https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
@@ -371,10 +335,81 @@ Resources:
             ./aws/install -b /usr/bin
             echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
 
-            # yum-cron            
+            # yum-cron
             yum install -q -y dnf-automatic
             sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
             systemctl enable --now dnf-automatic.timer
+
+            # DCV update script
+            cat << EoF > /home/ec2-user/update-dcv
+            #!/bin/bash
+            cd /tmp
+            if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
+              rm -f nice-dcv-el8-x86_64.tgz
+              wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+              tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+            elif ((uname -a | grep aarch64 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
+              rm -f nice-dcv-el8-aarch64.tgz
+              wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
+              tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
+            else
+              rm -f nice-dcv-el9-x86_64.tgz 
+              wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
+              tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64
+            fi
+            sudo dcv close-session ec2-user
+            sudo systemctl stop dcvserver dcv-virtual-session
+            sudo yum install -y ./nice-dcv-server-*.rpm
+            sudo yum install -y ./nice-dcv-web-viewer-*.rpm
+            sudo yum install -y ./nice-xdcv-*.rpm
+            sudo sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
+            sudo systemctl restart dcvserver dcv-virtual-session
+            EoF
+            chmod +x /home/ec2-user/update-dcv
+            chown ec2-user:ec2-user /home/ec2-user/update-dcv           
+
+            # AWS CLI update script
+            cat << EoF > /home/ec2-user/update-awscli
+            #!/bin/bash
+            cd /tmp
+            rm -f awscliv2.zip
+            if (uname -a | grep x86 1>/dev/null)
+            then
+              curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+            else
+              curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
+            fi
+            unzip -q -o awscliv2.zip
+            sudo ./aws/install --update -b /usr/bin
+            EoF
+            chmod +x /home/ec2-user/update-awscli
+            chown ec2-user:ec2-user /home/ec2-user/update-awscli             
+
+            # GPU drivers download script
+            cat << EoF > /home/ec2-user/download-gpu-drivers
+            #!/bin/bash
+            clear
+            echo  
+            echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only. 
+            echo  
+            echo By downloading, you agree to conditions and are bound by license terms as stated on 
+            echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html and
+            echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
+            echo 
+            sudo mkdir -p /home/ec2-user/Downloads/Drivers
+            sudo chown ec2-user:users /home/ec2-user/Downloads/Drivers
+            cd /home/ec2-user/Downloads/Drivers
+            pwd
+            aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+            chmod +x /home/ec2-user/Downloads/Drivers/*.run
+            aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
+            sudo mkdir -p /etc/nvidia
+            sudo curl -s -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2021_10_2.cert"
+            aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ .
+            pwd
+            EoF
+            chmod +x /home/ec2-user/download-gpu-drivers
+            chown ec2-user:ec2-user /home/ec2-user/download-gpu-drivers
 
             # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
             # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
@@ -401,15 +436,11 @@ Resources:
           Value: !Sub ${AWS::StackId}
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
-        
+
 Outputs:
-  InstanceID:
-    Description: EC2 Instance ID
-    Value: !Ref ec2Instance
- 
-  PublicIP:
-    Description: EC2 Public IP
-    Value: !GetAtt ec2Instance.PublicIp
+  EC2Instance:
+    Description: EC2 instance console
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 
   SSMsessionManager:
     Description: SSM Session Manager login ("sudo passwd ec2-user" to change password)
@@ -418,7 +449,3 @@ Outputs:
   DCVwebConsole:
     Description: DCV web console (login as ec2-user)
     Value: !Sub "https://${ec2Instance.PublicIp}:8443"
-    
-  DCVdownload:
-    Description: DCV client download
-    Value: https://download.nice-dcv.com
