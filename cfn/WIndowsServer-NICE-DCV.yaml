@@ -27,6 +27,7 @@ Metadata:
         Parameters:
           - imageId
           - instanceType
+          - driverType          
       -
         Label:
           default: EC2 configuration
@@ -57,6 +58,15 @@ Parameters:
     Description: Instance type ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
     Type: String
     Default: t3.medium
+  driverType:
+    Description: Graphics driver to install
+    Type: String
+    AllowedValues:
+      - AMD
+      - NICE-DCV
+      - NVIDIA-Gaming
+      - NVIDIA-GRID
+    Default: NICE-DCV
 
   ec2Name:
     Description: Name of EC2 instance
@@ -210,17 +220,14 @@ Resources:
                 @echo off
                 cd \windows\temp
                 del \windows\temp\nice-dcv-*.msi
-                del \windows\temp\dcv-display.log
                 del \windows\temp\dcv_install_msi.log
                 "C:\Program Files\NICE\DCV\Server\bin\dcv" close-session console
                 net stop dcvserver
-                powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
-                msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
                 powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
                 msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f 
+                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f                 
+                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
                 net start dcvserver
             c:\\Users\\Administrator\\update-awscli.cmd:
@@ -232,23 +239,23 @@ Resources:
                 @echo off
                 cls
                 @echo.
-                @echo NOTICE: These downloads are for GPU instances and are available to AWS customers only.
+                @echo NOTICE: These downloads are available to AWS customers only.
                 @echo.
-                @echo By downloading, you agree to conditions and are bound by license terms as stated on 
-                @echo   https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html and
-                @echo   https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html 
+                @echo By downloading, you agree to conditions and are bound by license terms as stated on
+                @echo   https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html and
+                @echo   https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html
                 @echo.
                 pause
-                @echo Downloading drivers...                
+                @echo Downloading drivers...
                 if not exist "C:\Users\Administrator\Downloads\Drivers" md "C:\Users\Administrator\Downloads\Drivers"
                 cd C:\Users\Administrator\Downloads\Drivers
                 cd
-                "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . 
+                "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ .
                 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
-                "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . 
+                "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ .
                 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
                 powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2021_10_2.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
-                "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ .                 
+                "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ .
                 cd
     Properties:
       ImageId: !Ref imageId
@@ -280,10 +287,6 @@ Resources:
             @echo ** https://docs.chocolatey.org/en-us/choco/setup
             @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 
-            @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general 
-            powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
-            msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
-
             @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
             powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
             msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
@@ -294,7 +297,6 @@ Resources:
 
             @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-storage.html
             reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f 
-            rem powershell -command "$shortcut=(New-Object -ComObject WScript.Shell).CreateShortcut('C:\Users\Administrator\Desktop\DCV-Storage.lnk');$shortcut.TargetPath='C:\Users\Administrator\';$shortcut.Save()"
 
             @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
             reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
@@ -303,12 +305,49 @@ Resources:
             cinst --no-progress -y awscli
             setx /M AWS_CLI_AUTO_PROMPT on-partial
 
+            @echo ** install 7-Zip
+            cinst --no-progress -y 7zip.install
+
+            @echo ** install graphics driver
+            SET DRIVER_TYPE=${driverType}
+            SET "PATH=%PATH%;C:\Program Files\7-zip"
+            cd \windows\temp
+            md driver
+            cd driver
+            IF %DRIVER_TYPE% EQU NICE-DCV (
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general
+                powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
+                msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
+            )            
+            IF %DRIVER_TYPE% EQU NVIDIA-GRID (
+                @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-installation-options
+                "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ .
+                reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
+                forfiles /M *.exe /C "cmd /c 7z x @file"
+                start /wait setup.exe -s
+            )
+            IF %DRIVER_TYPE% EQU NVIDIA-Gaming (
+                @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-installation-options
+                "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ .
+                reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
+                powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2021_10_2.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
+                forfiles /M *.exe /C "cmd /c 7z x @file"
+                start /wait setup.exe -s
+            )
+            IF %DRIVER_TYPE% EQU AMD (
+                @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver
+                "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ .
+                forfiles /M *.zip /C "cmd /c 7z x @file"
+                cd Packages\Drivers\Display\*INF
+                pnputil /add-driver *.inf /install
+            )
+
             @echo ** Restarting DCV 
             net stop dcvserver
             net start dcvserver
 
             cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region}
-            </script>       
+            </script>
       Tags:
         - Key: Name
           Value: !Ref ec2Name
