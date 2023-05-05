@@ -223,16 +223,18 @@ Resources:
                 "C:\Program Files\NICE\DCV\Server\bin\dcv" close-session console
                 net stop dcvserver
                 powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
+                wmic product where "name like 'NICE%%'" get name,version
                 start /wait msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
                 net start dcvserver
+                wmic product where "name like 'NICE%%'" get name,version
             c:\\Users\\Administrator\\update-awscli.cmd:
               content: |
                 @echo off
-                C:\ProgramData\chocolatey\bin\cup -y awscli
+                C:\ProgramData\chocolatey\bin\choco upgrade -y awscli
             c:\\Users\\Administrator\\download-NVIDIA-GRID-driver.cmd:
               content: |
                 @echo off
@@ -331,11 +333,12 @@ Resources:
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
 
           @echo ** install AWSCLI
-          cinst --no-progress -y awscli
+          choco install --no-progress -y awscli
+          choco install --no-progress -y chocolateygui
           setx /M AWS_CLI_AUTO_PROMPT on-partial
 
           @echo ** install 7-Zip
-          cinst --no-progress -y 7zip.install
+          choco install --no-progress -y 7zip.install
 
           @echo ** install graphics driver
           SET DRIVER_TYPE=${driverType}
