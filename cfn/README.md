@@ -32,9 +32,9 @@ It may take up to 60 minutes to provision the EC2 instance. After your stack has
 ### CloudFormation Outputs
 The following are available on **Outputs** section 
 - `SSMSessionManager`: SSM Session Manager URL link to change login user password. Password change command is in *Description* field.
-- `DCVwebConsole`: NICE DCV web browser console ULR link to login as the user specified in *Description* field. 
+- `DCVwebConsole`: NICE DCV web browser console URL link to login as the user specified in *Description* field. 
 - `EC2Instance`: EC2 console URL link to start/stop your EC2 instance or to get the latest IPv4 (or IPv6 if enabled) address.
-- `RdpConnect` (Windows Server only): console access via [Fleet Manager](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update NICE DCV server.
+- `RdpConnect` (Windows Server only): RDP console access via [Fleet Manager](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update NICE DCV server
 
 ## Using NICE DCV
 Refer to [NICE DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getting-started.html)
@@ -51,9 +51,11 @@ Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrie
 
 If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), you can choose to specify which graphics driver to install. Alternatively, you may use `C:\Users\Administrator\download-<DRIVER-TYPE>-driver.cmd` helper batch file to download (and manually install) NVIDIA GRID, NVIDIA gaming and AMD GPU drivers from AWS. Note that the drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for driver installation and configuration instructions. You may also need to uninstall [NICE DCV Virtual Display driver](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general).
 
+To update NICE DCV Server, connect to Fleet Manager RDP console using `RdpConnect` link and run `C:\Users\Administrator\update-DCV.cmd`
+
 
 ## Notes about Linux templates
-[Virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual) are used instead of console sessions, and system is configured with systemd multi-user.target. To ensure availability of virtual session, a custom daemon processs `dcv-virtual-session.service` polls for and creates a new virtual session when none are found. 
+[Virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual) instead of console sessions are used, and system is configured with systemd multi-user.target. To ensure availability of virtual session, a custom daemon processs `dcv-virtual-session.service` polls for and creates a new virtual session when none are found. 
 The login user name depends on Linux distributions as follows:
 - Amazon Linux 2, AlmaLinux, RHEL : ec2-user
 - Rocky Linux : rocky
