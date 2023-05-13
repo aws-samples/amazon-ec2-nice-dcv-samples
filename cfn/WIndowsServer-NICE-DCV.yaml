@@ -62,6 +62,7 @@ Parameters:
       - NICE-DCV
       - NVIDIA-Gaming
       - NVIDIA-GRID
+      - none
     Default: NICE-DCV
 
   ec2Name:
@@ -334,10 +335,12 @@ Resources:
 
           @echo ** install AWSCLI
           choco install --no-progress -y awscli
-          choco install --no-progress -y chocolateygui
           setx /M AWS_CLI_AUTO_PROMPT on-partial
 
-          @echo ** install 7-Zip
+          @echo ** install Chololatey GUI
+          choco install --no-progress -y chocolateygui
+          
+          @Echo ** install 7-zip
           choco install --no-progress -y 7zip.install
 
           @echo ** install graphics driver
