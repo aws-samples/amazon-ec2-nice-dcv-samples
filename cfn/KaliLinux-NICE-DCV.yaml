@@ -247,22 +247,22 @@ Resources:
           # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
           gpg --import NICE-GPG-KEY
-          wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
-          tar -xvzf nice-dcv-ubuntu2004-x86_64.tgz && cd nice-dcv-*-ubuntu2004-x86_64
+          wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
+          tar -xvzf nice-dcv-ubuntu2204-x86_64.tgz && cd nice-dcv-*-ubuntu2204-x86_64
 
           # tweaks for installation on Kali
           ln -s /etc/os-release /etc/lsb-release
           mkdir -p /etc/lightdm/lightdm.conf.d
 
           # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
-          apt-get -q -y install ./nice-dcv-server_*_amd64.ubuntu2004.deb
-          apt-get -q -y install ./nice-dcv-web-viewer_*_amd64.ubuntu2004.deb
+          apt-get -q -y install ./nice-dcv-server_*_amd64.ubuntu2204.deb
+          apt-get -q -y install ./nice-dcv-web-viewer_*_amd64.ubuntu2204.deb
           usermod -aG video dcv 
           # from /etc/lightdm/lightdm.conf.d
           sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
 
           # virtual session support
-          apt-get -q -y install ./nice-xdcv_*_amd64.ubuntu2004.deb
+          apt-get -q -y install ./nice-xdcv_*_amd64.ubuntu2204.deb
 
           # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
@@ -313,14 +313,14 @@ Resources:
           cat << EoF > /home/kali/update-dcv
           #!/bin/zsh
           cd /tmp
-          rm -f /tmp/nice-dcv-ubuntu2004-x86_64.tgz
-          wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
-          tar -xvzf nice-dcv-ubuntu2004-x86_64.tgz && cd nice-dcv-*-ubuntu2004-x86_64
+          rm -f /tmp/nice-dcv-ubuntu2204-x86_64.tgz
+          wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
+          tar -xvzf nice-dcv-ubuntu2204-x86_64.tgz && cd nice-dcv-*-ubuntu2204-x86_64
           sudo dcv close-session kali
           sudo systemctl stop dcvserver dcv-virtual-session
-          sudo apt-get install -y ./nice-dcv-server_*_amd64.ubuntu2004.deb 
-          sudo apt-get install -y ./nice-dcv-web-viewer_*_amd64.ubuntu2004.deb 
-          sudo apt-get install -y ./nice-xdcv_*_amd64.ubuntu2004.deb 
+          sudo apt-get install -y ./nice-dcv-server_*_amd64.ubuntu2204.deb 
+          sudo apt-get install -y ./nice-dcv-web-viewer_*_amd64.ubuntu2204.deb 
+          sudo apt-get install -y ./nice-xdcv_*_amd64.ubuntu2204.deb 
           sudo sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
           sudo systemctl restart dcvserver dcv-virtual-session
           EoF
