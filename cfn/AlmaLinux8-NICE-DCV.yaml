@@ -42,7 +42,6 @@ Metadata:
           default: EBS volume configuration
         Parameters:
           - volumeSize
-          - volumeType
           - deviceName
       - Label:
           default: AlmaLinux AMI IDs. Accept terms and subscribe before launching
@@ -96,13 +95,6 @@ Parameters:
     Description: Allowed source prefix (IPv6)
     Default: ::/0
 
-  volumeType:
-    Type: String
-    Description: Volume Type ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html )
-    AllowedValues:
-      - gp2
-      - gp3
-    Default: gp3
   volumeSize:
     Type: Number
     Description: Volume Size in GiBs (must be equal or larger than snapshot size)
@@ -246,7 +238,7 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: !Ref deviceName
           Ebs:
-            VolumeType: !Ref volumeType
+            VolumeType: gp3
             VolumeSize: !Ref volumeSize
             DeleteOnTermination: true
       UserData:
@@ -444,7 +436,7 @@ Resources:
           pwd
           aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ .
           cat << EOF > /home/ec2-user/Downloads/Drivers/amd-xorg.conf
-          Section "ServerLayout"
+                      Section "ServerLayout"
               Identifier     "Layout0"
               Screen          0 "Screen0"
               InputDevice     "Keyboard0" "CoreKeyboard"
