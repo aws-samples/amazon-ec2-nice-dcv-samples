@@ -450,6 +450,16 @@ Resources:
           chmod +x /home/kali/download-*-driver
           chown kali:kali /home/kali/download-*-driver
 
+          # Fix "Authentication Required to Create Managed Color Device" prompt
+          cat << EoF > /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla
+          [Allow Colord all Users]
+          Identity=unix-user:*
+          Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
+          ResultAny=no
+          ResultInactive=no
+          ResultActive=yes
+          EoF
+          
           # text console: DCV virtual sessions only
           systemctl isolate multi-user.target
           systemctl set-default multi-user.target
