@@ -15,6 +15,9 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - [SSM Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) with [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) for changing login password and for [upgrading NICE DCV server](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-upgrading.html)
 - [AWS CLI v2](https://aws.amazon.com/blogs/developer/aws-cli-v2-is-now-generally-available/) with [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html)
 - [gp3](https://aws.amazon.com/ebs/general-purpose/) volume type with option to adjust volume size
+- Option to associate static, public IPv4 address via [Elastic IP](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html)
+- Option to [specify](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) NICE DCV server TCP/UDP listen ports
+
 
 ## Deployment and using NICE DCV
 Refer to [cfn](cfn) section for instructions.
