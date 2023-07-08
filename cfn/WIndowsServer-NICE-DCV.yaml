@@ -35,7 +35,7 @@ Metadata:
           - subnetID
           - assignStaticIP
       - Label:
-          default: Allowed inbound source IP prefixes to NICE DCV port 8443
+          default: Allowed source IP prefixes
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -44,6 +44,10 @@ Metadata:
         Parameters:
           - volumeSize
           - deviceName
+      - Label:
+          default: NICE DCV configuration
+        Parameters:
+          - listenPort
 
 Parameters:
   imageId:
@@ -96,6 +100,13 @@ Parameters:
     Description: Allowed source prefix (IPv6)
     Default: ::/0
 
+  listenPort:
+    Type: Number
+    Description: NICE DCV server TCP/UDP port number
+    MinValue: 1024
+    MaxValue: 65535
+    Default: 8443
+
   volumeSize:
     Type: Number
     Description: Volume Size in GiBs (must be equal or larger than snapshot size)
@@ -117,23 +128,23 @@ Resources:
       SecurityGroupIngress:
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
-          FromPort: 8443
-          ToPort: 8443
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV QUIC (IPv4)
           IpProtocol: "udp"
-          FromPort: 8443
-          ToPort: 8443
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV (IPv6)
           IpProtocol: "tcp"
-          FromPort: 8443
-          ToPort: 8443
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV QUIC (IPv6)
           IpProtocol: "udp"
-          FromPort: 8443
-          ToPort: 8443
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
@@ -333,6 +344,10 @@ Resources:
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
 
+          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v web-port /t REG_DWORD /d ${listenPort} /f
+          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v quic-port /t REG_DWORD /d ${listenPort} /f
+
           @echo ** install AWSCLI
           choco install --no-progress -y awscli
           setx /M AWS_CLI_AUTO_PROMPT on-partial
@@ -428,4 +443,4 @@ Outputs:
 
   DCVwebConsole:
     Description: DCV web console (login as administrator)
-    Value: !Sub "https://${ec2Instance.PublicIp}:8443"
+    Value: !Sub "https://${ec2Instance.PublicIp}:${listenPort}"

@@ -19,11 +19,12 @@ In most cases, the default values are sufficient. You will need to specify a VPC
 - `ec2Name`: name of EC2 instance
 - `vpcID`: [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
 - `subnetID`: subnet with internet connectivity. Select subnet in default VPC if unsure. If you specify a different `instanceType`, ensure that it is available in AZ subnet you select. 
-- `ingressIPv4`: allowed IPv4 source prefix to NICE DCV listening ports at 8443, e.g. `1.2.3.4/32`. Get source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com)
-- `ingressIPv6`: allowed IPv6 source prefix to NICE DCV listening ports at 8443. Use `::1/128` to block all incoming IPv6 access
+- `ingressIPv4`: allowed IPv4 source prefix, e.g. `1.2.3.4/32`. Get source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com)
+- `ingressIPv6`: allowed IPv6 source prefix. Use `::1/128` to block all incoming IPv6 access
 - `assignStaticIP`: option to assign a static internet IPv4 address by associating EC2 instance with [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html). There is a small hourly charge when instance is stopped. For more information, see [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](http://aws.amazon.com/ec2/pricing/on-demand/). Default is `No`
 - `volumeSize`: EBS root volume size. Value must be equal or larger than AMI snapshot size
 - `deviceName`: [device name](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/device_naming.html)
+- `listenPort`: NICE DCV server TCP/UDP listen ports. Default is `8443`
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html) settings, and click **Create Stack** to launch your stack. 
 
@@ -75,6 +76,6 @@ If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com
 The CloudFormation templates are designed to provision EC2 instances in [public subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html). To use them for EC2 instances in [private subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) with internet connectivity, edit the .yaml file and either remove or comment out the last 3 lines as shown below
 ```
 #  DCVwebConsole:
-#    Description: DCV web console (login as administrator)
+#    Description: DCV web console (login as ec2-user)
 #    Value: !Sub "https://${ec2Instance.PublicIp}:8443"
 ```

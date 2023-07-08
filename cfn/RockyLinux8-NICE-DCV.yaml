@@ -34,7 +34,7 @@ Metadata:
           - subnetID
           - assignStaticIP
       - Label:
-          default: Allowed inbound source IP prefixes to NICE DCV port 8443
+          default: Allowed source IP prefixes
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -43,6 +43,10 @@ Metadata:
         Parameters:
           - volumeSize
           - deviceName
+      - Label:
+          default: NICE DCV configuration
+        Parameters:
+          - listenPort
 
 Parameters:
   imageId:
@@ -86,6 +90,13 @@ Parameters:
     Description: Allowed source prefix (IPv6)
     Default: ::/0
 
+  listenPort:
+    Type: Number
+    Description: NICE DCV server TCP/UDP port number
+    MinValue: 1024
+    MaxValue: 65535
+    Default: 8443
+
   volumeSize:
     Type: Number
     Description: Volume Size in GiBs (must be equal or larger than snapshot size)
@@ -107,23 +118,23 @@ Resources:
       SecurityGroupIngress:
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
-          FromPort: 8443
-          ToPort: 8443
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV QUIC (IPv4)
           IpProtocol: "udp"
-          FromPort: 8443
-          ToPort: 8443
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV (IPv6)
           IpProtocol: "tcp"
-          FromPort: 8443
-          ToPort: 8443
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV QUIC (IPv6)
           IpProtocol: "udp"
-          FromPort: 8443
-          ToPort: 8443
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
@@ -293,6 +304,12 @@ Resources:
           done
           EoF
           chmod +x /opt/dcv-virtual-session.sh
+
+          # https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+          sed -i "/^web-port=/d" /etc/dcv/dcv.conf
+          sed -i "/^quic-port=/d" /etc/dcv/dcv.conf
+          sed -i "/^\[connectivity\]/a web-port=${listenPort}" /etc/dcv/dcv.conf
+          sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
           cd /root/
           # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html            
@@ -470,8 +487,8 @@ Resources:
           # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
           # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
           systemctl stop firewalld
-          firewall-offline-cmd  --add-port 8443/tcp
-          firewall-offline-cmd  --add-port 8443/udp
+          firewall-offline-cmd  --add-port ${listenPort}/tcp
+          firewall-offline-cmd  --add-port ${listenPort}/udp
           systemctl disable firewalld
 
           # text console: DCV virtual sessions only
@@ -520,4 +537,4 @@ Outputs:
 
   DCVwebConsole:
     Description: DCV web console (login as rocky)
-    Value: !Sub "https://${ec2Instance.PublicIp}:8443"
+    Value: !Sub "https://${ec2Instance.PublicIp}:${listenPort}"
