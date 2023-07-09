@@ -29,8 +29,11 @@ rem powershell -command "$shortcut=(New-Object -ComObject WScript.Shell).CreateS
 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
 
 @echo ** install AWSCLI
-cinst --no-progress -y awscli
-setx /M AWS_CLI_AUTO_PROMPT on-partial      
+choco install --no-progress -y awscli
+setx /M AWS_CLI_AUTO_PROMPT on-partial
+
+@echo ** install Chololatey GUI
+choco install --no-progress -y chocolateygui 
 
 @echo ** Restarting DCV 
 net stop dcvserver

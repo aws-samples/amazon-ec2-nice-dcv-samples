@@ -113,7 +113,6 @@ EoF
 chmod +x /home/kali/update-awscli
 chown kali:kali /home/kali/update-awscli   
 
-
 # Fix "Authentication Required to Create Managed Color Device" prompt
 cat << EoF > /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla
 [Allow Colord all Users]

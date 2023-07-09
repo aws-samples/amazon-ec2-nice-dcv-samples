@@ -50,13 +50,13 @@ apt-get -q -y install ./nice-xdcv_*.deb
 
 # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
 cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
-sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
+sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
 
 # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
 # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
 cat << EoF > /etc/systemd/system/dcv-virtual-session.service
 [Unit]
-Description=Create DCV virtual session for user ubuntu
+Description=Create DCV virtual session
 After=default.target network.target 
 
 [Service]
@@ -93,6 +93,59 @@ fi
 unzip -q -o awscliv2.zip
 ./aws/install -b /usr/bin
 echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ubuntu/.bashrc
+
+
+# DCV update script
+cat << EoF > /home/ubuntu/update-dcv
+#!/bin/bash
+cd /tmp 
+if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
+  rm -f /tmp/nice-dcv-ubuntu1804-x86_64.tgz
+  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
+  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+elif ((uname -a | grep aarch 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
+  rm -f /tmp/nice-dcv-ubuntu2204-aarch64.tgz
+  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-aarch64.tgz
+  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
+elif ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 18.04 1>/dev/null)); then
+  rm -f /tmp/nice-dcv-ubuntu1804-x86_64.tgz
+  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-x86_64.tgz
+  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+elif (cat /etc/os-release | grep 18.04 1>/dev/null); then
+  rm -f /tmp/nice-dcv-ubuntu1804-aarch64.tgz
+  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-aarch64.tgz
+  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
+else
+  rm -f /tmp/nice-dcv-ubuntu2004-x86_64.tgz
+  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
+  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64  
+fi
+sudo dcv close-session ubuntu
+sudo systemctl stop dcvserver dcv-virtual-session
+sudo apt-get install -y ./nice-dcv-server_*.deb
+sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
+sudo apt-get install -y ./nice-xdcv_*.deb
+sudo sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
+sudo systemctl restart dcvserver dcv-virtual-session
+EoF
+chmod +x /home/ubuntu/update-dcv
+chown ubuntu:ubuntu /home/ubuntu/update-dcv 
+
+# AWS CLI update script
+cat << EoF > /home/ubuntu/update-awscli
+#!/bin/bash
+cd /tmp
+rm -f /tmp/awscliv2.zip
+if (uname -a | grep x86 1>/dev/null); then
+  curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+else
+  curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
+fi
+unzip -q -o awscliv2.zip
+sudo ./aws/install --update -b /usr/bin
+EoF
+chmod +x /home/ubuntu/update-awscli
+chown ubuntu:ubuntu /home/ubuntu/update-awscli   
 
 # text console: DCV virtual sessions only
 systemctl isolate multi-user.target

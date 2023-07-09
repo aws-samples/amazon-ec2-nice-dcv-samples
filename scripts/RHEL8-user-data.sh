@@ -21,7 +21,7 @@ yum install -q -y pulseaudio pulseaudio-utils
 # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
 
-if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then            
+if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then  
   wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
   tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
 elif ((uname -a | grep aarch64 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
@@ -38,13 +38,13 @@ yum install -y nice-xdcv-*.rpm
 
 # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
 cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
-sed -i '/^\[connectivity/a enable-quic-frontend=true' /etc/dcv/dcv.conf
+sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
 
 # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
 # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
 cat << EoF > /etc/systemd/system/dcv-virtual-session.service
 [Unit]
-Description=Create DCV virtual session for user $DCV-USER
+Description=Create DCV virtual session
 After=default.target network.target 
 
 [Service]
@@ -87,6 +87,51 @@ echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
 yum install -q -y dnf-automatic
 sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
 systemctl enable --now dnf-automatic.timer
+
+# DCV update script
+cat << EoF > /home/ec2-user/update-dcv
+#!/bin/bash
+cd /tmp
+if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
+  rm -f nice-dcv-el8-x86_64.tgz
+  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+  tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+elif ((uname -a | grep aarch64 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
+  rm -f nice-dcv-el8-aarch64.tgz
+  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
+  tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
+else
+  rm -f nice-dcv-el9-x86_64.tgz 
+  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
+  tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64
+fi
+sudo dcv close-session ec2-user
+sudo systemctl stop dcvserver dcv-virtual-session
+sudo yum install -y ./nice-dcv-server-*.rpm
+sudo yum install -y ./nice-dcv-web-viewer-*.rpm
+sudo yum install -y ./nice-xdcv-*.rpm
+sudo sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
+sudo systemctl restart dcvserver dcv-virtual-session
+EoF
+chmod +x /home/ec2-user/update-dcv
+chown ec2-user:ec2-user /home/ec2-user/update-dcv 
+
+# AWS CLI update script
+cat << EoF > /home/ec2-user/update-awscli
+#!/bin/bash
+cd /tmp
+rm -f awscliv2.zip
+if (uname -a | grep x86 1>/dev/null)
+then
+  curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+else
+  curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
+fi
+unzip -q -o awscliv2.zip
+sudo ./aws/install --update -b /usr/bin
+EoF
+chmod +x /home/ec2-user/update-awscli
+chown ec2-user:ec2-user /home/ec2-user/update-awscli  
 
 # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
 # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
