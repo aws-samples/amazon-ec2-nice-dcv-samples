@@ -33,6 +33,7 @@ Metadata:
           - vpcID
           - subnetID
           - assignStaticIP
+          - displayPublicIP
       - Label:
           default: Allowed source IP prefixes
         Parameters:
@@ -74,11 +75,18 @@ Parameters:
     AllowedPattern: ".+"
   assignStaticIP:
     Type: String
-    Description: Assign static IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
+    Description: Associate static public IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
     AllowedValues:
       - "Yes"
       - "No"
     Default: "No"
+  displayPublicIP:
+    Type: String
+    Description: Display EC2 public IP in CloudFormation Outputs (select No if EC2 has no public IP)
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "Yes"
 
   ingressIPv4:
     Type: String
@@ -91,8 +99,8 @@ Parameters:
 
   listenPort:
     Type: Number
-    Description: NICE DCV server TCP/UDP port number
-    ConstraintDescription: Do specify a value between 1024 and 65535
+    Description: NICE DCV server TCP/UDP port
+    ConstraintDescription: Specify a value between 1024 and 65535
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
@@ -108,6 +116,7 @@ Parameters:
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
+  displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
 
 Resources:
   securityGroup:
@@ -524,4 +533,11 @@ Outputs:
 
   DCVwebConsole:
     Description: DCV web console (login as kali)
-    Value: !Sub "https://${ec2Instance.PublicIp}:${listenPort}"
+    Value: !Sub
+      - "https://${IpAddress}:${listenPort}"
+      - IpAddress:
+          !If [
+            displayPublicIP,
+            !GetAtt ec2Instance.PublicIp,
+            !GetAtt ec2Instance.PrivateIp,
+          ]

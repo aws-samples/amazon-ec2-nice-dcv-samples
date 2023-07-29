@@ -21,7 +21,8 @@ In most cases, the default values are sufficient. You will need to specify a VPC
 - `subnetID`: subnet with internet connectivity. Select subnet in default VPC if unsure. If you specify a different `instanceType`, ensure that it is available in AZ subnet you select. 
 - `ingressIPv4`: allowed IPv4 source prefix, e.g. `1.2.3.4/32`. Get source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com)
 - `ingressIPv6`: allowed IPv6 source prefix. Use `::1/128` to block all incoming IPv6 access
-- `assignStaticIP`: option to assign a static internet IPv4 address by associating EC2 instance with [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html). There is a small hourly charge when instance is stopped. For more information, see [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](http://aws.amazon.com/ec2/pricing/on-demand/). Default is `No`
+- `assignStaticIP`: as the auto-assigned public IP address changes every time EC2 instance is stopped and started, this option associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html). There is a small hourly charge when instance is stopped. For more information, see [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/). Default is `No`
+- `displayPublicIP`: set this to `No` if you provision EC2 instance in a subnet that will not receive [public IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#concepts-public-addresses). Default is `Yes`
 - `volumeSize`: EBS root volume size. Value must be equal or larger than AMI snapshot size
 - `deviceName`: [device name](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/device_naming.html)
 - `listenPort`: NICE DCV server TCP/UDP listen ports. Default is `8443`
@@ -73,9 +74,4 @@ If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com
 
 
 ## EC2 instance in private subnet
-The CloudFormation templates are designed to provision EC2 instances in [public subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html). To use them for EC2 instances in [private subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) with internet connectivity, edit the .yaml file and either remove or comment out the last 3 lines as shown below
-```
-#  DCVwebConsole:
-#    Description: DCV web console (login as ec2-user)
-#    Value: !Sub "https://${ec2Instance.PublicIp}:8443"
-```
+The CloudFormation templates are designed to provision EC2 instances in [public subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html). To use them for EC2 instances in [private subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) with internet connectivity, set `displayPublicIP` parameter value to `No`  
