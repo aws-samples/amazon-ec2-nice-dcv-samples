@@ -117,6 +117,7 @@ Parameters:
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
+  displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
 
 Resources:
   securityGroup:
@@ -235,11 +236,12 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          cd /root/
+          mkdir -p /tmp/cfn
+          cd /tmp/cfn
 
           dnf install -q -y python3 python3-setuptools wget tmux unzip tar curl sed
 
-          # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
+          # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
           if (uname -a | grep x86 1>/dev/null); then
             dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
           else
@@ -247,53 +249,55 @@ Resources:
           fi
           systemctl enable --now amazon-ssm-agent
 
-          # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-          # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/
+          # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
           wget -4 -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
-          tar -xvf aws-cfn-bootstrap-py3-latest.tar.gz
+          tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
           cd aws-cfn-bootstrap-2.0
           python3 setup.py build
           python3 setup.py install
+          cd /tmp/cfn
 
           python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
+          # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           yum groupinstall -q -y 'Server with GUI'
           systemctl isolate multi-user.target
 
           sed -i "s/^#WaylandEnable=false/WaylandEnable=false/g" /etc/gdm/custom.conf
           yum install -q -y pulseaudio pulseaudio-utils
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+          # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
 
-          if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then            
+          if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
             tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
           elif ((uname -a | grep aarch64 1>/dev/null) && (cat /etc/os-release | grep 8. 1>/dev/null)); then
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
             tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
-          else
+          elif (uname -a | grep x86 1>/dev/null); then
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
-            tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64       
+            tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64
+          else
+            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-aarch64.tgz
+            tar -xvzf nice-dcv-el9-aarch64.tgz && cd nice-dcv-*-el9-aarch64
           fi
           yum install -y ./nice-dcv-server-*.rpm
           yum install -y ./nice-dcv-web-viewer-*.rpm
           yum install -y ./nice-xdcv-*.rpm
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
+          # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
           sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
 
-          # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
+          # Virtual session daemon: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
           cat << EoF > /etc/systemd/system/dcv-virtual-session.service
           [Unit]
           Description=Create DCV virtual session
-          After=default.target network.target 
+          After=default.target network.target
 
           [Service]
-          ExecStart=/opt/dcv-virtual-session.sh 
+          ExecStart=/opt/dcv-virtual-session.sh
 
           [Install]
           WantedBy=default.target
@@ -314,14 +318,14 @@ Resources:
           EoF
           chmod +x /opt/dcv-virtual-session.sh
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+          # Listen port: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
           sed -i "/^web-port=/d" /etc/dcv/dcv.conf
           sed -i "/^quic-port=/d" /etc/dcv/dcv.conf
           sed -i "/^\[connectivity\]/a web-port=${listenPort}" /etc/dcv/dcv.conf
           sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
-          cd /root/
-          # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html            
+          cd /tmp/cfn
+          # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
           yum remove awscli -y
           if (uname -a | grep x86 1>/dev/null); then
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
@@ -332,7 +336,7 @@ Resources:
           ./aws/install -b /usr/bin
           echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
 
-          # yum-cron
+          # dnf-automatic
           yum install -q -y dnf-automatic
           sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
           systemctl enable --now dnf-automatic.timer
@@ -349,10 +353,14 @@ Resources:
             rm -f nice-dcv-el8-aarch64.tgz
             wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
             tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
-          else
-            rm -f nice-dcv-el9-x86_64.tgz 
+          elif (uname -a | grep x86 1>/dev/null); then
+            rm -f nice-dcv-el9-x86_64.tgz
             wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
             tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64
+          else
+            rm -f nice-dcv-el9-aarch64.tgz
+            wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-aarch64.tgz
+            tar -xvzf nice-dcv-el9-aarch64.tgz && cd nice-dcv-*-el9-aarch64
           fi
           sudo dcv close-session ec2-user
           sudo systemctl stop dcvserver dcv-virtual-session
@@ -363,7 +371,7 @@ Resources:
           sudo systemctl restart dcvserver dcv-virtual-session
           EoF
           chmod +x /home/ec2-user/update-dcv
-          chown ec2-user:ec2-user /home/ec2-user/update-dcv           
+          chown ec2-user:ec2-user /home/ec2-user/update-dcv
 
           # AWS CLI update script
           cat << EoF > /home/ec2-user/update-awscli
@@ -380,7 +388,7 @@ Resources:
           sudo ./aws/install --update -b /usr/bin
           EoF
           chmod +x /home/ec2-user/update-awscli
-          chown ec2-user:ec2-user /home/ec2-user/update-awscli             
+          chown ec2-user:ec2-user /home/ec2-user/update-awscli
 
           # GPU drivers download script
           cat << EoF > /home/ec2-user/download-NVIDIA-GRID-driver
@@ -545,7 +553,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
-    Description: DCV web console (login as ec2-user)
+    Description: NICE DCV web browser client (login as ec2-user)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:
