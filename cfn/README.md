@@ -57,6 +57,7 @@ Use `C:\Users\Administrator\download-<DRIVER-TYPE>-driver.cmd` helper batch file
 
 To update NICE DCV Server, connect via Fleet Manager Remote Desktop console using `RdpConnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
+The blog [Building a high-performance Windows workstation on AWS for graphics intensive applications](https://aws.amazon.com/blogs/compute/building-a-high-performance-windows-workstation-on-aws-for-graphics-intensive-applications/) walks through use of Windows Server template to provision and manage a GPU Windows instance.  
 
 ## Notes about Linux templates
 [Virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual) instead of console sessions are used, and system is configured with systemd multi-user.target. To ensure availability of virtual session, a custom daemon processs `dcv-virtual-session.service` polls for and creates a new virtual session when none are found. 
