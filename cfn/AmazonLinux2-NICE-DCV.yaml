@@ -57,15 +57,15 @@ Metadata:
 Parameters:
   amazonLinuxVersion:
     Type: String
-    Description: Select appropriate Graviton instanceType (e.g. tg4.medium ) if using arm64
+    Description: Processor architecture
     AllowedValues:
       - Amazon Linux 2 (x86_64)
       - Amazon Linux 2 (arm64)
-    Default: Amazon Linux 2 (x86_64)
+    Default: Amazon Linux 2 (arm64)
   instanceType:
     Type: String
     Description: Instance Type (x86_64 or arm64) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
-    Default: t3.medium
+    Default: t4g.medium
 
   ec2Name:
     Type: String
@@ -83,7 +83,7 @@ Parameters:
     AllowedPattern: ".+"
   assignStaticIP:
     Type: String
-    Description: Associate static IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
+    Description: Associate static public IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
     AllowedValues:
       - "Yes"
       - "No"
@@ -253,14 +253,16 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          cd /root/
+          mkdir -p /tmp/cfn
+          cd /tmp/cfn
 
-          # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
+          # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-al2.html
           if (uname -a | grep x86 1>/dev/null); then
             yum install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
           else
             yum install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_arm64/amazon-ssm-agent.rpm
           fi
+          systemctl enable --now amazon-ssm-agent
 
           # cfn-init
           /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
@@ -274,7 +276,7 @@ Resources:
           yum install -q -y pulseaudio pulseaudio-utils
           sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+          # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
 
           if (uname -a | grep x86 1>/dev/null); then
@@ -288,19 +290,18 @@ Resources:
           yum install -q -y ./nice-dcv-web-viewer-*.rpm
           yum install -q -y ./nice-xdcv-*.rpm
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
+          # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
           sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
 
-          # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
+          # Virtual session daemon: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
           cat << EoF > /etc/systemd/system/dcv-virtual-session.service
           [Unit]
           Description=Create DCV virtual session
-          After=default.target network.target 
+          After=default.target network.target
 
           [Service]
-          ExecStart=/opt/dcv-virtual-session.sh 
+          ExecStart=/opt/dcv-virtual-session.sh
 
           [Install]
           WantedBy=default.target
@@ -321,14 +322,14 @@ Resources:
           EoF
           chmod +x /opt/dcv-virtual-session.sh
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+          # Listen port: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
           sed -i "/^web-port=/d" /etc/dcv/dcv.conf
           sed -i "/^quic-port=/d" /etc/dcv/dcv.conf
           sed -i "/^\[connectivity\]/a web-port=${listenPort}" /etc/dcv/dcv.conf
           sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
-          cd /root/
-          # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html            
+          cd /tmp/cfn
+          # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
           yum remove awscli -y
           if (uname -a | grep x86 1>/dev/null); then
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
@@ -541,7 +542,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
-    Description: DCV web console (login as ec2-user)
+    Description: NICE DCV web browser client (login as ec2-user)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:
