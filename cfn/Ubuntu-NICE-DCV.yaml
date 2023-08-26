@@ -58,20 +58,20 @@ Metadata:
           - ubuntu1804amd64
 
 Parameters:
-  instanceType:
-    Type: String
-    Description: Instance Type (x86_64 or arm64) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
-    Default: t3.medium
   ubuntuVersion:
     Type: String
-    Description: Select appropriate Graviton instanceType (e.g. tg4.medium ) if using aarch64
+    Description: Version and processor architecture
     AllowedValues:
       - Ubuntu 22.04 (x86_64)
       - Ubuntu 22.04 (aarch64)
       - Ubuntu 20.04 (x86_64)
       - Ubuntu 18.04 (x86_64)
       - Ubuntu 18.04 (aarch64)
-    Default: Ubuntu 22.04 (x86_64)
+    Default: Ubuntu 22.04 (aarch64)
+  instanceType:
+    Type: String
+    Description: Instance Type (x86_64 or arm64) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
+    Default: t4g.medium
 
   ec2Name:
     Type: String
@@ -292,7 +292,8 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          cd /root/
+          mkdir -p /tmp/cfn
+          cd /tmp/cfn
 
           # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
           export DEBIAN_FRONTEND=noninteractive
@@ -303,10 +304,11 @@ Resources:
           apt-get install -q -y python-setuptools wget tmux unzip tar curl sed
           # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
           wget -4 -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
-          tar -xvzf aws-cfn-bootstrap-1.4-34.tar.gz
+          tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
           cd aws-cfn-bootstrap-1.4
           python2 setup.py build
           python2 setup.py install
+          cd /tmp/cfn
 
           # cfn-init
           python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
@@ -323,11 +325,11 @@ Resources:
 
           sed -i "s/^#WaylandEnable=false/WaylandEnable=false/g" /etc/gdm3/custom.conf
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+
+          # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
           gpg --import NICE-GPG-KEY
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
           if ((uname -a | grep x86 1>/dev/null) && (cat /etc/os-release | grep 22.04 1>/dev/null)); then
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
             tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
@@ -346,15 +348,14 @@ Resources:
           fi
           apt-get -q -y install ./nice-dcv-server_*.deb
           apt-get -q -y install ./nice-dcv-web-viewer_*.deb
-          usermod -aG video dcv 
+          usermod -aG video dcv
           apt-get -q -y install ./nice-xdcv_*.deb
 
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
+          # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
           sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
 
-          # session storage: https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
+          # Virtual session daemon: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
           cat << EoF > /etc/systemd/system/dcv-virtual-session.service
           [Unit]
           Description=Create DCV virtual session
@@ -388,9 +389,8 @@ Resources:
           sed -i "/^\[connectivity\]/a web-port=${listenPort}" /etc/dcv/dcv.conf
           sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
-          cd /root/
-          apt-get autoremove -y
-          # https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+          cd /tmp/cfn
+          # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
           if (uname -a | grep x86 1>/dev/null); then
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
           else
@@ -608,7 +608,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
-    Description: DCV web console (login as ubuntu)
+    Description: NICE DCV web browser client (login as ubuntu)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:
