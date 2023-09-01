@@ -119,7 +119,9 @@ Parameters:
 
   volumeSize:
     Type: Number
-    Description: Volume Size in GiBs (must be equal or larger than snapshot size)
+    Description: Volume Size in GiB
+    MinValue: 8
+    MaxValue: 16384
     Default: 8
   deviceName:
     Type: String

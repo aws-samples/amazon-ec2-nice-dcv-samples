@@ -115,7 +115,9 @@ Parameters:
 
   volumeSize:
     Type: Number
-    Description: Volume Size in GiBs (must be equal or larger than snapshot size)
+    Description: Volume Size in GiB
+    MinValue: 8
+    MaxValue: 16384
     Default: 8
   deviceName:
     Type: String
@@ -125,11 +127,11 @@ Parameters:
   amazonLinux2amd64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Description: Amazon Linux 2 (x86_64). ( aws ssm get-parameters-by-path --path /aws/service/ami-amazon-linux-latest --query "Parameters[].Name" )
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2
   amazonLinux2arm64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Description: Amazon Linux 2 (arm64). ( aws ssm get-parameters-by-path --path /aws/service/ami-amazon-linux-latest --query "Parameters[].Name" )
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-arm64-gp2
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
