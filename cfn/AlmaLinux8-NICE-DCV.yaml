@@ -43,6 +43,7 @@ Metadata:
           default: EBS volume configuration
         Parameters:
           - volumeSize
+          - volumeType
           - deviceName
       - Label:
           default: NICE DCV configuration
@@ -68,7 +69,7 @@ Parameters:
     Default: AlmaLinux OS 9 (arm64)
   instanceType:
     Type: String
-    Description: Instance Type (x86_64 or arm64) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
+    Description: Instance Type (x86_64 or arm64)  ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Default: t4g.medium
 
   ec2Name:
@@ -123,6 +124,13 @@ Parameters:
     MinValue: 8
     MaxValue: 16384
     Default: 8
+  volumeType:
+    Type: String
+    Description: EBS volume type
+    AllowedValues:
+      - "gp3"
+      - "gp2"
+    Default: "gp3"
   deviceName:
     Type: String
     Description: Device Name
@@ -276,7 +284,7 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: !Ref deviceName
           Ebs:
-            VolumeType: gp3
+            VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
             DeleteOnTermination: true
       UserData:

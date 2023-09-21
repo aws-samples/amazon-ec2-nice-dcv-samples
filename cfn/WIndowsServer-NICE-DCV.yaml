@@ -44,6 +44,7 @@ Metadata:
           default: EBS volume configuration
         Parameters:
           - volumeSize
+          - volumeType
           - deviceName
       - Label:
           default: NICE DCV configuration
@@ -122,6 +123,13 @@ Parameters:
     MinValue: 30
     MaxValue: 16384
     Default: 30
+  volumeType:
+    Type: String
+    Description: EBS volume type
+    AllowedValues:
+      - "gp3"
+      - "gp2"
+    Default: "gp3"
   deviceName:
     Type: String
     Description: Device Name
@@ -324,7 +332,7 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: !Ref deviceName
           Ebs:
-            VolumeType: gp3
+            VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
             DeleteOnTermination: true
       UserData:

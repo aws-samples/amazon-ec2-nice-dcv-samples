@@ -43,6 +43,7 @@ Metadata:
           default: EBS volume configuration
         Parameters:
           - volumeSize
+          - volumeType
           - deviceName
       - Label:
           default: NICE DCV configuration
@@ -57,7 +58,7 @@ Parameters:
     AllowedPattern: "ami.+"
   instanceType:
     Type: String
-    Description: Instance Type (x86_64 or arm64) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
+    Description: Instance Type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Default: t3.medium
 
   ec2Name:
@@ -232,7 +233,7 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: !Ref deviceName
           Ebs:
-            VolumeType: gp3
+            VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
             DeleteOnTermination: true
       UserData:
