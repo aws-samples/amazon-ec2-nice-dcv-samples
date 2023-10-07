@@ -57,7 +57,7 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
   instanceType:
-    Description: Instance type ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html )
+    Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Type: String
     Default: t3.medium
   driverType:
@@ -77,12 +77,12 @@ Parameters:
     Default: Windows Server-NICE-DCV
   vpcID:
     Type: AWS::EC2::VPC::Id
-    Description: VPC with internet connectivity
+    Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
     ConstraintDescription: Do specify a valid value
     AllowedPattern: ".+"
   subnetID:
     Type: AWS::EC2::Subnet::Id
-    Description: Subnet with internet connectivity
+    Description: "Subnet with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#subnets: )"
     ConstraintDescription: Do specify a valid value
     AllowedPattern: ".+"
   assignStaticIP:
@@ -106,7 +106,7 @@ Parameters:
     Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
-    Description: Allowed source prefix (IPv6)
+    Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
     Default: ::/0
 
   listenPort:
@@ -302,7 +302,7 @@ Resources:
                 cd
                 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ .
                 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
-                powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2021_10_2.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
+                powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
                 cd
             c:\\Users\\Administrator\\download-AMD-driver.cmd:
               content: |
@@ -374,7 +374,7 @@ Resources:
 
           @echo ** install Chololatey GUI
           choco install --no-progress -y chocolateygui
-          
+
           @Echo ** install 7-zip
           choco install --no-progress -y 7zip.install
 
@@ -400,7 +400,10 @@ Resources:
               @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-installation-options
               "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ .
               reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
-              powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2021_10_2.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
+              powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
+              powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCertWindows_2023_9_22.txt')"
+              powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCert-Windows_2020_04.cert',  'C:\Users\Public\Documents\GridSwCert-Windows_2020_04.txt')"
+              powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCert-Windows_2019_09.cert',  'C:\Users\Public\Documents\GridSwCert-Windows_2019_09.txt')"
               forfiles /M *.exe /C "cmd /c 7z x @file"
               start /wait setup.exe -s
           )
@@ -409,7 +412,9 @@ Resources:
               "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ .
               forfiles /M *.zip /C "cmd /c 7z x @file"
               cd Packages\Drivers\Display\*INF
-              pnputil /add-driver *.inf /install
+              pnputil /add-driver *.inf /install /subdirs
+              cd \windows\temp\driver\Packages\Drivers\Audio\HDMI\W*\
+              pnputil /add-driver *.inf /install /subdirs
           )
 
           @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html#fleet-rdp-prerequisites
