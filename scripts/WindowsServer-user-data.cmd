@@ -2,10 +2,6 @@
 @echo off
 cd \windows\temp\
 
-@echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-win.html
-powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
-c:\windows\temp\AmazonSSMAgentSetup.exe /S
-
 @echo ** https://docs.chocolatey.org/en-us/choco/setup
 @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 
@@ -23,7 +19,6 @@ reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-mana
 
 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-storage.html
 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f 
-rem powershell -command "$shortcut=(New-Object -ComObject WScript.Shell).CreateShortcut('C:\Users\Administrator\Desktop\DCV-Storage.lnk');$shortcut.TargetPath='C:\Users\Administrator\';$shortcut.Save()"
 
 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
@@ -37,5 +32,9 @@ choco install --no-progress -y chocolateygui
 
 @echo ** Restarting DCV 
 net stop dcvserver
-net start dcvserver    
+net start dcvserver
+
+@echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html#fleet-rdp-prerequisites
+powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.4.201 -Force"
+powershell -command "Install-Module -Name PSReadLine -Repository PSGallery -MinimumVersion 2.2.2 -Force"
 </script>
