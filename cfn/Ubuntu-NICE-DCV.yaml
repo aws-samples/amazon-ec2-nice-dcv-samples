@@ -52,23 +52,23 @@ Metadata:
       - Label:
           default: Ubuntu AMI IDs
         Parameters:
-          - ubuntu2204amd64
           - ubuntu2204arm64
+          - ubuntu2204amd64
           - ubuntu2004amd64
-          - ubuntu1804arm64
           - ubuntu1804amd64
+          - ubuntu1804arm64
 
 Parameters:
   ubuntuVersion:
     Type: String
     Description: Version and processor architecture
     AllowedValues:
+      - Ubuntu 22.04 (arm64)
       - Ubuntu 22.04 (x86_64)
-      - Ubuntu 22.04 (aarch64)
       - Ubuntu 20.04 (x86_64)
+      - Ubuntu 18.04 (arm64)
       - Ubuntu 18.04 (x86_64)
-      - Ubuntu 18.04 (aarch64)
-    Default: Ubuntu 22.04 (aarch64)
+    Default: Ubuntu 22.04 (arm64)
   instanceType:
     Type: String
     Description: Instance Type (x86_64 or arm64) Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
@@ -145,7 +145,7 @@ Parameters:
     Default: /aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id
   ubuntu2204arm64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Ubuntu 22.04 (aarch64)
+    Description: Ubuntu 22.04 (arm64)
     Default: /aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id
   ubuntu2004amd64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
@@ -157,13 +157,13 @@ Parameters:
     Default: /aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id
   ubuntu1804arm64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Ubuntu 18.04 (aarch64)
+    Description: Ubuntu 18.04 (arm64)
     Default: /aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   useUbuntu2204amd64: !Equals [!Ref ubuntuVersion, "Ubuntu 22.04 (x86_64)"]
-  useUbuntu2204arm64: !Equals [!Ref ubuntuVersion, "Ubuntu 22.04 (aarch64)"]
+  useUbuntu2204arm64: !Equals [!Ref ubuntuVersion, "Ubuntu 22.04 (arm64)"]
   useUbuntu2004amd64: !Equals [!Ref ubuntuVersion, "Ubuntu 20.04 (x86_64)"]
   useUbuntu1804amd64: !Equals [!Ref ubuntuVersion, "Ubuntu 18.04 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
@@ -288,14 +288,6 @@ Resources:
                 elif ((uname -a | grep -q aarch) && (cat /etc/os-release | grep -q 22.04)); then
                   rm -f /tmp/nice-dcv-ubuntu2204-aarch64.tgz
                   wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-aarch64.tgz
-                  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
-                elif ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 18.04)); then
-                  rm -f /tmp/nice-dcv-ubuntu1804-x86_64.tgz
-                  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-x86_64.tgz
-                  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
-                elif (cat /etc/os-release | grep -q 18.04); then
-                  rm -f nice-dcv-ubuntu1804-aarch64.tgz
-                  wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-aarch64.tgz
                   tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
                 else
                   rm -f nice-dcv-ubuntu2004-x86_64.tgz
@@ -525,6 +517,10 @@ Resources:
 
           apt-get update
           # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html#agent-install-ubuntu-tabs
+          # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html Note: SSH inbound required in SG
+          if (cat /etc/os-release | grep -q 18.04); then
+            apt-get -q -y install ec2-instance-connect
+          fi
 
           apt-get install -q -y python-setuptools wget tmux unzip tar curl sed
           # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
@@ -561,11 +557,13 @@ Resources:
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-aarch64.tgz
             tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
           elif ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 18.04)); then
-            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-x86_64.tgz
-            tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+            rm -f /home/ubuntu/update-dcv
+            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/2023.0/Servers/nice-dcv-2023.0-15487-ubuntu1804-x86_64.tgz
+            tar -xvzf nice-dcv-*-x86_64.tgz && cd nice-dcv-*-x86_64
           elif (cat /etc/os-release | grep -q 18.04); then
-            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu1804-aarch64.tgz
-            tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
+            rm -f /home/ubuntu/update-dcv
+            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/2023.0/Servers/nice-dcv-2023.0-15487-ubuntu1804-aarch64.tgz
+            tar -xvzf nice-dcv-*-aarch64.tgz && cd nice-dcv-*-aarch64
           else
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2004-x86_64.tgz
             tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
