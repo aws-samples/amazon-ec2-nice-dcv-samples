@@ -30,12 +30,13 @@ Metadata:
           default: EC2 configuration
         Parameters:
           - ec2Name
+          - ec2KeyPair
           - vpcID
           - subnetID
           - displayPublicIP
           - assignStaticIP
       - Label:
-          default: Allowed source IP prefixes
+          default: Allowed source IP prefix
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -44,7 +45,6 @@ Metadata:
         Parameters:
           - volumeSize
           - volumeType
-          - deviceName
       - Label:
           default: NICE DCV configuration
         Parameters:
@@ -71,13 +71,18 @@ Parameters:
     Default: Ubuntu 22.04 (arm64)
   instanceType:
     Type: String
-    Description: Instance Type (x86_64 or arm64) Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
+    Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Default: t4g.medium
 
   ec2Name:
     Type: String
     Description: EC2 instance name
     Default: Ubuntu-NICE-DCV
+  ec2KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
+    ConstraintDescription: Specify a key pair
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
@@ -123,9 +128,9 @@ Parameters:
   volumeSize:
     Type: Number
     Description: Volume Size in GiB
-    MinValue: 8
+    MinValue: 10
     MaxValue: 16384
-    Default: 8
+    Default: 10
   volumeType:
     Type: String
     Description: EBS volume type
@@ -133,10 +138,6 @@ Parameters:
       - "gp3"
       - "gp2"
     Default: "gp3"
-  deviceName:
-    Type: String
-    Description: Device Name
-    Default: /dev/sda1
 
   # https://ubuntu.com/server/docs/cloud-images/amazon-ec2
   ubuntu2204amd64:
@@ -175,6 +176,16 @@ Resources:
       GroupDescription: Allow inbound DCV
       VpcId: !Ref vpcID
       SecurityGroupIngress:
+        - Description: SSH (IPv4)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref ingressIPv4
+        - Description: SSH (IPv6)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
           FromPort: !Ref listenPort
@@ -492,12 +503,13 @@ Resources:
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
+      KeyName: !Ref ec2KeyPair
       SubnetId: !Ref subnetID
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
       BlockDeviceMappings:
-        - DeviceName: !Ref deviceName
+        - DeviceName: /dev/sda1
           Ebs:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
@@ -523,7 +535,7 @@ Resources:
           fi
 
           apt-get install -q -y python-setuptools wget tmux unzip tar curl sed
-          # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
+          # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
           wget -4 -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
           tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
           cd aws-cfn-bootstrap-1.4
@@ -549,8 +561,12 @@ Resources:
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
           gpg --import NICE-GPG-KEY
+<<<<<<< HEAD
+          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 22.04)); then
+=======
 
           if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 22.04)); then
+>>>>>>> 1362a48556236b0ac2c029ddf5ba828dfdb2f405
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
             tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
           elif ((uname -a | grep -q aarch) && (cat /etc/os-release | grep -q 22.04)); then
@@ -574,7 +590,7 @@ Resources:
           apt-get -q -y install ./nice-xdcv_*.deb
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
-          cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf.org
+          cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
           sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
 
           # Virtual session daemon: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
@@ -587,7 +603,12 @@ Resources:
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+<<<<<<< HEAD
+          apt-get remove awscli -y
           if (uname -a | grep -q x86); then
+=======
+          if (uname -a | grep -q x86); then
+>>>>>>> 1362a48556236b0ac2c029ddf5ba828dfdb2f405
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
           else
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
@@ -627,6 +648,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
+      NetworkBorderGroup: !Ref AWS::Region
       InstanceId: !Ref ec2Instance
       Tags:
         - Key: StackName
@@ -639,7 +661,7 @@ Resources:
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
 Outputs:
-  EC2Instance:
+  EC2console:
     Description: EC2 instance console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 

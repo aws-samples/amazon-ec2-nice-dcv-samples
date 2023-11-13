@@ -30,12 +30,13 @@ Metadata:
           default: EC2 configuration
         Parameters:
           - ec2Name
+          - ec2KeyPair
           - vpcID
           - subnetID
           - displayPublicIP
           - assignStaticIP
       - Label:
-          default: Allowed source IP prefixes
+          default: Allowed source IP prefix
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -44,7 +45,6 @@ Metadata:
         Parameters:
           - volumeSize
           - volumeType
-          - deviceName
       - Label:
           default: NICE DCV configuration
         Parameters:
@@ -58,13 +58,18 @@ Parameters:
     AllowedPattern: "ami.+"
   instanceType:
     Type: String
-    Description: Instance Type (x86_64 or arm64) Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
+    Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Default: t4g.medium
 
   ec2Name:
     Type: String
     Description: EC2 instance name
     Default: RHEL 8/9-NICE-DCV
+  ec2KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
+    ConstraintDescription: Specify a key pair
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
@@ -120,10 +125,6 @@ Parameters:
       - "gp3"
       - "gp2"
     Default: "gp3"
-  deviceName:
-    Type: String
-    Description: Device Name
-    Default: /dev/sda1
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -136,6 +137,16 @@ Resources:
       GroupDescription: Allow inbound DCV
       VpcId: !Ref vpcID
       SecurityGroupIngress:
+        - Description: SSH (IPv4)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref ingressIPv4
+        - Description: SSH (IPv6)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
           FromPort: !Ref listenPort
@@ -438,12 +449,13 @@ Resources:
       ImageId: !Ref imageId
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
+      KeyName: !Ref ec2KeyPair
       SubnetId: !Ref subnetID
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
       BlockDeviceMappings:
-        - DeviceName: !Ref deviceName
+        - DeviceName: /dev/sda1
           Ebs:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
@@ -488,7 +500,6 @@ Resources:
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-
           if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
             tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
@@ -573,6 +584,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
+      NetworkBorderGroup: !Ref AWS::Region
       InstanceId: !Ref ec2Instance
       Tags:
         - Key: StackName
@@ -585,7 +597,7 @@ Resources:
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
 Outputs:
-  EC2Instance:
+  EC2console:
     Description: EC2 instance console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 

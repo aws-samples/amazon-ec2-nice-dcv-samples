@@ -33,10 +33,10 @@ Metadata:
           - ec2Name
           - vpcID
           - subnetID
-          - assignStaticIP
           - displayPublicIP
+          - assignStaticIP
       - Label:
-          default: Allowed source IP prefixes
+          default: Allowed source IP prefix
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -45,7 +45,6 @@ Metadata:
         Parameters:
           - volumeSize
           - volumeType
-          - deviceName
       - Label:
           default: NICE DCV configuration
         Parameters:
@@ -130,10 +129,6 @@ Parameters:
       - "gp3"
       - "gp2"
     Default: "gp3"
-  deviceName:
-    Type: String
-    Description: Device Name
-    Default: /dev/sda1
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -172,7 +167,7 @@ Resources:
           CidrIp: 0.0.0.0/0
         - Description: Allow all outbound traffic (IPv6)
           IpProtocol: "-1"
-          CidrIpv6: "::/0"
+          CidrIpv6: ::/0
       Tags:
         - Key: StackName
           Value: !Sub ${AWS::StackName}
@@ -240,6 +235,7 @@ Resources:
       ResourceSignal:
         Timeout: PT90M
     Metadata:
+      Comment: Install Update files
       AWS::CloudFormation::Init:
         configSets:
           setup:
@@ -334,7 +330,7 @@ Resources:
       SecurityGroupIds:
         - !Ref securityGroup
       BlockDeviceMappings:
-        - DeviceName: !Ref deviceName
+        - DeviceName: /dev/sda1
           Ebs:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
@@ -459,11 +455,11 @@ Resources:
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
 Outputs:
-  RdpConnect:
+  RDPconnect:
     Description: RDP (Remote Desktop Protocol) access via Fleet Manager
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/managed-instances/rdp-connect?region=${AWS::Region}&instances=${ec2Instance}"
 
-  EC2Instance:
+  EC2console:
     Description: EC2 instance console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 
@@ -472,7 +468,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
-    Description: DCV web console (login as administrator)
+    Description: NICE DCV web browser client (login as administrator)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:

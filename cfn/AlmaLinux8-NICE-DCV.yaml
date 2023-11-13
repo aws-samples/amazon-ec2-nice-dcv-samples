@@ -30,12 +30,13 @@ Metadata:
           default: EC2 configuration
         Parameters:
           - ec2Name
+          - ec2KeyPair
           - vpcID
           - subnetID
           - displayPublicIP
           - assignStaticIP
       - Label:
-          default: Allowed source IP prefixes
+          default: Allowed source IP prefix
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -44,7 +45,6 @@ Metadata:
         Parameters:
           - volumeSize
           - volumeType
-          - deviceName
       - Label:
           default: NICE DCV configuration
         Parameters:
@@ -52,30 +52,35 @@ Metadata:
       - Label:
           default: AlmaLinux AMI IDs. Accept terms and subscribe before launching
         Parameters:
-          - almaLinux8amd64
-          - almaLinux8arm64
-          - almaLinux9amd64
           - almaLinux9arm64
+          - almaLinux9amd64
+          - almaLinux8arm64
+          - almaLinux8amd64
 
 Parameters:
   almaLinuxVersion:
     Type: String
     Description: Version and processor architecture
     AllowedValues:
-      - AlmaLinux OS 8 (x86_64)
-      - AlmaLinux OS 8 (arm64)
-      - AlmaLinux OS 9 (x86_64)
       - AlmaLinux OS 9 (arm64)
+      - AlmaLinux OS 9 (x86_64)
+      - AlmaLinux OS 8 (arm64)
+      - AlmaLinux OS 8 (x86_64)
     Default: AlmaLinux OS 9 (arm64)
   instanceType:
     Type: String
-    Description: Instance Type (x86_64 or arm64) Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
+    Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Default: t4g.medium
 
   ec2Name:
     Type: String
     Description: EC2 instance name
     Default: AlmaLinux OS 8/9-NICE-DCV
+  ec2KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
+    ConstraintDescription: Specify a key pair
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
@@ -121,9 +126,9 @@ Parameters:
   volumeSize:
     Type: Number
     Description: Volume Size in GiB
-    MinValue: 8
+    MinValue: 10
     MaxValue: 16384
-    Default: 8
+    Default: 10
   volumeType:
     Type: String
     Description: EBS volume type
@@ -131,27 +136,24 @@ Parameters:
       - "gp3"
       - "gp2"
     Default: "gp3"
-  deviceName:
-    Type: String
-    Description: Device Name
-    Default: /dev/sda1
 
-  almaLinux8amd64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: AlmaLinux OS 8 (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye
-    Default: /aws/service/marketplace/prod-fai27pconxer6/latest
-  almaLinux8arm64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: AlmaLinux OS 8 (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-zgsymdwitnxmm
-    Default: /aws/service/marketplace/prod-ee3jipi4asbr6/latest
-  almaLinux9amd64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: AlmaLinux OS 9 (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-ykmb6re2rcouy
-    Default: /aws/service/marketplace/prod-6grf2aboe7hdm/latest
   almaLinux9arm64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Description: AlmaLinux OS 9 (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-pvttztrj2uzjk
     Default: /aws/service/marketplace/prod-owmexvyxh5isg/latest
+  almaLinux9amd64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: AlmaLinux OS 9 (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-ykmb6re2rcouy
+    Default: /aws/service/marketplace/prod-6grf2aboe7hdm/latest
+  almaLinux8arm64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: AlmaLinux OS 8 (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-zgsymdwitnxmm
+    Default: /aws/service/marketplace/prod-ee3jipi4asbr6/latest
+  almaLinux8amd64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: AlmaLinux OS 8 (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye
+    Default: /aws/service/marketplace/prod-fai27pconxer6/latest
+
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -167,6 +169,16 @@ Resources:
       GroupDescription: Allow inbound DCV
       VpcId: !Ref vpcID
       SecurityGroupIngress:
+        - Description: SSH (IPv4)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref ingressIPv4
+        - Description: SSH (IPv6)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
           FromPort: !Ref listenPort
@@ -482,12 +494,13 @@ Resources:
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
+      KeyName: !Ref ec2KeyPair
       SubnetId: !Ref subnetID
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
       BlockDeviceMappings:
-        - DeviceName: !Ref deviceName
+        - DeviceName: /dev/sda1
           Ebs:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
@@ -532,8 +545,12 @@ Resources:
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
+<<<<<<< HEAD
+          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
+=======
 
           if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
+>>>>>>> 1362a48556236b0ac2c029ddf5ba828dfdb2f405
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
             tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
           elif ((uname -a | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
@@ -617,6 +634,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
+      NetworkBorderGroup: !Ref AWS::Region
       InstanceId: !Ref ec2Instance
       Tags:
         - Key: StackName
@@ -629,7 +647,7 @@ Resources:
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
 Outputs:
-  EC2Instance:
+  EC2console:
     Description: EC2 instance console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 

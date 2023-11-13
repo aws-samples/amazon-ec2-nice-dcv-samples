@@ -30,12 +30,13 @@ Metadata:
           default: EC2 configuration
         Parameters:
           - ec2Name
+          - ec2KeyPair
           - vpcID
           - subnetID
           - displayPublicIP
           - assignStaticIP
       - Label:
-          default: Allowed source IP prefixes
+          default: Allowed source IP prefix
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -44,7 +45,6 @@ Metadata:
         Parameters:
           - volumeSize
           - volumeType
-          - deviceName
       - Label:
           default: NICE DCV configuration
         Parameters:
@@ -52,16 +52,17 @@ Metadata:
       - Label:
           default: Amazon Linux 2 AMI IDs
         Parameters:
-          - amazonLinux2amd64
           - amazonLinux2arm64
+          - amazonLinux2amd64
+
 
 Parameters:
   amazonLinuxVersion:
     Type: String
     Description: Processor architecture
     AllowedValues:
-      - Amazon Linux 2 (x86_64)
       - Amazon Linux 2 (arm64)
+      - Amazon Linux 2 (x86_64)
     Default: Amazon Linux 2 (arm64)
   instanceType:
     Type: String
@@ -72,6 +73,11 @@ Parameters:
     Type: String
     Description: EC2 instance name
     Default: Amazon Linux 2-NICE-DCV
+  ec2KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
+    ConstraintDescription: Specify a key pair
+    AllowedPattern: ".+"
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
@@ -117,9 +123,9 @@ Parameters:
   volumeSize:
     Type: Number
     Description: Volume Size in GiB
-    MinValue: 8
+    MinValue: 10
     MaxValue: 16384
-    Default: 8
+    Default: 10
   volumeType:
     Type: String
     Description: EBS volume type
@@ -127,19 +133,15 @@ Parameters:
       - "gp3"
       - "gp2"
     Default: "gp3"
-  deviceName:
-    Type: String
-    Description: Device Name
-    Default: /dev/xvda
 
-  amazonLinux2amd64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Amazon Linux 2 (x86_64). ( aws ssm get-parameters-by-path --path /aws/service/ami-amazon-linux-latest --query "Parameters[].Name" )
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2
   amazonLinux2arm64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Description: Amazon Linux 2 (arm64). ( aws ssm get-parameters-by-path --path /aws/service/ami-amazon-linux-latest --query "Parameters[].Name" )
     Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-arm64-gp2
+  amazonLinux2amd64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Amazon Linux 2 (x86_64). ( aws ssm get-parameters-by-path --path /aws/service/ami-amazon-linux-latest --query "Parameters[].Name" )
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -153,6 +155,16 @@ Resources:
       GroupDescription: Allow inbound DCV
       VpcId: !Ref vpcID
       SecurityGroupIngress:
+        - Description: SSH (IPv4)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref ingressIPv4
+        - Description: SSH (IPv6)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
           FromPort: !Ref listenPort
@@ -179,7 +191,7 @@ Resources:
           CidrIp: 0.0.0.0/0
         - Description: Allow all outbound traffic (IPv6)
           IpProtocol: "-1"
-          CidrIpv6: "::/0"
+          CidrIpv6: ::/0
       Tags:
         - Key: StackName
           Value: !Sub ${AWS::StackName}
@@ -447,12 +459,13 @@ Resources:
       ImageId: !If [useAMD64, !Ref amazonLinux2amd64, !Ref amazonLinux2arm64]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
+      KeyName: !Ref ec2KeyPair
       SubnetId: !Ref subnetID
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
       BlockDeviceMappings:
-        - DeviceName: !Ref deviceName
+        - DeviceName: /dev/xvda
           Ebs:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
@@ -482,7 +495,6 @@ Resources:
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-
           if (uname -a | grep -q x86); then
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
             tar -xvzf nice-dcv-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
@@ -554,6 +566,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
+      NetworkBorderGroup: !Ref AWS::Region
       InstanceId: !Ref ec2Instance
       Tags:
         - Key: StackName
@@ -566,7 +579,7 @@ Resources:
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
 Outputs:
-  EC2Instance:
+  EC2console:
     Description: EC2 instance console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 
