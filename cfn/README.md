@@ -5,7 +5,7 @@ Some distributions such as AlmaLinux and Kali Linux *are not officially supporte
 ## About CloudFormation templates
 The CloudFormation templates do not detect and install graphics drivers for [accelerated GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances), but provide helper scripts to download them. [Windows Server](WIndowsServer-NICE-DCV.yaml) template do provide option to install NICE-DCV, NVIDIA GRID, NVIDIA gaming or AMD GPU driver. Refer to notes below for more information. 
 
-When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/pp/prodview-2otariyxb3mqu), [AlmaLinux](https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye?) or [Kali Linux](https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to), subscribe before using CloudFormation stack. 
+When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d), [AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342) or [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), subscribe before using CloudFormation stack. 
 
 
 ## Deployment via CloudFormation console
@@ -18,7 +18,7 @@ In most cases, the default values are sufficient. You will need to specify a VPC
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). Due to memory demands of running graphical environment, 4 GB or more RAM instance types are recommended. If you specify a different instance type, do verify its availablity. Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error). You can also use AWS CLI, e.g. `aws ec2 describe-instance-type-offerings --output table --location-type availability-zone --region us-east-1 --filter "Name=instance-type,Values=g4ad.xlarge"` checks availablity of g4ad.xlarge instance type in us-east-1 Region.
 - `driverType` (Windows Server only): choose between NICE-DCV, NVIDIA GRID, NVIDIA Gaming and AMD GPU driver, or select none not to install any graphics driver. Default is `NICE-DCV`
 - `ec2Name`: name of EC2 instance
-- `ec2KeyPair`: [EC2 key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) name
+- `ec2KeyPair`: [EC2 key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). [Create a key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html) if you do not have one
 - `vpcID`: [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
 - `subnetID`: subnet with internet connectivity. Select subnet in default VPC if unsure. If you specify a different `instanceType`, ensure that it is available in AZ subnet you select. 
 - `ingressIPv4`: allowed IPv4 source prefix, e.g. `1.2.3.4/32`. Get source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com)
@@ -27,11 +27,11 @@ In most cases, the default values are sufficient. You will need to specify a VPC
 - `assignStaticIP`: as the auto-assigned public IP address changes every time EC2 instance is stopped and started, this option associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html). There is a small hourly charge when instance is stopped. For more information, see [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/). Default is `No`
 - `volumeSize`: EBS root volume size. Value must be equal or larger than AMI snapshot size
 - `volumeType`: EBS `gp3` or `gp2` [general purpose](https://aws.amazon.com/ebs/general-purpose/) type. Default is `gp3`
-- `listenPort`: NICE DCV server TCP/UDP listen ports. Default is `8443`
+- `listenPort`: NICE DCV server TCP/UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html) settings, and click **Create Stack** to launch your stack. 
 
-It may take up to 60 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
+It may take more than 30 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
 
 ### CloudFormation Outputs
 The following are available on **Outputs** section 
@@ -59,7 +59,7 @@ If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com
 
 Use `C:\Users\Administrator\download-<DRIVER-TYPE>-driver.cmd` helper batch file to download the latest NVIDIA GRID, NVIDIA gaming and AMD GPU drivers from AWS. Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for driver installation and configuration instructions. 
 
-To update NICE DCV Server, connect via Fleet Manager Remote Desktop console using `RdpConnect` link and run `C:\Users\Administrator\update-DCV.cmd`
+To update NICE DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
 
 ## Notes about Linux templates
@@ -82,4 +82,4 @@ The CloudFormation templates are designed to provision EC2 instances in [public 
 
 
 ## EC2 in Local Zones
-To use template in [AWS Local Zones](https://aws.amazon.com/about-aws/global-infrastructure/localzones/), verify [available services](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/) and adjust CloudFormation parameters according. For example, you may have to change `version`, `instanceType` and `volumeType`  with `assignStaticIP` set to `No`
+To use template in [AWS Local Zones](https://aws.amazon.com/about-aws/global-infrastructure/localzones/), verify [available services](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/) and adjust CloudFormation parameters accordingly. For example, you may have to change `version`, `instanceType` and `volumeType`  with `assignStaticIP` set to `No`
