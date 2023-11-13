@@ -545,12 +545,7 @@ Resources:
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-<<<<<<< HEAD
           if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
-=======
-
-          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
->>>>>>> 1362a48556236b0ac2c029ddf5ba828dfdb2f405
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
             tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
           elif ((uname -a | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
