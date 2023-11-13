@@ -5,7 +5,7 @@ Some distributions such as AlmaLinux and Kali Linux *are not officially supporte
 ## About CloudFormation templates
 The CloudFormation templates do not detect and install graphics drivers for [accelerated GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances), but provide helper scripts to download them. [Windows Server](WIndowsServer-NICE-DCV.yaml) template do provide option to install NICE-DCV, NVIDIA GRID, NVIDIA gaming or AMD GPU driver. Refer to notes below for more information. 
 
-When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/pp/prodview-2otariyxb3mqu) or [AlmaLinux](https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye?), subscribe before provisioning CloudFormation stack. 
+When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/pp/prodview-2otariyxb3mqu), [AlmaLinux](https://aws.amazon.com/marketplace/pp/prodview-mku4y3g4sjrye?) or [Kali Linux](https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to), subscribe before using CloudFormation stack. 
 
 
 ## Deployment via CloudFormation console
@@ -13,7 +13,7 @@ Download desired template file and login to AWS [CloudFormation console](https:/
 
 ### CloudFormation Parameters
 In most cases, the default values are sufficient. You will need to specify a VPC and subnet to provision EC2 instance in. 
-- `version` (Linux only): version and processor architecture (Intel/AMD x86_64 or [Graviton](https://aws.amazon.com/ec2/graviton/) where applicable). Default is latest version and arm64
+- `version` (Linux only): version and processor architecture (Intel/AMD x86_64 or [Graviton](https://aws.amazon.com/ec2/graviton/) arm64) where applicable. Default is latest version and arm64
 - `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. For [RHEL 8/9](https://access.redhat.com/solutions/15356) and [Rocky Linux 8/9](https://rockylinux.org/cloud-images/), go to indicated web page to retrieve AMI ID for your AWS Region
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). Due to memory demands of running graphical environment, 4 GB or more RAM instance types are recommended. If you specify a different instance type, do verify its availablity. Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error). You can also use AWS CLI, e.g. `aws ec2 describe-instance-type-offerings --output table --location-type availability-zone --region us-east-1 --filter "Name=instance-type,Values=g4ad.xlarge"` checks availablity of g4ad.xlarge instance type in us-east-1 Region.
 - `driverType` (Windows Server only): choose between NICE-DCV, NVIDIA GRID, NVIDIA Gaming and AMD GPU driver, or select none not to install any graphics driver. Default is `NICE-DCV`
@@ -26,7 +26,7 @@ In most cases, the default values are sufficient. You will need to specify a VPC
 - `displayPublicIP`: set this to `No` if you provision EC2 instance in a subnet that will not receive [public IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#concepts-public-addresses). EC2 private IP will be displayed in CloudFormation Outputs section instead. Default is `Yes`
 - `assignStaticIP`: as the auto-assigned public IP address changes every time EC2 instance is stopped and started, this option associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html). There is a small hourly charge when instance is stopped. For more information, see [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/). Default is `No`
 - `volumeSize`: EBS root volume size. Value must be equal or larger than AMI snapshot size
-- `volumeType`: EBS [general purpose](https://aws.amazon.com/ebs/general-purpose/) type. Default is `gp3`
+- `volumeType`: EBS `gp3` or `gp2` [general purpose](https://aws.amazon.com/ebs/general-purpose/) type. Default is `gp3`
 - `listenPort`: NICE DCV server TCP/UDP listen ports. Default is `8443`
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html) settings, and click **Create Stack** to launch your stack. 
@@ -37,8 +37,8 @@ It may take up to 60 minutes to provision the EC2 instance. After your stack has
 The following are available on **Outputs** section 
 - `SSMSessionManager`: SSM Session Manager URL link to change login user password. Password change command is in *Description* field.
 - `DCVwebConsole`: NICE DCV web browser console URL link to login as the user specified in *Description* field. 
-- `EC2Instance`: EC2 console URL link to start/stop your EC2 instance or to get the latest IPv4 (or IPv6 if enabled) address.
-- `RdpConnect` (Windows Server only): RDP console access via [Fleet Manager](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update NICE DCV server
+- `EC2console`: EC2 console URL link to start/stop your EC2 instance or to get the latest IPv4 (or IPv6 if enabled) address.
+- `RDPconnect` (Windows Server only): RDP console access via [Fleet Manager](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update NICE DCV server
 
 ## Using NICE DCV
 Refer to [NICE DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getting-started.html)
@@ -72,7 +72,7 @@ The login user name depends on Linux distributions as follows:
 
 You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder via SSM Session Manager session to update NICE DCV and AWS CLI. 
 
-As the provisioning process install graphical desktop and other libraries, you may want to [reboot the EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-reboot.html) before logging in. Some templates support ARM64 architecture; specify a [Graviton](https://aws.amazon.com/ec2/graviton/) instance type (e.g. t4g.medium) if you choose ARM64 option. 
+As the provisioning process install graphical desktop and other libraries, you may want to [reboot the EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-reboot.html) before logging in. Some templates support both x86_64 and arm64 processor architectures, specify the appropriate instance type. 
 
 If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances), you may use helper scripts */home/{user name}/download-<DRIVER_TYPE>-driver* to download NVIDIA GRID, NVIDIA gaming or AMD GPU drivers.  Note that the drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html) and [Install AMD drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html). Refer to [Prerequisites for Linux NICE DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html) for driver installation and configuration instructions.
 
