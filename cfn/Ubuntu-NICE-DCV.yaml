@@ -561,12 +561,7 @@ Resources:
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
           gpg --import NICE-GPG-KEY
-<<<<<<< HEAD
           if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 22.04)); then
-=======
-
-          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 22.04)); then
->>>>>>> 1362a48556236b0ac2c029ddf5ba828dfdb2f405
             wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
             tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
           elif ((uname -a | grep -q aarch) && (cat /etc/os-release | grep -q 22.04)); then
@@ -603,12 +598,8 @@ Resources:
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-<<<<<<< HEAD
           apt-get remove awscli -y
           if (uname -a | grep -q x86); then
-=======
-          if (uname -a | grep -q x86); then
->>>>>>> 1362a48556236b0ac2c029ddf5ba828dfdb2f405
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
           else
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
