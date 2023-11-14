@@ -359,6 +359,15 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
+            "/home/ubuntu/configure-gnome":
+              content: |
+                #!/bin/bash
+                sudo apt install -y gnome-shell-extension-ubuntu-dock
+                gnome-extensions enable ubuntu-dock@ubuntu.com
+                XDG_CURRENT_DESKTOP=ubuntu:GNOME gnome-control-center&
+              mode: "000755"
+              owner: "root"
+              group: "root"
             "/home/ubuntu/download-NVIDIA-GRID-driver":
               content: |
                 #!/bin/bash
@@ -549,9 +558,13 @@ Resources:
           # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           systemctl isolate multi-user.target
 
-          apt-get -q -y install ubuntu-desktop
+          if (cat /etc/os-release | grep -q 18.04); then
+            apt-get -q -y install ubuntu-desktop
+          else
+            apt-get -q -y install ubuntu-desktop-minimal 
+          fi
           apt-get -q -y install gdm3
-          apt-get -q -y install pulseaudio-utils
+          apt-get -q -y install pulseaudio-utils gnome-tweaks
 
           sed -i "s/^#WaylandEnable=false/WaylandEnable=false/g" /etc/gdm3/custom.conf
 
