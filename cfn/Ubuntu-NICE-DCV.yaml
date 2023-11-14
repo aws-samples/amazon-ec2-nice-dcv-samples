@@ -366,8 +366,8 @@ Resources:
                 gnome-extensions enable ubuntu-dock@ubuntu.com
                 XDG_CURRENT_DESKTOP=ubuntu:GNOME gnome-control-center&
               mode: "000755"
-              owner: "root"
-              group: "root"
+              owner: "ubuntu"
+              group: "ubuntu"
             "/home/ubuntu/download-NVIDIA-GRID-driver":
               content: |
                 #!/bin/bash
