@@ -22,9 +22,9 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: AMI ID
+          default: RHEL version
         Parameters:
-          - imageId
+          - rhelVersion
       - Label:
           default: EC2 configuration
         Parameters:
@@ -52,13 +52,24 @@ Metadata:
           default: NICE DCV configuration
         Parameters:
           - listenPort
+      - Label:
+          default: AMI ID
+        Parameters:
+          - rhel9arm64
+          - rhel9x86
+          - rhel8arm64
+          - rhel8x86
 
 Parameters:
-  imageId:
+  rhelVersion:
     Type: String
-    Description: AMI ID ( Get from https://access.redhat.com/solutions/15356 )
-    ConstraintDescription: Do specify a valid Image ID
-    AllowedPattern: "ami.+"
+    Description: Version and processor architecture
+    AllowedValues:
+      - Red Hat Enterprise Linux 9 (arm64)
+      - Red Hat Enterprise Linux 9 (x86_64)
+      - Red Hat Enterprise Linux 8 (arm64)
+      - Red Hat Enterprise Linux 8 (x86_64)
+    Default: Red Hat Enterprise Linux 9 (arm64)
   instanceType:
     Type: String
     Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
@@ -129,8 +140,29 @@ Parameters:
       - "gp2"
     Default: "gp3"
 
+  rhel9arm64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Red Hat Enterprise Linux 9 (arm64) ( https://aws.amazon.com/marketplace/pp/prodview-jugq2ewzbalue )
+    Default: /aws/service/marketplace/prod-xtovizizqqkn4/latest
+  rhel9x86:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Red Hat Enterprise Linux 9 (x86_64) ( https://aws.amazon.com/marketplace/pp/prodview-b5psjqk4f5f3k )
+    Default: /aws/service/marketplace/prod-zajqq6vxyggys/latest
+  rhel8arm64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Red Hat Enterprise Linux 8 (arm64) ( https://aws.amazon.com/marketplace/pp/prodview-fvgsywc5jqlkw )
+    Default: /aws/service/marketplace/prod-ly3mqgzc5ajak/latest
+  rhel8x86:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Red Hat Enterprise Linux 8 (x86_64) ( https://aws.amazon.com/marketplace/pp/prodview-kv5mi3ksb2mma )
+    Default: /aws/service/marketplace/prod-aht4stwdth2ls/latest
+
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
+  useRhel8x86: !Equals [!Ref rhelVersion, "Red Hat Enterprise Linux 8 (x86_64)"]
+  useRhel8arm64:
+    !Equals [!Ref rhelVersion, "Red Hat Enterprise Linux 8 (arm64)"]
+  useRhel9x86: !Equals [!Ref rhelVersion, "Red Hat Enterprise Linux 9 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
 
 Resources:
@@ -449,7 +481,16 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
     Properties:
-      ImageId: !Ref imageId
+      ImageId:
+        !If [
+          useRhel8x86,
+          !Ref rhel8x86,
+          !If [
+            useRhel8arm64,
+            !Ref rhel8arm64,
+            !If [useRhel9x86, !Ref rhel9x86, !Ref rhel9arm64],
+          ],
+        ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair

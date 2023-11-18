@@ -24,7 +24,7 @@ Metadata:
       - Label:
           default: Rocky Linux version. Subscribe before launching ( https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d )
         Parameters:
-          - imageId
+          - rockyLinuxVersion
       - Label:
           default: EC2 configuration
         Parameters:
@@ -52,13 +52,24 @@ Metadata:
           default: NICE DCV configuration
         Parameters:
           - listenPort
+      - Label:
+          default: AMI ID
+        Parameters:
+          - rockyLinux9arm64
+          - rockyLinux9x86
+          - rockyLinux8arm64
+          - rockyLinux8x86
 
 Parameters:
-  imageId:
+  rockyLinuxVersion:
     Type: String
-    Description: AMI ID ( Get from https://rockylinux.org/cloud-images/ )
-    ConstraintDescription: Do specify a valid Image ID
-    AllowedPattern: "ami.+"
+    Description: Version and processor architecture
+    AllowedValues:
+      - Rocky Linux 9 (arm64)
+      - Rocky Linux 9 (x86_64)
+      - Rocky Linux 8 (arm64)
+      - Rocky Linux 8 (x86_64)
+    Default: Rocky Linux 9 (arm64)
   instanceType:
     Type: String
     Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
@@ -129,8 +140,28 @@ Parameters:
       - "gp2"
     Default: "gp3"
 
+  rockyLinux9arm64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Rocky Linux 9 (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-6ihwigagrts66
+    Default: /aws/service/marketplace/prod-g6tz6c6khshey/latest
+  rockyLinux9x86:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Rocky Linux 9 (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-ygp66mwgbl2ii
+    Default: /aws/service/marketplace/prod-xyoviokzipekw/latest
+  rockyLinux8arm64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Rocky Linux 8 (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-uzg6o44ep3ugw
+    Default: /aws/service/marketplace/prod-oa44qrf5fdbw6/latest
+  rockyLinux8x86:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Rocky Linux 8 (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-2otariyxb3mqu
+    Default: /aws/service/marketplace/prod-hij7xr5pvhcuk/latest
+
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
+  useRockyLinux8x86: !Equals [!Ref rockyLinuxVersion, "Rocky Linux 8 (x86_64)"]
+  useRockyLinux8arm64: !Equals [!Ref rockyLinuxVersion, "Rocky Linux 8 (arm64)"]
+  useRockyLinux9x86: !Equals [!Ref rockyLinuxVersion, "Rocky Linux 9 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
 
 Resources:
@@ -449,7 +480,16 @@ Resources:
               owner: "rocky"
               group: "rocky"
     Properties:
-      ImageId: !Ref imageId
+      ImageId:
+        !If [
+          useRockyLinux8x86,
+          !Ref rockyLinux8x86,
+          !If [
+            useRockyLinux8arm64,
+            !Ref rockyLinux8arm64,
+            !If [useRockyLinux9x86, !Ref rockyLinux9x86, !Ref rockyLinux9arm64],
+          ],
+        ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair

@@ -17,8 +17,7 @@ In most cases, the default values are sufficient. You will need to specify value
 
 Version
 - `version` (where applicable): version and processor architecture (Intel/AMD x86_64 or [Graviton](https://aws.amazon.com/ec2/graviton/) arm64). Default is latest version and arm64
-- `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID. For [RHEL 8/9](https://access.redhat.com/solutions/15356) and [Rocky Linux 8/9](https://rockylinux.org/cloud-images/), go to indicated web page to retrieve AMI ID for your AWS Region
-
+- `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID
 EC2
 - `ec2Name`: name of EC2 instance
 - `ec2KeyPair` (Linux only): [EC2 key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). [Create a key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html) if you do not have one
