@@ -22,21 +22,24 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: AMI and instance type
+          default: AMI ID
         Parameters:
           - imageId
-          - instanceType
-          - driverType
       - Label:
           default: EC2 configuration
         Parameters:
           - ec2Name
+          - driverType
+          - instanceType
+      - Label:
+          default: Network configuration
+        Parameters:
           - vpcID
           - subnetID
           - displayPublicIP
           - assignStaticIP
       - Label:
-          default: Allowed source IP prefix
+          default: Allowed source IP
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -52,7 +55,7 @@ Metadata:
 
 Parameters:
   imageId:
-    Description: Windows Server AMI ID ( aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name" )
+    Description: AMI ID ( aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name" )
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
   instanceType:
@@ -84,13 +87,6 @@ Parameters:
     Description: "Subnet with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#subnets: )"
     ConstraintDescription: Do specify a valid value
     AllowedPattern: ".+"
-  assignStaticIP:
-    Type: String
-    Description: Associate static public IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
-    AllowedValues:
-      - "Yes"
-      - "No"
-    Default: "No"
   displayPublicIP:
     Type: String
     Description: Display EC2 public IP in CloudFormation Outputs (select No if EC2 has no public IP)
@@ -98,6 +94,13 @@ Parameters:
       - "Yes"
       - "No"
     Default: "Yes"
+  assignStaticIP:
+    Type: String
+    Description: Associate static public IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
   ingressIPv4:
     Type: String
@@ -111,14 +114,13 @@ Parameters:
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
-    ConstraintDescription: Specify a value between 1024 and 65535
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
 
   volumeSize:
     Type: Number
-    Description: Volume Size in GiB
+    Description: Volume size in GiB
     MinValue: 30
     MaxValue: 16384
     Default: 30
@@ -141,13 +143,18 @@ Resources:
       GroupDescription: Allow inbound DCV
       VpcId: !Ref vpcID
       SecurityGroupIngress:
+        - Description: SSH (IPv4)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref ingressIPv4
+        - Description: SSH (IPv6)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
-          FromPort: !Ref listenPort
-          ToPort: !Ref listenPort
-          CidrIp: !Ref ingressIPv4
-        - Description: NICE DCV QUIC (IPv4)
-          IpProtocol: "udp"
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
@@ -156,6 +163,11 @@ Resources:
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
+        - Description: NICE DCV QUIC (IPv4)
+          IpProtocol: "udp"
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: !Ref ingressIPv4
         - Description: NICE DCV QUIC (IPv6)
           IpProtocol: "udp"
           FromPort: !Ref listenPort
@@ -443,6 +455,7 @@ Resources:
     Type: AWS::EC2::EIP
     Properties:
       Domain: vpc
+      NetworkBorderGroup: !Ref AWS::Region
       InstanceId: !Ref ec2Instance
       Tags:
         - Key: StackName
