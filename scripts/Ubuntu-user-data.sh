@@ -1,5 +1,6 @@
 #!/bin/bash
-mkdir -p /root/cfn
+mkdir -p /tmp/cfn
+cd /tmp/cfn
 
 # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
 export DEBIAN_FRONTEND=noninteractive   
@@ -33,7 +34,7 @@ gpg --import NICE-GPG-KEY
 # DCV update script
 cat << EoF > /home/ubuntu/update-dcv
 #!/bin/bash
-cd /tmp 
+cd /tmp
 if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 22.04)); then
   rm -f /tmp/nice-dcv-ubuntu1804-x86_64.tgz
   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
