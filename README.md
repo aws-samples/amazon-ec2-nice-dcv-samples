@@ -3,7 +3,7 @@ Collection of sample [AWS CloudFormation](https://aws.amazon.com/cloudformation/
 
 
 ## Description
-[NICE DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops and application streaming in the cloud from any device. To use it, [install the NICE DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html) server software on a server and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) (screenshot below) or [native client application](https://docs.aws.amazon.com/dcv/latest/userguide/client.html). 
+[NICE DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops and application streaming in the cloud from any device. To use, [install NICE DCV server software](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html) and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) (screenshot below) or [native client application](https://www.nice-dcv.com/latest.html). 
 
 <img alternate="NICE DCV web browser client" src="images/nice-dcv-Ubuntu.png">
 
@@ -18,12 +18,12 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html#using-copy-paste-browser)
 - [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer-web.html)
 - [Audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html)
-- [SSM Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) with [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) for changing login password and for [upgrading NICE DCV server](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-upgrading.html)
+- [SSM Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) with [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) for terminal access, changing login password and for [upgrading NICE DCV server](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-upgrading.html)
 - [AWS CLI v2](https://aws.amazon.com/blogs/developer/aws-cli-v2-is-now-generally-available/) with [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html)
 - [gp3 or gp2](https://aws.amazon.com/ebs/general-purpose/) volume type with option to specify volume size
 - Option to associate static, public IPv4 address via [Elastic IP](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html)
 - Option to specify NICE DCV server TCP/UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
-
+- [EC2 IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) for [NICE DCV licensing verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2) and S3 bucket access to [NVIDIA](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html) drivers (for use with [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances)) 
 
 
 ## Deployment and using NICE DCV
