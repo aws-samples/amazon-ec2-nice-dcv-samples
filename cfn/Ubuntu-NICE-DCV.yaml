@@ -52,14 +52,6 @@ Metadata:
           default: NICE DCV configuration
         Parameters:
           - listenPort
-      - Label:
-          default: AMI ID
-        Parameters:
-          - ubuntu2204arm64
-          - ubuntu2204x86
-          - ubuntu2004x86
-          - ubuntu1804x86
-          - ubuntu1804arm64
 
 Parameters:
   ubuntuVersion:
@@ -71,6 +63,9 @@ Parameters:
       - Ubuntu 20.04 (x86_64)
       - Ubuntu 18.04 (arm64)
       - Ubuntu 18.04 (x86_64)
+      - Ubuntu Pro 20.04 (x86_64)
+      - Ubuntu Pro 18.04 (arm64)
+      - Ubuntu Pro 18.04 (x86_64)
     Default: Ubuntu 22.04 (arm64)
   instanceType:
     Type: String
@@ -142,34 +137,15 @@ Parameters:
       - "gp2"
     Default: "gp3"
 
-  # https://ubuntu.com/server/docs/cloud-images/amazon-ec2
-  ubuntu2204x86:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Ubuntu 22.04 (x86_64)
-    Default: /aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id
-  ubuntu2204arm64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Ubuntu 22.04 (arm64)
-    Default: /aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id
-  ubuntu2004x86:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Ubuntu 20.04 (x86_64)
-    Default: /aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id
-  ubuntu1804x86:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Ubuntu 18.04 (x86_64)
-    Default: /aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id
-  ubuntu1804arm64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Ubuntu 18.04 (arm64)
-    Default: /aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id
-
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   useUbuntu2204x86: !Equals [!Ref ubuntuVersion, "Ubuntu 22.04 (x86_64)"]
   useUbuntu2204arm64: !Equals [!Ref ubuntuVersion, "Ubuntu 22.04 (arm64)"]
   useUbuntu2004x86: !Equals [!Ref ubuntuVersion, "Ubuntu 20.04 (x86_64)"]
   useUbuntu1804x86: !Equals [!Ref ubuntuVersion, "Ubuntu 18.04 (x86_64)"]
+  useUbuntu1804arm64: !Equals [!Ref ubuntuVersion, "Ubuntu 18.04 (arm64)"]
+  useUbuntuPro2004x86: !Equals [!Ref ubuntuVersion, "Ubuntu Pro 20.04 (x86_64)"]
+  useUbuntuPro1804x86: !Equals [!Ref ubuntuVersion, "Ubuntu Pro 18.04 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
 
 Resources:
@@ -494,20 +470,32 @@ Resources:
               owner: "ubuntu"
               group: "ubuntu"
     Properties:
-      ImageId:
+      ImageId: # https://ubuntu.com/server/docs/cloud-images/amazon-ec2
         !If [
           useUbuntu2204x86,
-          !Ref ubuntu2204x86,
+          "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
           !If [
             useUbuntu2204arm64,
-            !Ref ubuntu2204arm64,
+            "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
             !If [
               useUbuntu2004x86,
-              !Ref ubuntu2004x86,
+              "{{resolve:ssm:/aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
               !If [
                 useUbuntu1804x86,
-                !Ref ubuntu1804x86,
-                !Ref ubuntu1804arm64,
+                "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                !If [
+                  useUbuntu1804arm64,
+                  "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                  !If [
+                    useUbuntuPro2004x86,
+                    "{{resolve:ssm:/aws/service/marketplace/prod-733j3j6jvf5s2/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-ngmnrama2krsg
+                    !If [
+                      useUbuntuPro1804x86,
+                      "{{resolve:ssm:/aws/service/marketplace/prod-psxr647mwx22w/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-322njmk4u5jam
+                      "{{resolve:ssm:/aws/service/marketplace/prod-ozrfpayhkysxo/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-5daaremvkenwg
+                    ],
+                  ],
+                ],
               ],
             ],
           ],
