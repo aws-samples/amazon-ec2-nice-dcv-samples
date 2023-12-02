@@ -52,11 +52,6 @@ Metadata:
           default: NICE DCV configuration
         Parameters:
           - listenPort
-      - Label:
-          default: AMI ID
-        Parameters:
-          - amazonLinux2arm64
-          - amazonLinux2x86
 
 Parameters:
   amazonLinuxVersion:
@@ -136,18 +131,9 @@ Parameters:
       - "gp2"
     Default: "gp3"
 
-  amazonLinux2arm64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Amazon Linux 2 (arm64). ( aws ssm get-parameters-by-path --path /aws/service/ami-amazon-linux-latest --query "Parameters[].Name" )
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-arm64-gp2
-  amazonLinux2x86:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Amazon Linux 2 (x86_64). ( aws ssm get-parameters-by-path --path /aws/service/ami-amazon-linux-latest --query "Parameters[].Name" )
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2
-
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
-  useAMD64: !Equals [!Ref amazonLinuxVersion, "Amazon Linux 2 (x86_64)"]
+  useAl2x86: !Equals [!Ref amazonLinuxVersion, "Amazon Linux 2 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
 
 Resources:
@@ -458,7 +444,12 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
     Properties:
-      ImageId: !If [useAMD64, !Ref amazonLinux2x86, !Ref amazonLinux2arm64]
+      ImageId:
+        !If [
+          useAl2x86,
+          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-x86_64-gp2}}",
+          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/amzn2-ami-kernel-5.10-hvm-arm64-gp2}}",
+        ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair
