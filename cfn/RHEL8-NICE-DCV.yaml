@@ -52,13 +52,6 @@ Metadata:
           default: NICE DCV configuration
         Parameters:
           - listenPort
-      - Label:
-          default: AMI ID
-        Parameters:
-          - rhel9arm64
-          - rhel9x86
-          - rhel8arm64
-          - rhel8x86
 
 Parameters:
   rhelVersion:
@@ -139,23 +132,6 @@ Parameters:
       - "gp3"
       - "gp2"
     Default: "gp3"
-
-  rhel9arm64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Red Hat Enterprise Linux 9 (arm64) ( https://aws.amazon.com/marketplace/pp/prodview-jugq2ewzbalue )
-    Default: /aws/service/marketplace/prod-xtovizizqqkn4/latest
-  rhel9x86:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Red Hat Enterprise Linux 9 (x86_64) ( https://aws.amazon.com/marketplace/pp/prodview-b5psjqk4f5f3k )
-    Default: /aws/service/marketplace/prod-zajqq6vxyggys/latest
-  rhel8arm64:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Red Hat Enterprise Linux 8 (arm64) ( https://aws.amazon.com/marketplace/pp/prodview-fvgsywc5jqlkw )
-    Default: /aws/service/marketplace/prod-ly3mqgzc5ajak/latest
-  rhel8x86:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Red Hat Enterprise Linux 8 (x86_64) ( https://aws.amazon.com/marketplace/pp/prodview-kv5mi3ksb2mma )
-    Default: /aws/service/marketplace/prod-aht4stwdth2ls/latest
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -481,14 +457,17 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
     Properties:
-      ImageId:
-        !If [
+      ImageId: !If [
           useRhel8x86,
-          !Ref rhel8x86,
+          "{{resolve:ssm:/aws/service/marketplace/prod-aht4stwdth2ls/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-kv5mi3ksb2mma
           !If [
             useRhel8arm64,
-            !Ref rhel8arm64,
-            !If [useRhel9x86, !Ref rhel9x86, !Ref rhel9arm64],
+            "{{resolve:ssm:/aws/service/marketplace/prod-ly3mqgzc5ajak/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-fvgsywc5jqlkw
+            !If [
+              useRhel9x86,
+              "{{resolve:ssm:/aws/service/marketplace/prod-zajqq6vxyggys/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-b5psjqk4f5f3k
+              "{{resolve:ssm:/aws/service/marketplace/prod-xtovizizqqkn4/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-jugq2ewzbalue
+            ],
           ],
         ]
       InstanceType: !Ref instanceType
