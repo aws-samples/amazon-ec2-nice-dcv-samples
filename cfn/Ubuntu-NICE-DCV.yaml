@@ -63,6 +63,8 @@ Parameters:
       - Ubuntu 20.04 (x86_64)
       - Ubuntu 18.04 (arm64)
       - Ubuntu 18.04 (x86_64)
+      - Ubuntu Pro 22.04 (arm64)
+      - Ubuntu Pro 22.04 (x86_64)
       - Ubuntu Pro 20.04 (x86_64)
       - Ubuntu Pro 18.04 (arm64)
       - Ubuntu Pro 18.04 (x86_64)
@@ -144,6 +146,9 @@ Conditions:
   useUbuntu2004x86: !Equals [!Ref ubuntuVersion, "Ubuntu 20.04 (x86_64)"]
   useUbuntu1804x86: !Equals [!Ref ubuntuVersion, "Ubuntu 18.04 (x86_64)"]
   useUbuntu1804arm64: !Equals [!Ref ubuntuVersion, "Ubuntu 18.04 (arm64)"]
+  useUbuntuPro2204x86: !Equals [!Ref ubuntuVersion, "Ubuntu Pro 22.04 (x86_64)"]
+  useUbuntuPro2204arm64:
+    !Equals [!Ref ubuntuVersion, "Ubuntu Pro 22.04 (arm64)"]
   useUbuntuPro2004x86: !Equals [!Ref ubuntuVersion, "Ubuntu Pro 20.04 (x86_64)"]
   useUbuntuPro1804x86: !Equals [!Ref ubuntuVersion, "Ubuntu Pro 18.04 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
@@ -470,7 +475,7 @@ Resources:
               owner: "ubuntu"
               group: "ubuntu"
     Properties:
-      ImageId: # https://ubuntu.com/server/docs/cloud-images/amazon-ec2
+      ImageId: # https://ubuntu.com/server/docs/cloud-images/amazon-ec2 https://ubuntu.com/blog/ubuntu-pro-is-now-part-of-the-aws-ec2-console
         !If [
           useUbuntu2204x86,
           "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
@@ -487,12 +492,20 @@ Resources:
                   useUbuntu1804arm64,
                   "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
                   !If [
-                    useUbuntuPro2004x86,
-                    "{{resolve:ssm:/aws/service/marketplace/prod-733j3j6jvf5s2/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-ngmnrama2krsg
+                    useUbuntuPro2204x86,
+                    "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
                     !If [
-                      useUbuntuPro1804x86,
-                      "{{resolve:ssm:/aws/service/marketplace/prod-psxr647mwx22w/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-322njmk4u5jam
-                      "{{resolve:ssm:/aws/service/marketplace/prod-ozrfpayhkysxo/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-5daaremvkenwg
+                      useUbuntuPro2204arm64,
+                      "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                      !If [
+                        useUbuntuPro2004x86,
+                        "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                        !If [
+                          useUbuntuPro1804x86,
+                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                        ],
+                      ],
                     ],
                   ],
                 ],
