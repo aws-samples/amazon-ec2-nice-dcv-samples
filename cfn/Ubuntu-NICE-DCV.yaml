@@ -309,7 +309,9 @@ Resources:
                   curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
                 fi
                 unzip -q -o awscliv2.zip
+                /usr/bin/aws --version
                 sudo ./aws/install --update -b /usr/bin
+                /usr/bin/aws --version
               mode: "000755"
               owner: "ubuntu"
               group: "ubuntu"

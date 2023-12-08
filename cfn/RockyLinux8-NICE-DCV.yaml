@@ -323,7 +323,9 @@ Resources:
                   curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
                 fi
                 unzip -q -o awscliv2.zip
+                /usr/bin/aws --version
                 sudo ./aws/install --update -b /usr/bin
+                /usr/bin/aws --version
               mode: "000755"
               owner: "rocky"
               group: "rocky"
@@ -515,6 +517,17 @@ Resources:
 
           dnf clean all
           dnf install -q -y python3 python3-setuptools wget tmux unzip tar curl sed
+
+          # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
+          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
+            wget -4 -nv https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
+            wget -4 -nv https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
+            dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
+          elif (uname -a | grep -q x86); then
+            wget -4 -nv https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rpm
+            wget -4 -nv https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
+            dnf install -q -y ./ec2-instance-connect.rpm ./ec2-instance-connect-selinux.noarch.rpm
+          fi
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
           if (uname -a | grep -q x86); then
