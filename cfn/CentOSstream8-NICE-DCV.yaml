@@ -555,8 +555,8 @@ Resources:
           # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
           # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
           systemctl stop firewalld
-          firewall-offline-cmd  --add-port ${listenPort}/tcp
-          firewall-offline-cmd  --add-port ${listenPort}/udp
+          firewall-offline-cmd --add-port ${listenPort}/tcp
+          firewall-offline-cmd --add-port ${listenPort}/udp
           systemctl disable firewalld
 
           # text console: DCV virtual sessions only
