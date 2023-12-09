@@ -99,7 +99,7 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
-    Default: "No"
+    Default: "Yes"
 
   ingressIPv4:
     Type: String
@@ -140,7 +140,7 @@ Resources:
   securityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow inbound DCV
+      GroupDescription: Allow inbound DCV and SSH
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: SSH (IPv4)
@@ -491,10 +491,10 @@ Resources:
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
           if (uname -a | grep -q x86); then
-            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
             tar -xvzf nice-dcv-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
           else
-            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-aarch64.tgz
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-aarch64.tgz
             tar -xvzf nice-dcv-el7-aarch64.tgz && cd nice-dcv-*-el7-aarch64
           fi
           yum install -q -y ./nice-dcv-server-*.rpm
@@ -581,8 +581,13 @@ Resources:
 
 Outputs:
   EC2console:
-    Description: EC2 instance console
+    Description: EC2 console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+
+  EC2instanceConnect:
+    Condition: displayPublicIP
+    Description: EC2 Instance Connect
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=ec2-user&sshPort=22#/"
 
   SSMsessionManager:
     Description: SSM Session Manager login ("sudo passwd ec2-user" to change password)

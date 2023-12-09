@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Kali Linux with NICE DCV (login as kali)
+Description: CentOS Stream 8 with NICE DCV (login as centos)
 
 Metadata:
   License:
@@ -22,7 +22,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: AMI ID. Subscribe before launching ( https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to )
+          default: CentOS Stream version. Subscribe before launching ( https://aws.amazon.com/marketplace/pp/prodview-urkpdamxhet6q )
         Parameters:
           - imageId
       - Label:
@@ -56,8 +56,9 @@ Metadata:
 Parameters:
   imageId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Kali AMI ID ( aws ssm get-parameters-by-path --path /aws/service/marketplace/prod-tsqyof4l3a3aa/ --query "Parameters[].Name" )
-    Default: /aws/service/marketplace/prod-tsqyof4l3a3aa/latest
+    Description: CentOS 8 (x86_64) AMI ID
+    Default: /aws/service/marketplace/prod-ri6pvkyyeeydg/latest
+
   instanceType:
     Type: String
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
@@ -66,7 +67,7 @@ Parameters:
   ec2Name:
     Type: String
     Description: EC2 instance name
-    Default: Kali Linux-NICE-DCV
+    Default: CentOS Stream 8-NICE-DCV
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
@@ -119,7 +120,7 @@ Parameters:
     Description: Volume size in GiB
     MinValue: 10
     MaxValue: 16384
-    Default: 15
+    Default: 10
   volumeType:
     Type: String
     Description: EBS volume type
@@ -250,37 +251,45 @@ Resources:
             - 00_setup
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
-            "/home/kali/update-dcv":
+            "/home/centos/update-dcv":
               content: |
                 #!/bin/bash
                 cd /tmp
-                sudo dcv close-session kali
-                rm -f /tmp/nice-dcv-ubuntu2204-x86_64.tgz
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
-                tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+                sudo dcv close-session centos
+                if (uname -a | grep -q x86); then
+                  rm -f nice-dcv-el8-x86_64.tgz
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+                  tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+                else
+                  rm -f nice-dcv-el8-aarch64.tgz
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
+                  tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
+                fi
                 sudo systemctl stop dcvserver dcv-virtual-session
-                sudo apt-get install -y ./nice-dcv-server_*.deb
-                sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
-                sudo usermod -aG video dcv
-                sudo apt-get install -y ./nice-xdcv_*.deb
+                sudo dnf install -y nice-dcv-server-*.rpm
+                sudo dnf install -y nice-dcv-web-viewer-*.rpm
+                sudo dnf install -y nice-xdcv-*.rpm
                 sudo systemctl restart dcvserver dcv-virtual-session
               mode: "000755"
-              owner: "kali"
-              group: "kali"
-            "/home/kali/update-awscli":
+              owner: "centos"
+              group: "centos"
+            "/home/centos/update-awscli":
               content: |
                 #!/bin/bash
                 cd /tmp
                 rm -f awscliv2.zip
-                curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
-                /usr/bin/aws --version
+                if (uname -a | grep -q x86); then
+                  curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+                else
+                  curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
+                fi
                 unzip -q -o awscliv2.zip
                 /usr/bin/aws --version
                 sudo ./aws/install --update -b /usr/bin
                 /usr/bin/aws --version
               mode: "000755"
-              owner: "kali"
-              group: "kali"
+              owner: "centos"
+              group: "centos"
             "/etc/systemd/system/dcv-virtual-session.service":
               content: |
                 [Unit]
@@ -298,7 +307,7 @@ Resources:
             "/opt/dcv-virtual-session.sh":
               content: |
                 #!/bin/bash
-                dcvUser=kali
+                dcvUser=centos
                 while true;
                 do
                   if (/usr/bin/dcv list-sessions | grep -q $dcvUser); then
@@ -311,22 +320,128 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
-            "/etc/polkit-1/rules.d/kali.rules":
+            "/home/centos/download-NVIDIA-GRID-driver":
               content: |
-                polkit.addRule(function(action, subject) {
-                   if ((action.id == "org.freedesktop.color-manager.create-device" ||
-                        action.id == "org.freedesktop.color-manager.create-profile" ||
-                        action.id == "org.freedesktop.color-manager.delete-device" ||
-                        action.id == "org.freedesktop.color-manager.delete-profile" ||
-                        action.id == "org.freedesktop.color-manager.modify-device" ||
-                        action.id == "org.freedesktop.color-manager.modify-profile") &&
-                       subject.isInGroup("kali")) {
-                      return polkit.Result.YES;
-                   }
-                });
-              mode: "000644"
-              owner: "root"
-              group: "root"
+                #!/bin/bash
+                clear
+                echo  
+                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
+                echo  
+                echo By downloading, you agree to conditions and are bound by license terms as stated on 
+                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
+                echo 
+                mkdir -p /home/centos/Downloads/Drivers
+                cd /home/centos/Downloads/Drivers
+                pwd
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1                
+                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                chmod +x /home/centos/Downloads/Drivers/*.run
+              mode: "000755"
+              owner: "centos"
+              group: "centos"
+            "/home/centos/download-NVIDIA-Gaming-driver":
+              content: |
+                #!/bin/bash
+                clear
+                echo  
+                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
+                echo  
+                echo By downloading, you agree to conditions and are bound by license terms as stated on 
+                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
+                echo 
+                mkdir -p /home/centos/Downloads/Drivers                
+                cd /home/centos/Downloads/Drivers
+                pwd
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                sudo mkdir -p /etc/nvidia
+                sudo curl -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2023_9_22.cert"
+              mode: "000755"
+              owner: "centos"
+              group: "centos"
+            "/home/centos/download-AMD-driver":
+              content: |
+                #!/bin/bash
+                clear
+                echo  
+                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
+                echo  
+                echo By downloading, you agree to conditions and are bound by license terms as stated on 
+                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
+                echo 
+                mkdir -p /home/centos/Downloads/Drivers                
+                cd /home/centos/Downloads/Drivers
+                pwd
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ .
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                cat << EOF > /home/centos/Downloads/Drivers/amd-xorg.conf
+                Section "ServerLayout"
+                    Identifier     "Layout0"
+                    Screen          0 "Screen0"
+                    InputDevice     "Keyboard0" "CoreKeyboard"
+                    InputDevice     "Mouse0" "CorePointer"
+                EndSection
+                Section "Files"
+                    ModulePath "/opt/amdgpu/lib64/xorg/modules/drivers"
+                    ModulePath "/opt/amdgpu/lib/xorg/modules"
+                    ModulePath "/opt/amdgpu-pro/lib/xorg/modules/extensions"
+                    ModulePath "/opt/amdgpu-pro/lib64/xorg/modules/extensions"
+                    ModulePath "/usr/lib64/xorg/modules"
+                    ModulePath "/usr/lib/xorg/modules"
+                EndSection
+                Section "InputDevice"
+                    # generated from default
+                    Identifier     "Mouse0"
+                    Driver         "mouse"
+                    Option         "Protocol" "auto"
+                    Option         "Device" "/dev/psaux"
+                    Option         "Emulate3Buttons" "no"
+                    Option         "ZAxisMapping" "4 5"
+                EndSection
+                Section "InputDevice"
+                    # generated from default
+                    Identifier     "Keyboard0"
+                    Driver         "kbd"
+                EndSection
+                Section "Monitor"
+                    Identifier     "Monitor0"
+                    VendorName     "Unknown"
+                    ModelName      "Unknown"
+                EndSection
+                Section "Device"
+                    Identifier     "Device0"
+                    Driver         "amdgpu"
+                    VendorName     "AMD"
+                    BoardName      "Radeon MxGPU V520"
+                    BusID          "PCI:0:30:0"
+                EndSection
+                Section "Extensions"
+                    Option         "DPMS" "Disable"
+                EndSection
+                Section "Screen"
+                    Identifier     "Screen0"
+                    Device         "Device0"
+                    Monitor        "Monitor0"
+                    DefaultDepth   24
+                    Option         "AllowEmptyInitialConfiguration" "True"
+                    SubSection "Display"
+                        Virtual    3840 2160
+                        Depth      32
+                    EndSubSection
+                EndSection
+                EOF
+              mode: "000755"
+              owner: "centos"
+              group: "centos"
     Properties:
       ImageId: !Ref imageId
       InstanceType: !Ref instanceType
@@ -337,14 +452,14 @@ Resources:
       SecurityGroupIds:
         - !Ref securityGroup
       BlockDeviceMappings:
-        - DeviceName: /dev/xvda
+        - DeviceName: /dev/sda1
           Ebs:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
             DeleteOnTermination: true
       UserData:
         Fn::Base64: !Sub |
-          #!/bin/zsh
+          #!/bin/bash
           mkdir -p /tmp/cfn
           cd /tmp/cfn
 
@@ -352,27 +467,25 @@ Resources:
           sysctl -w net.ipv6.conf.all.disable_ipv6=1
           sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-          # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
-          export DEBIAN_FRONTEND=noninteractive
+          dnf clean all
+          dnf install -q -y python3 python3-setuptools wget tmux unzip tar curl sed
 
-          apt-get -q update
-          apt-get install -q -y wget tmux unzip tar curl sed
+          # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
+          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
+            dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
+          fi
 
-          # EC2-instance-connect
-          curl -s -L -O http://archive.ubuntu.com/ubuntu/pool/main/e/ec2-instance-connect/ec2-instance-connect_1.1.17-0ubuntu1_all.deb
-          apt-get install -q -y ./ec2-instance-connect_1.1.17-0ubuntu1_all.deb
+          # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
+          if (uname -a | grep -q x86); then
+            dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
+          else
+            dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_arm64/amazon-ssm-agent.rpm
+          fi
+          systemctl enable --now amazon-ssm-agent
 
-          # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
-          apt-get install -q -y snapd
-          systemctl enable snapd
-          systemctl start snapd
-          sleep 2
-          systemctl enable snapd.apparmor
-          snap install amazon-ssm-agent --classic
-          snap start amazon-ssm-agent
-
-          # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/        
-          apt-get install -q -y python3 python3-setuptools python3-docutils python3-daemon
+          # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
           curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
           cd aws-cfn-bootstrap-2.0
@@ -380,28 +493,27 @@ Resources:
           python3 setup.py install
           cd /tmp/cfn
 
-          # cfn-init
           python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
-          apt-get -q -y install kali-desktop-xfce
-          apt-get -q -y install pipewire-audio
+          # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
+          dnf groupinstall -q -y 'Server with GUI'
+          systemctl isolate multi-user.target
+
+          sed -i "s/^#WaylandEnable=false/WaylandEnable=false/g" /etc/gdm/custom.conf
+          dnf install -q -y pulseaudio pulseaudio-utils
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
-          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-          gpg --import NICE-GPG-KEY
-          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
-          tar -xvzf nice-dcv-ubuntu2204-x86_64.tgz && cd nice-dcv-*-ubuntu2204-x86_64
-
-          # tweaks for installation on Kali
-          mkdir -p /etc/lightdm/lightdm.conf.d
-
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
-          apt-get -q -y install ./nice-dcv-server_*.deb
-          apt-get -q -y install ./nice-dcv-web-viewer_*.deb
-          usermod -aG video dcv 
-          # from /etc/lightdm/lightdm.conf.d
-          sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
-          apt-get -q -y install ./nice-xdcv_*.deb
+          rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
+          if (uname -a | grep -q x86); then
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+            tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+          else
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
+            tar -xzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
+          fi
+          dnf install -q -y ./nice-dcv-server-*.rpm
+          dnf install -q -y ./nice-dcv-web-viewer-*.rpm
+          dnf install -q -y ./nice-xdcv-*.rpm
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -416,23 +528,36 @@ Resources:
           sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
           # remove AWSCLI version 1
-          apt-get -q -y remove awscli
+          dnf remove awscli -q -y
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+          if (uname -a | grep -q x86); then
+            curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
+          else
+            curl -s https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
+          fi
           unzip -q -o awscliv2.zip
           ./aws/install -b /usr/bin
-          echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/kali/.zshrc
+          echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/centos/.bashrc
+
+          # Update OS
+          dnf update -q -y
+
+          # dnf-automatic
+          dnf install -q -y dnf-automatic
+          sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
+          systemctl enable --now dnf-automatic.timer
 
           # DCV update script
           # AWS CLI update script
-          # Fix "Authentication Required to Create Managed Color Device" prompt: https://www.kali.org/docs/general-use/xfce-with-rdp/
 
-          # Update OS
-          apt-get -q update
-          apt-get -q -y upgrade
-          apt-get -y autoremove
+          # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
+          # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
+          systemctl stop firewalld
+          firewall-offline-cmd  --add-port ${listenPort}/tcp
+          firewall-offline-cmd  --add-port ${listenPort}/udp
+          systemctl disable firewalld
 
           # text console: DCV virtual sessions only
           systemctl isolate multi-user.target
@@ -484,14 +609,14 @@ Outputs:
   EC2instanceConnect:
     Condition: displayPublicIP
     Description: EC2 Instance Connect
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=kali&sshPort=22#/"
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=centos&sshPort=22#/"
 
   SSMsessionManager:
-    Description: SSM Session Manager login ("sudo passwd kali" to change password)
+    Description: SSM Session Manager login ("sudo passwd centos" to change password)
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
-    Description: NICE DCV web browser client (login as kali)
+    Description: NICE DCV web browser client (login as centos)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:

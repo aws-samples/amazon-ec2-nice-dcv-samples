@@ -101,7 +101,7 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
-    Default: "No"
+    Default: "Yes"
 
   ingressIPv4:
     Type: String
@@ -140,12 +140,15 @@ Conditions:
     !Equals [!Ref rhelVersion, "Red Hat Enterprise Linux 8 (arm64)"]
   useRhel9x86: !Equals [!Ref rhelVersion, "Red Hat Enterprise Linux 9 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
+  isNotGraviton: !Or [!Condition useRhel8x86, !Condition useRhel9x86]
+  displayInstanceConnect:
+    !And [!Condition displayPublicIP, !Condition isNotGraviton]
 
 Resources:
   securityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Allow inbound DCV
+      GroupDescription: Allow inbound DCV and SSH
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: SSH (IPv4)
@@ -300,9 +303,7 @@ Resources:
                   curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
                 fi
                 unzip -q -o awscliv2.zip
-                /usr/bin/aws --version
                 sudo ./aws/install --update -b /usr/bin
-                /usr/bin/aws --version
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
@@ -500,12 +501,12 @@ Resources:
 
           # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
           if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
-            wget -4 -nv https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
-            wget -4 -nv https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
             dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
           elif (uname -a | grep -q x86); then
-            wget -4 -nv https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rpm
-            wget -4 -nv https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rpm
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
             dnf install -q -y ./ec2-instance-connect.rpm ./ec2-instance-connect-selinux.noarch.rpm
           fi
 
@@ -518,7 +519,7 @@ Resources:
           systemctl enable --now amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-          wget -4 -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
           cd aws-cfn-bootstrap-2.0
           python3 setup.py build
@@ -537,16 +538,16 @@ Resources:
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
           if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
-            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
             tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
           elif ((uname -a | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
-            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
             tar -xzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
           elif (uname -a | grep -q x86); then
-            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
             tar -xzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64
           else
-            wget -nv https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-aarch64.tgz
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-aarch64.tgz
             tar -xzf nice-dcv-el9-aarch64.tgz && cd nice-dcv-*-el9-aarch64
           fi
           dnf install -q -y ./nice-dcv-server-*.rpm
@@ -641,8 +642,13 @@ Resources:
 
 Outputs:
   EC2console:
-    Description: EC2 instance console
+    Description: EC2 console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+
+  EC2instanceConnect:
+    Condition: displayInstanceConnect
+    Description: EC2 Instance Connect
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=ec2-user&sshPort=22#/"
 
   SSMsessionManager:
     Description: SSM Session Manager login ("sudo passwd ec2-user" to change password)
