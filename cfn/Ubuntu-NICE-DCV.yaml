@@ -309,7 +309,9 @@ Resources:
                   curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
                 fi
                 unzip -q -o awscliv2.zip
+                /usr/bin/aws --version
                 sudo ./aws/install --update -b /usr/bin
+                /usr/bin/aws --version
               mode: "000755"
               owner: "ubuntu"
               group: "ubuntu"
@@ -546,23 +548,24 @@ Resources:
             apt-get -q -y install ec2-instance-connect
           fi
 
-          apt-get install -q -y python-setuptools wget tmux unzip tar curl sed
-          # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/releasehistory-aws-cfn-bootstrap.html#releasehistory-aws-cfn-bootstrap-v1
-          wget -4 -nv https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
-          tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
-          cd aws-cfn-bootstrap-1.4
-          python2 setup.py build
-          python2 setup.py install
+          apt-get install -q -y wget tmux unzip tar curl sed
+          apt-get install -q -y python3 python3-setuptools python3-docutils python3-daemon
+          # CfN scripts: # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/
+          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+          tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
+          cd aws-cfn-bootstrap-2.0
+          python3 setup.py build
+          python3 setup.py install
           cd /tmp/cfn
 
-          # cfn-init
-          python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+          python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
           # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           systemctl isolate multi-user.target
 
           if (cat /etc/os-release | grep -q 18.04); then
             apt-get -q -y install ubuntu-desktop
+            rm -f /home/ubuntu/configure-gnome
           else
             apt-get -q -y install ubuntu-desktop-minimal 
           fi
@@ -640,7 +643,7 @@ Resources:
           systemctl daemon-reload
 
           # cfn-init completed so signal success or not
-          python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+          python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
