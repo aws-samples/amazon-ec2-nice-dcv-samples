@@ -348,7 +348,6 @@ Resources:
             "/home/ubuntu/configure-gnome":
               content: |
                 #!/bin/bash
-                gnome-extensions enable ubuntu-dock@ubuntu.com
                 XDG_CURRENT_DESKTOP=ubuntu:GNOME gnome-control-center&
               mode: "000755"
               owner: "root"
@@ -570,7 +569,11 @@ Resources:
             apt-get -q -y install ubuntu-desktop-minimal 
           fi
           apt-get -q -y install gdm3
-          apt-get -q -y install pulseaudio-utils gnome-tweaks gnome-shell-extension-ubuntu-dock
+          apt-get -q -y install pulseaudio-utils
+          apt-get -q -y install gnome-tweaks gnome-shell-extension-ubuntu-dock
+          if (cat /etc/os-release | grep -q 22.04); then
+            apt-get -q -y install gnome-shell-extension-manager
+          fi
 
           sed -i "s/^#WaylandEnable=false/WaylandEnable=false/g" /etc/gdm3/custom.conf
 
