@@ -274,7 +274,9 @@ Resources:
             c:\\Users\\Administrator\\update-awscli.cmd:
               content: |
                 @echo off
+                aws --version
                 C:\ProgramData\chocolatey\bin\choco upgrade -y awscli
+                aws --version
             c:\\Users\\Administrator\\download-NVIDIA-GRID-driver.cmd:
               content: |
                 @echo off
