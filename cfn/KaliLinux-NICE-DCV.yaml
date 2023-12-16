@@ -119,7 +119,7 @@ Parameters:
     Description: Volume size in GiB
     MinValue: 10
     MaxValue: 16384
-    Default: 15
+    Default: 20
   volumeType:
     Type: String
     Description: EBS volume type
