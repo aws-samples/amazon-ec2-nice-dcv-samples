@@ -52,6 +52,7 @@ Metadata:
           default: NICE DCV configuration
         Parameters:
           - listenPort
+          - sessionType
 
 Parameters:
   imageId:
@@ -113,6 +114,13 @@ Parameters:
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
+  sessionType:
+    Type: String
+    Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
+    AllowedValues:
+      - "virtual"
+      - "virtual_NVIDIA_Driver"
+    Default: "virtual"
 
   volumeSize:
     Type: Number
@@ -248,6 +256,10 @@ Resources:
         configSets:
           setup:
             - 00_setup
+          dcv_gpu_install:
+            - 02_dcv_gpu_install
+          virtual_NVIDIA_Driver:
+            - 03_gpu_nvidia_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/kali/update-dcv":
@@ -310,6 +322,36 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
+            "/etc/systemd/system/dcv-post-reboot.service":
+              content: |
+                [Unit]
+                Description=Post install tasks
+                After=default.target network.target
+
+                [Service]
+                ExecStart=/opt/dcv-post-reboot.sh
+
+                [Install]
+                WantedBy=default.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/opt/dcv-post-reboot.sh":
+              content: !Sub |
+                #!/bin/bash
+                rm -f /etc/systemd/system/dcv-post-reboot.service
+
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                rm -f /opt/dcv-post-reboot.sh
+                systemctl daemon-reload
+              mode: "000755"
+              owner: "root"
+              group: "root"
             "/etc/polkit-1/rules.d/kali.rules":
               content: |
                 polkit.addRule(function(action, subject) {
@@ -324,6 +366,48 @@ Resources:
                    }
                 });
               mode: "000644"
+              owner: "root"
+              group: "root"
+        02_dcv_gpu_install:
+          files:
+            "/etc/systemd/system/dcv-gpu-install.service":
+              content: |
+                [Unit]
+                Description=Install GPU driver
+                After=default.target network.target
+
+                [Service]
+                ExecStart=/opt/install-gpu-driver
+
+                [Install]
+                WantedBy=default.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+        03_gpu_nvidia_install:
+          files:
+            "/opt/install-gpu-driver": # https://www.kali.org/docs/cloud/aws/
+              content: |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                apt-get install -q -y nvidia-driver nvidia-cuda-toolkit
+                apt-get install -q -y nvidia-xconfig
+
+                nvidia-xconfig --preserve-busid --enable-all-gpus
+
+                systemctl set-default graphical.target
+                systemctl enable dcv-post-reboot
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${0}
+
+                reboot
+              mode: "000755"
               owner: "root"
               group: "root"
     Properties:
@@ -379,7 +463,6 @@ Resources:
           python3 setup.py install
           cd /tmp/cfn
 
-          # cfn-init
           python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
           apt-get -q -y install kali-desktop-xfce
@@ -397,7 +480,7 @@ Resources:
           # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
           apt-get -q -y install ./nice-dcv-server_*.deb
           apt-get -q -y install ./nice-dcv-web-viewer_*.deb
-          usermod -aG video dcv 
+          usermod -aG video dcv
           # from /etc/lightdm/lightdm.conf.d
           sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
           apt-get -q -y install ./nice-xdcv_*.deb
@@ -405,8 +488,6 @@ Resources:
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
           sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
-
-          # Virtual session daemon: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-manual
 
           # Listen port: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
           sed -i "/^web-port=/d" /etc/dcv/dcv.conf
@@ -424,28 +505,37 @@ Resources:
           ./aws/install -b /usr/bin
           echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/kali/.zshrc
 
-          # DCV update script
-          # AWS CLI update script
-          # Fix "Authentication Required to Create Managed Color Device" prompt: https://www.kali.org/docs/general-use/xfce-with-rdp/
+          # Higher virtual session resolution
+          sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
 
           # Update OS
           apt-get -q update
-          apt-get -q -y upgrade
-          apt-get -y autoremove
+          apt-get -q -y full-upgrade
+          apt-get -q -y autoremove
 
-          # text console: DCV virtual sessions only
-          systemctl isolate multi-user.target
-          systemctl set-default multi-user.target
+          # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          export SESSION="${sessionType}"
           systemctl daemon-reload
-
-          # cfn-init completed so signal success or not
-          python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+          systemctl set-default multi-user.target
+          systemctl enable dcv-virtual-session
+          case $SESSION in
+            virtual)
+              systemctl enable dcv-post-reboot
+              ;;
+            virtual_*) # systemctl to install GPU driver after reboot
+              apt-get install -q -y linux-headers-cloud-amd64
+              python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              systemctl daemon-reload
+              systemctl enable dcv-gpu-install
+              ;;
+          esac
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
           sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
-          systemctl enable --now dcvserver dcv-virtual-session.service
+          systemctl enable dcvserver
 
           sleep 1 && reboot
       Tags:
