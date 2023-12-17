@@ -26,6 +26,7 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - Option to specify NICE DCV server TCP/UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
 - [EC2 IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) for [NICE DCV license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2) and S3 bucket access to [NVIDIA](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html) drivers (for [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances))
 - Virtual or console [NICE DCV session](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) with option to install [NVIDIA GRID or Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) driver (some Linux distros)
+- Option to install NVIDIA GRID, NVIDIA Gaming or AMD GPU driver (G5, G4dn, G4ad instance types on Windows)
 
 ## Deployment and using NICE DCV
 Refer to [cfn](cfn) section for instructions.
