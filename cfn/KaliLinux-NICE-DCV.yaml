@@ -339,7 +339,6 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                rm -f /etc/systemd/system/dcv-post-reboot.service
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
@@ -347,7 +346,8 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
-                rm -f /opt/dcv-post-reboot.sh
+                rm -f /etc/systemd/system/dcv-post-reboot.service
+                rm -f ${!0}
                 systemctl daemon-reload
               mode: "000755"
               owner: "root"
@@ -394,18 +394,15 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
+                apt-get install -q -y linux-headers-cloud-amd64
                 apt-get install -q -y nvidia-driver nvidia-cuda-toolkit
-                apt-get install -q -y nvidia-xconfig
 
-                nvidia-xconfig --preserve-busid --enable-all-gpus
-
-                systemctl set-default graphical.target
-                systemctl enable dcv-post-reboot
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
                 rm -f ${0}
-
                 reboot
               mode: "000755"
               owner: "root"
@@ -515,15 +512,14 @@ Resources:
 
           # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           export SESSION="${sessionType}"
-          systemctl daemon-reload
           systemctl set-default multi-user.target
+          systemctl daemon-reload
           systemctl enable dcv-virtual-session
           case $SESSION in
             virtual)
               systemctl enable dcv-post-reboot
               ;;
             virtual_*) # systemctl to install GPU driver after reboot
-              apt-get install -q -y linux-headers-cloud-amd64
               python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
               python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload

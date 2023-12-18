@@ -53,6 +53,7 @@ Metadata:
         Parameters:
           - listenPort
           - sessionType
+          - teslaDriverVersion
       - Label:
           default: AMI ID
         Parameters:
@@ -79,7 +80,7 @@ Parameters:
   ec2Name:
     Type: String
     Description: EC2 instance name
-    Default: Rocky Linux 8/9-NICE-DCV
+    Default: Rocky Linux-NICE-DCV
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
@@ -128,13 +129,18 @@ Parameters:
     Default: 8443
   sessionType:
     Type: String
-    Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
+    Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
+      - "virtual_NVIDIA_Tesla_Driver"
       - "console"
       - "console_NVIDIA_GRID_Driver"
       - "console_NVIDIA_Gaming_Driver"
     Default: "virtual"
+  teslaDriverVersion:
+    Type: String
+    Description: NVIDIA Tesla driver version (if applicable). Get appropriate version from https://www.nvidia.com/Download/index.aspx (Data Center/Tesla Product Type)
+    Default: 535.129.03
 
   volumeSize:
     Type: Number
@@ -302,6 +308,8 @@ Resources:
             - 03_gpu_nvidia_grid_install
           console_NVIDIA_Gaming_Driver:
             - 04_gpu_nvidia_gaming_install
+          virtual_NVIDIA_Tesla_Driver:
+            - 05_gpu_nvidia_tesla_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/rocky/update-dcv":
@@ -399,7 +407,6 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                rm -f /etc/systemd/system/dcv-post-reboot.service
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
@@ -407,7 +414,16 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
-                rm -f /opt/dcv-post-reboot.sh
+                SESSION="${sessionType}"
+                case $SESSION in
+                  console*)
+                    systemctl set-default graphical.target
+                    systemctl isolate graphical.target
+                    ;;
+                esac
+
+                rm -f /etc/systemd/system/dcv-post-reboot.service
+                rm -f ${!0}
                 systemctl daemon-reload
               mode: "000755"
               owner: "root"
@@ -561,9 +577,11 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 yum install -q -y kernel-devel-$(uname -r)
-                yum install -q -y vulkan-devel libglvnd-devel
-
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
                 chmod +x NVIDIA-Linux-x86_64*.run
                 ./NVIDIA-Linux-x86_64*.run -s
 
@@ -572,13 +590,9 @@ Resources:
 
                 nvidia-xconfig --preserve-busid --enable-all-gpus
 
-                systemctl set-default graphical.target
                 systemctl enable dcv-post-reboot
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 rm -f /etc/systemd/system/dcv-gpu-install.service
                 rm -f ${0}
-
                 reboot
               mode: "000755"
               owner: "root"
@@ -590,14 +604,15 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 yum install -q -y kernel-devel-$(uname -r)
-                yum install -q -y vulkan-devel libglvnd-devel
-
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
+
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/NVIDIA-Linux-x86_64*-grid.run
                 ./nvidia-drivers/NVIDIA-Linux-x86_64*.run -s
@@ -613,15 +628,41 @@ Resources:
 
                 nvidia-xconfig --preserve-busid --enable-all-gpus
 
-                systemctl set-default graphical.target
                 systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${0}
+                reboot
+              mode: "000755"
+              owner: "root"
+              group: "root"
+        05_gpu_nvidia_tesla_install:
+          files:
+            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#runfile
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                yum install -q -y kernel-devel-$(uname -r)
+                DRIVER_VERSION="${teslaDriverVersion}"
+                BASE_URL=https://us.download.nvidia.com/tesla
+                if (uname -a | grep -q x86); then
+                  curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
+                else
+                  curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-aarch64-$DRIVER_VERSION.run
+                fi
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
-                rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
+                chmod +x NVIDIA-Linux-*.run
+                ./NVIDIA-Linux-*.run -s
 
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${!0}
                 reboot
               mode: "000755"
               owner: "root"
@@ -775,25 +816,29 @@ Resources:
           systemctl enable dnf-automatic.timer
 
           # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-          export SESSION="${sessionType}"
-          systemctl daemon-reload
           systemctl set-default multi-user.target
+          systemctl daemon-reload
+          export SESSION="${sessionType}"
           case $SESSION in
-            virtual)
-              systemctl enable dcv-virtual-session
-              systemctl enable dcv-post-reboot
-              ;;
-            console)
-              systemctl set-default graphical.target
+            console*)
               sed -i "/^\[session-management\]/a create-session = true" /etc/dcv/dcv.conf
-              systemctl enable dcv-post-reboot
               ;;
-            console_*) # systemctl to install GPU driver after reboot
+            virtual*)
+              systemctl enable dcv-virtual-session
+              ;;
+          esac
+          systemctl enable dcv-post-reboot
+          case $SESSION in
+            *_NVIDIA*) # install GPU driver after reboot
+              systemctl disable dcv-post-reboot
+
               dnf install -q -y epel-release
               dnf install -q -y dkms
               dnf install -q -y unzip gcc make
-              # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#rhel            
-              # https://access.redhat.com/solutions/41278
+              dnf install -q -y vulkan-devel libglvnd-devel
+
+              # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#rhel                          
+              # https://access.redhat.com/solutions/41278             
               modprobe -r nouveau
               echo "blacklist nouveau" > /etc/modprobe.d/denylist_nouveau.conf
               echo "install nouveau /bin/false" >> /etc/modprobe.d/denylist_nouveau.conf
@@ -802,8 +847,7 @@ Resources:
               MODNAME="nouveau"; echo "omit_dracutmodules+=\" $MODNAME \"" >> /etc/dracut.conf.d/omit-$MODNAME.conf
               grubby --args  "nouveau.blacklist=1 rd.driver.blacklist=nouveau" --update-kernel ALL
               sed -i '/^KDUMP_COMMANDLINE_APPEND=/s/"$/ rd.driver.blacklist=nouveau"/' /etc/sysconfig/kdump
-              
-              sed -i "/^\[session-management\]/a create-session = true" /etc/dcv/dcv.conf
+
               python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
               python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload
