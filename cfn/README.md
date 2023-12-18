@@ -3,7 +3,8 @@ Operating systems such as AlmaLinux and Kali Linux and those that have reached e
 
 
 ## About CloudFormation templates
-When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d), [AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4) or [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), subscribe before using CloudFormation template. 
+When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d), [AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4) or [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), subscribe before using.  If you specify a different instance type, do verify its availablity. Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error). Default instance type is `t4g.medium` and `t3.medium` for ARM and x86_64 architecture respectively.
+
 
 
 ## Deployment via CloudFormation console
@@ -15,13 +16,13 @@ In most cases, the default values are sufficient. You will need to specify value
 
 Version
 - `osVersion` (where applicable): operating system version and processor architecture (Intel/AMD x86_64 or [Graviton](https://aws.amazon.com/ec2/graviton/) arm64). Default is latest version and arm64
-- `imageId`: [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID
+- `imageId` (where applicable): [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID
 
 EC2
 - `ec2Name`: name of EC2 instance
 - `ec2KeyPair` (Linux only): [EC2 key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). [Create a key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html) if you do not have one
 - `driverType` (Windows Server only): choose between NICE-DCV, NVIDIA GRID, NVIDIA Gaming and AMD GPU driver, or select none not to install any graphics driver. Default is `NICE-DCV`
--  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). Due to memory demands of running graphical environment, 4 GB or more RAM instance types are recommended. If you specify a different instance type, do verify its availablity. Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error). Default is `t4g.medium` and `t3.medium` for ARM and x86_64 architecture respectively 
+-  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html)
 
 Networking
 - `vpcID`: [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
@@ -39,7 +40,7 @@ EBS Volume
 
 NICE DCV
 - `listenPort`: NICE DCV server TCP/UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
-- `sessionType` (Linux only): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual`. NVIDIA GRID or gaming driver installation may be available as `console_NVIDIA_GRID_Driver` and `console_NVIDIA_Gaming_Driver`. (select latest x86_64 `osVersion` and specify [G4dn](https://aws.amazon.com/ec2/instance-types/g4/) or [G5](https://aws.amazon.com/ec2/instance-types/g5/) `instanceType`)
+- `sessionType` (Linux only): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual`. 
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html) settings, and click **Create Stack** to launch your stack. 
 
@@ -66,7 +67,7 @@ On Linux instances, the web browser client can be disabled by removing `nice-dcv
 ## Notes about Windows Server template
 The blog [Building a high-performance Windows workstation on AWS for graphics intensive applications](https://aws.amazon.com/blogs/compute/building-a-high-performance-windows-workstation-on-aws-for-graphics-intensive-applications/) walks through use of Windows Server template to provision and manage a GPU Windows instance.  
 
-Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console) or from [AWS CLI](https://aws.amazon.com/cli/) (e.g. `aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name"`). Refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog for more information.
+Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console), [AWS CloudShell](https://aws.amazon.com/cloudshell/) or [AWS CLI](https://aws.amazon.com/cli/). Refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog for more information.
 
 If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), you can choose to specify which graphics driver to install. Note that the drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). 
 
@@ -83,14 +84,12 @@ The login user name depends on Linux distributions as follows:
 - Kali Linux : kali
 - CentOS 7, CentOS Stream 8 : centos
 
-You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder via SSM Session Manager session to update NICE DCV and AWS CLI. 
+You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder via SSM Session Manager or EC2 Instance Connect to update NICE DCV and AWS CLI. 
 
 
+[NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) and [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers may be available as `sessionType` install options as `console_NVIDIA_GRID_Driver` and `console_NVIDIA_Gaming_Driver` respectively. Select latest x86_64 `osVersion` and specify [G4dn](https://aws.amazon.com/ec2/instance-types/g4/) or [G5](https://aws.amazon.com/ec2/instance-types/g5/) `instanceType`. Installation may not work due to dynamic nature of driver and OS versions. 
 
-If you provision a supported  [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances), [NVIDIA Grid](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) and [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers may be available as `sessionType` options. Else select `console` sessionType to install [public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver). You can use helper scripts `install-<DRIVER_TYPE>-driver` scripts to install or update NVIDIA GRID, NVIDIA gaming or AMD GPU drivers. 
-
-
-Note that the drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html) and [Install AMD drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html). Refer to [Prerequisites for Linux NICE DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html) for driver installation and configuration instructions.
+For supported [GPU accelerated instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type), you can select `console` sessionType and install [public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver). Helper scripts (`install-<DRIVER_TYPE>-driver`) in */home/{user name}* folder can be used to download and install NVIDIA GRID, NVIDIA gaming or AMD GPU drivers. Note that these downloads are for AWS customers only. Further configuration is required and you are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html) and [Install AMD drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html). Refer to [Prerequisites for Linux NICE DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) for NICE DCV GPU driver installation and configuration instructions.
 
 
 ## EC2 in private subnet
