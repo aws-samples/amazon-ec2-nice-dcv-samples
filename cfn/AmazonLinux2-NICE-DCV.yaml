@@ -545,6 +545,10 @@ Resources:
                 chmod +x NVIDIA-Linux-x86_64*.run
                 CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-x86_64*.run -s
 
+                # Configure dkms.conf to uses gcc10 and ignore version mismatches
+                cd /usr/src/nvidia-*
+                sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc10-gcc IGNORE_CC_MISMATCH=1/" dkms.conf
+
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
 
@@ -576,6 +580,10 @@ Resources:
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/NVIDIA-Linux-x86_64*-grid.run
                 CC=/usr/bin/gcc10-cc ./nvidia-drivers/NVIDIA-Linux-x86_64*.run -s
+
+                # Configure dkms.conf to uses gcc10 and ignore version mismatches
+                cd /usr/src/nvidia-*
+                sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc10-gcc IGNORE_CC_MISMATCH=1/" dkms.conf
 
                 cat << EOF | tee -a /etc/nvidia/gridd.conf
                 vGamingMarketplace=2
@@ -619,6 +627,10 @@ Resources:
 
                 chmod +x NVIDIA-Linux-*.run
                 CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-*.run -s
+
+                # Configure dkms.conf to uses gcc10 and ignore version mismatches
+                cd /usr/src/nvidia-*
+                sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc10-gcc IGNORE_CC_MISMATCH=1/" dkms.conf
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
