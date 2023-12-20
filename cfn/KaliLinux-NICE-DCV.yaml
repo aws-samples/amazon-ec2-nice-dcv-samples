@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Kali Linux with NICE DCV (login as kali)
+Description: Kali Linux with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
 
 Metadata:
   License:
@@ -502,7 +502,7 @@ Resources:
           ./aws/install -b /usr/bin
           echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/kali/.zshrc
 
-          # Higher virtual session resolution
+          # Higher web client max resolution
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
 
           # Update OS
@@ -511,15 +511,16 @@ Resources:
           apt-get -q -y autoremove
 
           # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-          export SESSION="${sessionType}"
           systemctl set-default multi-user.target
           systemctl daemon-reload
-          systemctl enable dcv-virtual-session
+          export SESSION="${sessionType}"
           case $SESSION in
             virtual)
               systemctl enable dcv-post-reboot
               ;;
-            virtual_*) # systemctl to install GPU driver after reboot
+            *_NVIDIA*) # install GPU driver after reboot
+              systemctl disable dcv-post-reboot
+
               python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
               python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload

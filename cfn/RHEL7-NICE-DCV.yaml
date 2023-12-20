@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: RHEL 7 with NICE DCV (login as ec2-user)
+Description: RHEL 7 with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
 
 Metadata:
   License:
@@ -570,6 +570,15 @@ Resources:
           yum install -q -y ./nice-dcv-web-viewer-*.rpm
           yum install -q -y ./nice-xdcv-*.rpm
 
+          # EPEL: https://docs.fedoraproject.org/en-US/epel/
+          subscription-manager repos --enable rhel-*-optional-rpms --enable rhel-*-extras-rpms --enable rhel-ha-for-rhel-*-server-rpms
+          yum install -q -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+          # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+          yum install -q -y dkms
+          yum install -q -y usbutils
+          dcvusbdriverinstaller --quiet
+
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
           sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
@@ -603,7 +612,7 @@ Resources:
 
           # Console session support
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"\/home\/ec2-user\"" /etc/dcv/dcv.conf
-          # Higher virtual session resolution
+          # Higher web client max resolution
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
 
           # Update OS

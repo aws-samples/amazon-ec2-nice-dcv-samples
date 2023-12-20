@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CentOS Stream 8 with NICE DCV (login as centos)
+Description: CentOS Stream 8 with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
 
 Metadata:
   License:
@@ -267,20 +267,14 @@ Resources:
                 cd /tmp
                 sudo dcv close-session centos
                 sudo dcv close-session console
-                if (uname -a | grep -q x86); then
-                  rm -f nice-dcv-el8-x86_64.tgz
-                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
-                  tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
-                else
-                  rm -f nice-dcv-el8-aarch64.tgz
-                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
-                  tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
-                fi
-                sudo systemctl stop dcvserver dcv-virtual-session
+                rm -f nice-dcv-el8-x86_64.tgz
+                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+                tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+                sudo systemctl stop dcvserver
                 sudo dnf install -y nice-dcv-server-*.rpm
                 sudo dnf install -y nice-dcv-web-viewer-*.rpm
                 sudo dnf install -y nice-xdcv-*.rpm
-                sudo systemctl restart dcvserver dcv-virtual-session
+                sudo systemctl restart dcvserver
               mode: "000755"
               owner: "centos"
               group: "centos"
@@ -289,11 +283,7 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 rm -f awscliv2.zip
-                if (uname -a | grep -q x86); then
-                  curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
-                else
-                  curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
-                fi
+                curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
                 unzip -q -o awscliv2.zip
                 /usr/bin/aws --version
                 sudo ./aws/install --update -b /usr/bin
@@ -363,6 +353,9 @@ Resources:
                     ;;
                 esac
 
+                # for USB driver DKMS
+                dnf install -q -y kernel-devel-$(uname -r)
+                
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
                 systemctl daemon-reload
@@ -520,18 +513,12 @@ Resources:
           dnf install -q -y python3 python3-setuptools wget tmux unzip tar curl sed
 
           # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
-          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
-            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
-            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
-            dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
-          fi
+          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
+          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
+          dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
-          if (uname -a | grep -q x86); then
-            dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
-          else
-            dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_arm64/amazon-ssm-agent.rpm
-          fi
+          dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
           systemctl enable --now amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
@@ -554,16 +541,20 @@ Resources:
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-          if (uname -a | grep -q x86); then
-            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
-            tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
-          else
-            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
-            tar -xzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
-          fi
+          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+          tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
           dnf install -q -y ./nice-dcv-server-*.rpm
           dnf install -q -y ./nice-dcv-web-viewer-*.rpm
           dnf install -q -y ./nice-xdcv-*.rpm
+
+          # EPEL: https://docs.fedoraproject.org/en-US/epel/
+          dnf config-manager --set-enabled powertools
+          dnf install epel-release epel-next-release
+
+          # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+          yum install -q -y dkms
+          yum install -q -y usbutils
+          dcvusbdriverinstaller --quiet
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -580,11 +571,7 @@ Resources:
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          if (uname -a | grep -q x86); then
-            curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
-          else
-            curl -s https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
-          fi
+          curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
           unzip -q -o awscliv2.zip
           ./aws/install -b /usr/bin
           echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/centos/.bashrc
@@ -602,7 +589,7 @@ Resources:
 
           # Console session support
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"centos\"\nstorage-root=\"\/home\/centos\"" /etc/dcv/dcv.conf
-          # Higher virtual session resolution
+          # Higher web client max resolution
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
 
           # Update OS
