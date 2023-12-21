@@ -41,7 +41,7 @@ EBS Volume
 NICE DCV
 - `listenPort`: NICE DCV server TCP/UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
 - `sessionType` (Linux only): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual`. GPU driver installation may be available for some distros. Refer to [GPU driver installation](#gpu-driver-installation) section below for details
-- `teslaDriverVersion` (Linux only): NVIDIA [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `*_Tesla_repo_Driver` or `*_Tesla_runfile_Driver` option is selected under `sessionType`
+- `teslaDriverVersion` (Linux only): NVIDIA [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `console_Tesla_runfile_Driver` or `virtual_Tesla_runfile_Driver` option is selected under `sessionType`
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html) settings, and click **Create Stack** to launch your stack. 
 
