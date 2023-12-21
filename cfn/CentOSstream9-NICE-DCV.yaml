@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CentOS Stream 9 with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
+Description: CentOS Stream 9 with NICE DCV (login as ec2-user)
 
 Metadata:
   License:
@@ -57,7 +57,7 @@ Metadata:
 Parameters:
   imageId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: CentOS 9 (x86_64) AMI ID
+    Description: CentOS Stream 9 (x86_64) AMI ID
     Default: /aws/service/marketplace/prod-rmp6ecfjs7hl6/latest
 
   instanceType:
@@ -353,9 +353,12 @@ Resources:
                     ;;
                 esac
 
-                # for USB driver DKMS
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 dnf install -q -y kernel-devel-$(uname -r)
-                
+                dnf install -q -y usbutils
+                dcvusbdriverinstaller --quiet
+                systemctl restart dcvserver
+
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
                 systemctl daemon-reload
@@ -432,6 +435,7 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
                 tar -xf amdgpu-pro-*rhel*.tar.xz
+                rm -f *.tar.xz
                 cd amdgpu-pro*
                 sudo ./amdgpu-pro-install --opencl=pal,legacy
                 pwd
@@ -549,14 +553,15 @@ Resources:
           dnf install -q -y ./nice-dcv-web-viewer-*.rpm
           dnf install -q -y ./nice-xdcv-*.rpm
 
+          # NICE DCV VA-API
+          dnf install -q -y libva
+
           # EPEL: https://docs.fedoraproject.org/en-US/epel/
           dnf config-manager --set-enabled crb
           dnf install -q -y epel-release epel-next-release
 
-          # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-          yum install -q -y dkms
-          yum install -q -y usbutils
-          dcvusbdriverinstaller --quiet
+          # USB and Nvidia driver DKMS
+          dnf install -q -y dkms
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -586,7 +591,7 @@ Resources:
           systemctl disable firewalld
 
           # X11 dummy driver for non GPU instance console session
-          yum install -q -y xorg-x11-drv-dummy
+          dnf install -q -y xorg-x11-drv-dummy
           python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
           # Console session support

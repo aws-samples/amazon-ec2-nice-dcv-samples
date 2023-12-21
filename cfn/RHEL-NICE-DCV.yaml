@@ -404,11 +404,18 @@ Resources:
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
-                systemctl set-default graphical.target
-                systemctl isolate graphical.target
+                case $SESSION in
+                  console*)
+                    systemctl set-default graphical.target
+                    systemctl isolate graphical.target
+                    ;;
+                esac
 
-                # for USB driver DKMS
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 dnf install -q -y kernel-devel-$(uname -r)
+                dnf install -q -y usbutils
+                dcvusbdriverinstaller --quiet
+                systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -486,6 +493,7 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
                 tar -xf amdgpu-pro-*rhel*.tar.xz
+                rm -f *.tar.xz
                 cd amdgpu-pro*
                 sudo ./amdgpu-pro-install --opencl=pal,legacy
                 pwd
@@ -620,7 +628,7 @@ Resources:
               owner: "root"
               group: "root"
         05_gpu_nvidia_repo_install:
-          files:
+          files: # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#rhel-9-rocky-9
             "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#rhel8
               content: |
                 #!/bin/bash
@@ -630,16 +638,9 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 dnf install -q -y kernel-devel-$(uname -r)
-                # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/upgrading_from_rhel_8_to_rhel_9/appendix-rhel-8-repositories_upgrading-from-rhel-8-to-rhel-9
-                if (cat /etc/os-release | grep -q 8.); then
-                  subscription-manager repos --enable codeready-builder-for-rhel-8-${ARCH}-rpms --enable rhel-8-for-${ARCH}-baseos-rpms --enable rhel-8-for-${ARCH}-appstream-rpms
-                  DISTRO=rhel8
-                else
-                  subscription-manager repos --enable codeready-builder-for-rhel-9-${ARCH}-rpms --enable rhel-9-for-${ARCH}-baseos-rpms --enable rhel--for-${ARCH}-appstream-rpms
-                  DISTRO=rhel9
-                fi
+                DISTRO=$(. /etc/os-release;echo rhel$VERSION_ID | sed -e 's/\..*//g')
                 ARCH=$( /bin/arch )
-                dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/${ARCH}/cuda-$DISTRO.repo
+                dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 dnf clean all
                 dnf -q -y module install nvidia-driver:latest-dkms
 
@@ -666,11 +667,8 @@ Resources:
                 dnf install -q -y kernel-devel-$(uname -r)
                 DRIVER_VERSION="${teslaDriverVersion}"
                 BASE_URL=https://us.download.nvidia.com/tesla
-                if (uname -a | grep -q x86); then
-                  curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
-                else
-                  curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-aarch64-$DRIVER_VERSION.run
-                fi
+                ARCH=$( /bin/arch )
+                curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -789,19 +787,22 @@ Resources:
           dnf install -q -y ./nice-dcv-web-viewer-*.rpm
           dnf install -q -y ./nice-xdcv-*.rpm
 
+          # NICE DCV VA-API
+          dnf install -q -y libva
+
           # EPEL: https://docs.fedoraproject.org/en-US/epel/
+          # RedHat: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/upgrading_from_rhel_8_to_rhel_9/appendix_rhel-9-repositories_upgrading-from-rhel-8-to-rhel-9
+          ARCH=$( /bin/arch )
           if (cat /etc/os-release | grep -q 8.); then
-            subscription-manager repos --enable codeready-builder-for-rhel-8-$(arch)-rpms
-            dnf install-q -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+            subscription-manager repos --enable codeready-builder-for-rhel-8-$ARCH-rpms --enable rhel-8-for-$ARCH-baseos-rpms --enable rhel-8-for-$ARCH-appstream-rpms
+            dnf install -q -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
           else
-            subscription-manager repos --enable codeready-builder-for-rhel-9-$(arch)-rpms
+            subscription-manager repos --enable codeready-builder-for-rhel-9-$ARCH-rpms --enable rhel-9-for-$ARCH-baseos-rpms --enable rhel--for-$ARCH-appstream-rpms
             dnf install -q -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
           fi
 
-          # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+          # USB and Nvidia driver DKMS
           dnf install -q -y dkms
-          dnf install -q -y usbutils
-          dcvusbdriverinstaller --quiet
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"

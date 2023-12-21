@@ -346,6 +346,12 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                apt-get install -q -y linux-headers-cloud-amd64
+                apt-get install -q -y usbutils
+                dcvusbdriverinstaller --quiet
+                systemctl restart dcvserver
+
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
                 systemctl daemon-reload
@@ -463,6 +469,7 @@ Resources:
           python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
           apt-get -q -y install kali-desktop-xfce
+          # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           apt-get -q -y install pipewire-audio
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
@@ -481,6 +488,12 @@ Resources:
           # from /etc/lightdm/lightdm.conf.d
           sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
           apt-get -q -y install ./nice-xdcv_*.deb
+
+          # NICE DCV VA-API
+          apt-get install -q -y libva2 libva-drm2
+
+          # USB and Nvidia driver DKMS
+          apt-get install -q -y dkms
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"

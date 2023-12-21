@@ -327,7 +327,6 @@ Resources:
                 sudo systemctl stop dcvserver
                 sudo apt-get install -y ./nice-dcv-server_*.deb
                 sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
-                sudo usermod -aG video dcv
                 sudo apt-get install -y ./nice-xdcv_*.deb
                 sudo systemctl restart dcvserver
               mode: "000755"
@@ -410,11 +409,18 @@ Resources:
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
-                systemctl set-default graphical.target
-                systemctl isolate graphical.target
+                case $SESSION in
+                  console*)
+                    systemctl set-default graphical.target
+                    systemctl isolate graphical.target
+                    ;;
+                esac
 
-                # for USB driver DKMS
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 apt-get install -q -y linux-headers-$(uname -r)
+                apt-get install -q -y usbutils
+                dcvusbdriverinstaller --quiet
+                systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -491,7 +497,8 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
-                tar -xf amdgpu-pro-*rhel*.tar.xz
+                tar -xf amdgpu-pro-*ubuntu*.tar.xz
+                rm -f *.tar.xz
                 cd amdgpu-pro*
                 sudo ./amdgpu-pro-install --opencl=pal,legacy
                 pwd
@@ -626,8 +633,8 @@ Resources:
               owner: "root"
               group: "root"
         05_gpu_nvidia_repo_install:
-          files:
-            "/opt/install-gpu-driver": # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu
+          files: # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu
+            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#ubuntu-lts
               content: |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
@@ -635,15 +642,15 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                apt-key del 7fa2af80
                 apt-get install -q -y linux-headers-$(uname -r)
                 DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
                 # ARCH
                 if (uname -a | grep x86); then
-                  curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/x86_64/cuda-keyring_1.1-1_all.deb
+                  ARCH=x86_64
                 else
-                  curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/arm64/cuda-keyring_1.1-1_all.deb
+                  ARCH=arm64
                 fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
                 apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
                 apt-get -q update
                 apt-get -q -y install cuda-drivers
@@ -672,10 +679,11 @@ Resources:
                 DRIVER_VERSION="${teslaDriverVersion}"
                 BASE_URL=https://us.download.nvidia.com/tesla
                 if (uname -a | grep -q x86); then
-                  curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
+                  ARCH=x86_64
                 else
-                  curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-aarch64-$DRIVER_VERSION.run
+                  ARCH=arm64
                 fi
+                curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -756,8 +764,7 @@ Resources:
           export DEBIAN_FRONTEND=noninteractive
 
           apt-get -q update
-          # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html#agent-install-ubuntu-tabs
-          # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html Note: SSH inbound required in SG
+          # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
           if (cat /etc/os-release | grep -q 18.04); then
             apt-get -q -y install ec2-instance-connect
           fi
@@ -778,11 +785,11 @@ Resources:
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           if (cat /etc/os-release | grep -q 18.04); then
             apt-get -q -y install ubuntu-desktop
-            rm -f /home/ubuntu/configure-gnome
           else
             apt-get -q -y install ubuntu-desktop-minimal 
           fi
           apt-get -q -y install gdm3
+          # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           apt-get -q -y install pulseaudio-utils
           apt-get -q -y install gnome-tweaks gnome-shell-extension-ubuntu-dock
           if (cat /etc/os-release | grep -q 22.04); then
@@ -821,10 +828,11 @@ Resources:
           usermod -aG video dcv
           apt-get -q -y install ./nice-xdcv_*.deb
 
-          # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+          # NICE DCV VA-API
+          apt-get install -q -y libva2 libva-drm2
+
+          # USB and Nvidia driver DKMS
           apt-get install -q -y dkms
-          apt-get install -q -y usbutils
-          dcvusbdriverinstaller --quiet
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -856,7 +864,7 @@ Resources:
 
           # Console session support
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"ubuntu\"\nstorage-root=\"\/home\/ubuntu\"" /etc/dcv/dcv.conf
-          # Higher virtual session resolution
+          # Higher web client max resolution
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
 
           # Update OS
@@ -883,6 +891,7 @@ Resources:
 
               apt-get install -q -y unzip gcc make
               apt-get install -q -y libglvnd-dev pkg-config
+
               # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#ubuntu
               if (! cat /etc/modprobe.d/blacklist.conf | grep -q nouveau); then
                 echo "blacklist vga16fb" >> /etc/modprobe.d/blacklist.conf

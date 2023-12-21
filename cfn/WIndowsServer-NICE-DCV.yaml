@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Windows Server with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
+Description: Windows Server with NICE DCV (login as administrator)
 
 Metadata:
   License:
