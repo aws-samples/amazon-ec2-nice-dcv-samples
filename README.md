@@ -20,14 +20,14 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - [USB remotization](https://docs.aws.amazon.com/dcv/latest/userguide/using-usb.html)
 - [Audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html)
 - [SSM Agent](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html) with [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) for terminal access, changing login password and for [upgrading NICE DCV server](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-upgrading.html)
-- [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html) (some [Linux distros](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html)) for secure SSH access
+- [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html) (some [Linux distros](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html)) browser-based SSH
 - [AWS CLI v2](https://aws.amazon.com/blogs/developer/aws-cli-v2-is-now-generally-available/) with [partial mode](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html#cli-usage-auto-prompt-modes) [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html) 
 - [gp3 or gp2](https://aws.amazon.com/ebs/general-purpose/) volume type with option to specify volume size
 - [EC2 IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) for [NICE DCV license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2) and S3 bucket access to [NVIDIA](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html) [GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) drivers 
-- Option to associate static, public IPv4 address via [Elastic IP](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html)
-- Option to specify NICE DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
-- [Virtual or console session](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro)
-- Option to install [NVIDIA GRID, Gaming or Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) GPU driver (some Linux distros)
+- Associate static, public IPv4 address via [Elastic IP](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html) (optional)
+- Specify NICE DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
+- Virtual or console [session](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro)
+- Install [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) GPU drivers (Windows and some Linux distros)
 
 
 ## Deployment and using NICE DCV
