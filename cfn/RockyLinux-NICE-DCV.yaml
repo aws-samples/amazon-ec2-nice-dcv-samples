@@ -518,6 +518,7 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
                 tar -xf amdgpu-pro-*rhel*.tar.xz
+                rm -f *.tar.xz
                 cd amdgpu-pro*
                 sudo ./amdgpu-pro-install --opencl=pal,legacy
                 pwd
@@ -690,9 +691,8 @@ Resources:
 
                 dnf install -q -y kernel-devel-$(uname -r)
                 DRIVER_VERSION="${teslaDriverVersion}"
-                BASE_URL=https://us.download.nvidia.com/tesla
                 ARCH=$( /bin/arch )
-                curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
+                curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
