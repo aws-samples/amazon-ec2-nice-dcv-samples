@@ -54,6 +54,7 @@ Metadata:
           - listenPort
           - sessionType
           - teslaDriverVersion
+          - ubuntuDriverVersion
 
 Parameters:
   osVersion:
@@ -133,6 +134,7 @@ Parameters:
       - "virtual"
       - "virtual_NVIDIA_Tesla_repo_Driver"
       - "virtual_NVIDIA_Tesla_runfile_Driver"
+      - "console_Ubuntu_Driver"
       - "console_NVIDIA_GRID_Driver"
       - "console_NVIDIA_Gaming_Driver"
       - "console_NVIDIA_Tesla_repo_Driver"
@@ -141,8 +143,12 @@ Parameters:
     Default: "virtual"
   teslaDriverVersion:
     Type: String
-    Description: NVIDIA Tesla runfile driver version (if applicable). Get appropriate version from https://www.nvidia.com/Download/index.aspx (Data Center/Tesla Product Type)
+    Description: "[*_NVIDIA_Tesla_runfile_Driver] Driver version. ( https://www.nvidia.com/Download/index.aspx : Product Type=Data Center/Tesla )"
     Default: 535.129.03
+  ubuntuDriverVersion:
+    Type: String
+    Description: "[*_Ubuntu_Driver] Driver version ( https://ubuntu.com/server/docs/nvidia-drivers-installation )"
+    Default: 535
 
   volumeSize:
     Type: Number
@@ -303,6 +309,8 @@ Resources:
             - 05_gpu_nvidia_repo_install
           virtual_NVIDIA_Tesla_runfile_Driver:
             - 06_gpu_nvidia_tesla_install
+          console_Ubuntu_Driver:
+            - 07_gpu_ubuntu_driver_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/ubuntu/update-dcv":
@@ -406,6 +414,9 @@ Resources:
                 SESSION="${sessionType}"
                 case $SESSION in
                   console_NVIDIA*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
+                  console_Ubuntu*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
@@ -693,6 +704,30 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
+        07_gpu_ubuntu_driver_install:
+          files:
+            "/opt/install-gpu-driver": # https://ubuntu.com/server/docs/nvidia-drivers-installation
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                export DEBIAN_FRONTEND=noninteractive
+                ubuntu-drivers install --gpgpu nvidia:${ubuntuDriverVersion}-server
+                apt-get install -q -y nvidia-utils-${ubuntuDriverVersion}-server
+
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${!0}
+                reboot
+              mode: "000755"
+              owner: "ubuntu"
+              group: "ubuntu"
     Properties:
       ImageId: # https://ubuntu.com/server/docs/cloud-images/amazon-ec2 https://ubuntu.com/blog/ubuntu-pro-is-now-part-of-the-aws-ec2-console
         !If [
@@ -881,6 +916,14 @@ Resources:
           esac
           systemctl enable dcv-post-reboot
           case $SESSION in
+            *_Ubuntu*) # https://ubuntu.com/server/docs/nvidia-drivers-installation
+              systemctl disable dcv-post-reboot
+
+              python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              systemctl daemon-reload
+              systemctl enable dcv-gpu-install
+              ;;
             *_NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
 

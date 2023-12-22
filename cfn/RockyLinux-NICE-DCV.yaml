@@ -142,7 +142,7 @@ Parameters:
     Default: "virtual"
   teslaDriverVersion:
     Type: String
-    Description: NVIDIA Tesla runfile driver version (if applicable). Get appropriate version from https://www.nvidia.com/Download/index.aspx (Data Center/Tesla Product Type)
+    Description: "[*_NVIDIA_Tesla_runfile_Driver] Driver version. ( https://www.nvidia.com/Download/index.aspx : Product Type=Data Center/Tesla )"
     Default: 535.129.03
 
   volumeSize:
@@ -889,7 +889,7 @@ Resources:
               systemctl disable dcv-post-reboot
 
               dnf install -q -y unzip gcc make
-              dnf install -q -y vulkan-devel libglvnd-devel
+              dnf install -q -y vulkan-devel libglvnd-devel elfutils-libelf-devel
 
               # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#rhel                          
               # https://access.redhat.com/solutions/41278             
