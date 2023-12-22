@@ -715,8 +715,11 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 export DEBIAN_FRONTEND=noninteractive
+                apt-get -q update
+                apt-get -q -y install ubuntu-drivers-common
                 ubuntu-drivers install --gpgpu nvidia:${ubuntuDriverVersion}-server
-                apt-get install -q -y nvidia-utils-${ubuntuDriverVersion}-server
+                apt-get -q -y install nvidia-driver-${ubuntuDriverVersion}-server
+                apt-get -q -y install nvidia-utils-${ubuntuDriverVersion}-server
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
