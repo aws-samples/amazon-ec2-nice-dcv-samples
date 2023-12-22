@@ -147,7 +147,7 @@ Parameters:
     Default: 535.129.03
   ubuntuDriverVersion:
     Type: String
-    Description: "[*_Ubuntu_Driver] Driver version ( https://ubuntu.com/server/docs/nvidia-drivers-installation )"
+    Description: "[*-Ubuntu_repo_Driver] Driver version ( https://ubuntu.com/server/docs/nvidia-drivers-installation )"
     Default: 535
 
   volumeSize:
