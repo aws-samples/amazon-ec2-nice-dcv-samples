@@ -677,11 +677,7 @@ Resources:
 
                 apt-get install -q -y linux-headers-$(uname -r)
                 DRIVER_VERSION="${teslaDriverVersion}"
-                if (uname -a | grep -q x86); then
-                  ARCH=x86_64
-                else
-                  ARCH=arm64
-                fi
+                ARCH=$( /bin/arch )
                 curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
