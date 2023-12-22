@@ -132,18 +132,18 @@ Parameters:
     Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
-      - "virtual_NVIDIA_Tesla_repo_Driver"
-      - "virtual_NVIDIA_Tesla_runfile_Driver"
-      - "console_Ubuntu_Driver"
-      - "console_NVIDIA_GRID_Driver"
-      - "console_NVIDIA_Gaming_Driver"
-      - "console_NVIDIA_Tesla_repo_Driver"
-      - "console_NVIDIA_Tesla_runfile_Driver"
+      - "virtual-with-NVIDIA_Tesla_repo_Driver"
+      - "virtual-with-NVIDIA_Tesla_runfile_Driver"
+      - "console-with-Ubuntu_repo_Driver"
+      - "console-with-NVIDIA_GRID_Driver"
+      - "console-with-NVIDIA_Gaming_Driver"
+      - "console-with-NVIDIA_Tesla_repo_Driver"
+      - "console-with-NVIDIA_Tesla_runfile_Driver"
       - "console"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
-    Description: "[*_NVIDIA_Tesla_runfile_Driver] Driver version. ( https://www.nvidia.com/Download/index.aspx : Product Type=Data Center/Tesla )"
+    Description: "[*-NVIDIA_Tesla_runfile_Driver] Driver version. ( https://www.nvidia.com/Download/index.aspx : Product Type=Data Center/Tesla )"
     Default: 535.129.03
   ubuntuDriverVersion:
     Type: String
@@ -297,19 +297,19 @@ Resources:
             - 01_console
           dcv_gpu_install:
             - 02_dcv_gpu_install
-          console_NVIDIA_GRID_Driver:
+          console-with-NVIDIA_GRID_Driver:
             - 03_gpu_nvidia_grid_install
-          console_NVIDIA_Gaming_Driver:
+          console-with-NVIDIA_Gaming_Driver:
             - 04_gpu_nvidia_gaming_install
-          console_NVIDIA_Tesla_repo_Driver:
+          console-with-NVIDIA_Tesla_repo_Driver:
             - 05_gpu_nvidia_repo_install
-          console_NVIDIA_Tesla_runfile_Driver:
+          console-with-NVIDIA_Tesla_runfile_Driver:
             - 06_gpu_nvidia_tesla_install
-          virtual_NVIDIA_Tesla_repo_Driver:
+          virtual-with-NVIDIA_Tesla_repo_Driver:
             - 05_gpu_nvidia_repo_install
-          virtual_NVIDIA_Tesla_runfile_Driver:
+          virtual-with-NVIDIA_Tesla_runfile_Driver:
             - 06_gpu_nvidia_tesla_install
-          console_Ubuntu_Driver:
+          console-with-Ubuntu_repo_Driver:
             - 07_gpu_ubuntu_driver_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -413,10 +413,10 @@ Resources:
 
                 SESSION="${sessionType}"
                 case $SESSION in
-                  console_NVIDIA*)
+                  console-with-NVIDIA*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
-                  console_Ubuntu*)
+                  console-with-Ubuntu*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
@@ -920,7 +920,7 @@ Resources:
           esac
           systemctl enable dcv-post-reboot
           case $SESSION in
-            *_Ubuntu*) # https://ubuntu.com/server/docs/nvidia-drivers-installation
+            *Ubuntu*) # https://ubuntu.com/server/docs/nvidia-drivers-installation
               systemctl disable dcv-post-reboot
 
               python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
@@ -928,7 +928,7 @@ Resources:
               systemctl daemon-reload
               systemctl enable dcv-gpu-install
               ;;
-            *_NVIDIA*) # install GPU driver after reboot
+            *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
 
               apt-get install -q -y unzip gcc make

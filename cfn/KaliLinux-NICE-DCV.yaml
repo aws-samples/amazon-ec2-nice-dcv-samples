@@ -119,7 +119,7 @@ Parameters:
     Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
-      - "virtual_NVIDIA_Driver"
+      - "virtual-with-NVIDIA_Driver"
     Default: "virtual"
 
   volumeSize:
@@ -258,7 +258,7 @@ Resources:
             - 00_setup
           dcv_gpu_install:
             - 02_dcv_gpu_install
-          virtual_NVIDIA_Driver:
+          virtual-with-NVIDIA_Driver:
             - 03_gpu_nvidia_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -531,7 +531,7 @@ Resources:
             virtual)
               systemctl enable dcv-post-reboot
               ;;
-            *_NVIDIA*) # install GPU driver after reboot
+            *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
 
               python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
