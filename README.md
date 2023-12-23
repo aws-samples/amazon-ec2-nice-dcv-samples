@@ -12,6 +12,7 @@ NICE DCV client do not require a license while NICE DCV server requires [licensi
 
 
 The CloudFormation templates provision EC2 instances running NICE DCV server with the following features:
+- [GNOME](https://www.gnome.org/) desktop environment
 - [Web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) 
 - [Adaptable display resolution](https://docs.aws.amazon.com/dcv/latest/userguide/changing-resolution.html)
 - [QUIC UDP transport protocol](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html)
@@ -28,7 +29,7 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - Associate static, public IPv4 address via [Elastic IP](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html) (optional)
 - Specify NICE DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
 - Virtual or console [session](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro)
-- Install [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) GPU drivers (Windows and some Linux distros)
+- [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) GPU drivers (optional: Windows and some Linux distros)
 
 
 ## Deployment and using NICE DCV
