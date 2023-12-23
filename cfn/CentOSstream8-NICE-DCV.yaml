@@ -514,7 +514,7 @@ Resources:
           sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
           dnf clean all
-          dnf install -q -y python3 python3-setuptools wget tmux unzip tar curl sed
+          dnf install -q -y wget tmux unzip tar curl sed
 
           # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
           curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
@@ -526,6 +526,7 @@ Resources:
           systemctl enable --now amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
+          dnf install -q -y python3 python3-pip python3-setuptools python3-docutils
           curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
           cd aws-cfn-bootstrap-2.0
@@ -573,7 +574,7 @@ Resources:
           sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
           # remove AWSCLI version 1
-          dnf remove awscli -q -y
+          dnf remove -q -y awscli
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html

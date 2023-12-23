@@ -457,7 +457,7 @@ Resources:
           snap install amazon-ssm-agent --classic
           snap start amazon-ssm-agent
 
-          # https://aws.amazon.com/premiumsupport/knowledge-center/install-cloudformation-scripts/        
+          # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html    
           apt-get install -q -y python3 python3-setuptools python3-docutils python3-daemon
           curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
