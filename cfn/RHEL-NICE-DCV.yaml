@@ -749,8 +749,9 @@ Resources:
           python3 setup.py build
           python3 setup.py install
           cd /tmp/cfn
+          export CFN_INIT="python3 /usr/local/bin/cfn-init"
 
-          python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           dnf groupinstall -q -y 'Server with GUI'
@@ -766,7 +767,7 @@ Resources:
           fi
 
           # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
-          sed -i "s/^#WaylandEnable=false/WaylandEnable=false/g" /etc/gdm/custom.conf
+          sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
@@ -837,7 +838,7 @@ Resources:
 
           # X11 dummy driver for non GPU instance console session
           dnf install -q -y xorg-x11-drv-dummy
-          python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
           # Console session support
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"\/home\/ec2-user\"" /etc/dcv/dcv.conf
@@ -882,8 +883,8 @@ Resources:
               grubby --args  "nouveau.blacklist=1 rd.driver.blacklist=nouveau" --update-kernel ALL
               sed -i '/^KDUMP_COMMANDLINE_APPEND=/s/"$/ rd.driver.blacklist=nouveau"/' /etc/sysconfig/kdump
 
-              python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              python3 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload
               systemctl enable dcv-gpu-install
               ;;

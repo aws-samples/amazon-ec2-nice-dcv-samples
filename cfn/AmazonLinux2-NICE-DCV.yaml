@@ -715,8 +715,8 @@ Resources:
           sysctl -w net.ipv6.conf.all.disable_ipv6=1
           sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-          # cfn-init
-          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+          export CFN_INIT="/opt/aws/bin/cfn-init"
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
           yum clean all
           yum install -q -y deltarpm wget tmux unzip tar curl sed
@@ -730,7 +730,7 @@ Resources:
           amazon-linux-extras install -y firefox
 
           # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
-          sed -i "s/^#WaylandEnable=false/WaylandEnable=false/g" /etc/gdm/custom.conf
+          sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
@@ -777,7 +777,7 @@ Resources:
 
           # X11 dummy driver for non GPU instance console session
           yum install -q -y xorg-x11-drv-dummy
-          /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
           # Console session support
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"\/home\/ec2-user\"" /etc/dcv/dcv.conf
@@ -811,8 +811,8 @@ Resources:
               yum install -q -y unzip gcc make
               yum install -q -y vulkan-devel libglvnd-devel
 
-              /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload
               systemctl enable dcv-gpu-install
               ;;

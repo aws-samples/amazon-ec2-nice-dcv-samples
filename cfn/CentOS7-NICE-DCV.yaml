@@ -559,8 +559,9 @@ Resources:
           python2 setup.py build
           python2 setup.py install
           cd /tmp/cfn
+          export CFN_INIT="python2 /usr/bin/cfn-init"
 
-          python2 /usr/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           yum groupinstall -q -y "GNOME Desktop"
@@ -613,7 +614,7 @@ Resources:
 
           # X11 dummy driver for non GPU instance console session
           yum install -q -y xorg-x11-drv-dummy
-          python2 /usr/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
           # Console session support
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"centos\"\nstorage-root=\"\/home\/centos\"" /etc/dcv/dcv.conf

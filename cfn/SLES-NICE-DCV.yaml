@@ -24,7 +24,7 @@ Metadata:
       - Label:
           default: AMI ID. ( https://www.suse.com/c/aws-ssm-parameters/ )
         Parameters:
-          - imageId
+          - osVersion
       - Label:
           default: EC2 configuration
         Parameters:
@@ -56,10 +56,14 @@ Metadata:
           - teslaDriverVersion
 
 Parameters:
-  imageId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: SUSE Linux Enterprise Server AMI ID ( aws ssm get-parameters-by-path --path /aws/service/suse/sles/ --recursive --query "Parameters[].Name" )
-    Default: /aws/service/suse/sles/15-sp5/x86_64/latest
+  osVersion:
+    Type: String
+    Description: Version and processor architecture
+    AllowedValues:
+      - SUSE Linux Enterprise Server 15 SP5
+      - SUSE Linux Enterprise Server 12 SP5
+    Default: SUSE Linux Enterprise Server 15 SP5
+
   instanceType:
     Type: String
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
@@ -145,6 +149,7 @@ Parameters:
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
+  useSles15: !Equals [!Ref osVersion, "SUSE Linux Enterprise Server 15 SP5"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
 
 Resources:
@@ -283,12 +288,17 @@ Resources:
                 cd /tmp
                 sudo dcv close-session ec2-user
                 sudo dcv close-session console
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles15-x86_64.tgz
-                tar -xvzf nice-dcv-sles15-x86_64.tgz && cd nice-dcv-*-sles15-x86_64
+                if (cat /etc/os-release | grep -q 15.); then
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles15-x86_64.tgz
+                  tar -xvzf nice-dcv-sles15-x86_64.tgz && cd nice-dcv-*-sles15-x86_64
+                else
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles12-x86_64.tgz
+                  tar -xvzf nice-dcv-sles12-x86_64.tgz && cd nice-dcv-*-sles12-x86_64
+                fi
                 sudo systemctl stop dcvserver
-                zypper -n install -y ./nice-dcv-server-*.rpm
-                zypper -n install -y ./nice-dcv-web-viewer-*.rpm
-                zypper -n install -y ./nice-xdcv-*.rpm
+                zypper install -y ./nice-dcv-server-*.rpm
+                zypper install -y ./nice-dcv-web-viewer-*.rpm
+                zypper install -y ./nice-xdcv-*.rpm
                 sudo systemctl restart dcvserver
               mode: "000755"
               owner: "ec2-user"
@@ -356,7 +366,13 @@ Resources:
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                python3 /usr/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                
+                if (cat /etc/os-release | grep -q 15.); then
+                  export CFN_SIGNAL="python3 /usr/bin/cfn-signal"                   
+                else
+                  export CFN_SIGNAL="python2 /usr/local/bin/cfn-signal"
+                fi
+                $CFN_SIGNAL -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -462,8 +478,6 @@ Resources:
                 DISTRO=sles15
                 ARCH=$( /bin/arch )
                 zypper -n -t addrepo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
-                VERSION_ID=$(. /etc/os-release;echo $VERSION_ID)
-                SUSEConnect -p PackageHub/$VERSION_ID/x86_64
                 zypper -n -t refresh
                 zypper -n install -y cuda-drivers
 
@@ -505,8 +519,13 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
-    Properties:
-      ImageId: !Ref imageId
+    Properties: # https://www.suse.com/c/aws-ssm-parameters/
+      ImageId:
+        !If [
+          useSles15,
+          "{{resolve:ssm:/aws/service/suse/sles/15-sp5/x86_64/latest}}",
+          "{{resolve:ssm:/aws/service/suse/sles/12-sp5/x86_64/latest}}",
+        ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair
@@ -530,8 +549,10 @@ Resources:
           sysctl -w net.ipv6.conf.all.disable_ipv6=1
           sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
+          # Packge Hub: https://packagehub.suse.com/how-to-use/
+          VERSION_ID=$(. /etc/os-release;echo $VERSION_ID)
+          SUSEConnect -p PackageHub/$VERSION_ID/x86_64          
           zypper refresh
-          SUSEConnect -p PackageHub/$VERSION_ID/x86_64
           zypper -n install -y wget tmux unzip tar curl sed
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-sles.html
@@ -539,18 +560,36 @@ Resources:
           systemctl enable --now amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-          zypper -n install -y python3 python3-pip python3-setuptools python3-docutils
-          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
-          tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
-          cd aws-cfn-bootstrap-2.0
-          python3 setup.py build
-          python3 setup.py install
+          if (cat /etc/os-release | grep -q 15.); then
+            zypper -n install -y python3 python3-pip python3-setuptools python3-docutils
+            curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+            tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
+            cd aws-cfn-bootstrap-2.0
+            python3 setup.py build
+            python3 setup.py install
+          else
+            curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
+            tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
+            cd aws-cfn-bootstrap-1.4
+            python2 setup.py build
+            python2 setup.py install
+          fi
           cd /tmp/cfn
 
-          python3 /usr/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+          if (cat /etc/os-release | grep -q 15.); then
+            export CFN_INIT="python3 /usr/bin/cfn-init"
+          else
+            export CFN_INIT="python2 /usr/local/bin/cfn-init"
+          fi
+
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
-          zypper -n install -y -t pattern gnome_basic
+          if (cat /etc/os-release | grep -q 15.); then
+            zypper -n install -y -t pattern gnome_basic
+          else
+            zypper -n install -y -t pattern gnome-basic
+          fi
           update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/gdm
           sed -i "s/DEFAULT_WM=\"\"/DEFAULT_WM=\"gnome\"/" /etc/sysconfig/windowmanager
 
@@ -558,12 +597,17 @@ Resources:
           zypper -n install -y pulseaudio-utils
 
           # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
-          sed -i "s/^#WaylandEnable=false/WaylandEnable=false/g" /etc/gdm/custom.conf
+          sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles15-x86_64.tgz
-          tar -xzf nice-dcv-sles15-x86_64.tgz && cd nice-dcv-*-sles15-x86_64
+          if (cat /etc/os-release | grep -q 15.); then
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles15-x86_64.tgz
+            tar -xzf nice-dcv-sles15-x86_64.tgz && cd nice-dcv-*-sles15-x86_64
+          else
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles12-x86_64.tgz
+            tar -xzf nice-dcv-sles12-x86_64.tgz && cd nice-dcv-*-sles12-x86_64
+          fi
           zypper -n install -y ./nice-dcv-server-*.rpm
           usermod -a -G video dcv
           zypper -n install -y ./nice-dcv-web-viewer-*.rpm
@@ -573,10 +617,9 @@ Resources:
           zypper -n install -y libva2 libva-drm2
 
           # USB and Nvidia driver DKMS
-          VERSION_ID=$(. /etc/os-release;echo $VERSION_ID)
-
-          zypper refresh
-          zypper -n install -y dkms
+          if (cat /etc/os-release | grep -q 15.); then
+            zypper -n install -y dkms
+          fi
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -600,14 +643,16 @@ Resources:
 
           # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
           # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
-          systemctl stop firewalld
-          firewall-offline-cmd --add-port ${listenPort}/tcp
-          firewall-offline-cmd --add-port ${listenPort}/udp
-          systemctl disable firewalld
+          if (cat /etc/os-release | grep -q 15.); then
+            systemctl stop firewalld
+            firewall-offline-cmd --add-port ${listenPort}/tcp
+            firewall-offline-cmd --add-port ${listenPort}/udp
+            systemctl disable firewalld
+          fi
 
           # X11 dummy driver for non GPU instance console session
           zypper -n install -y xf86-video-dummy
-          python3 /usr/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
           # Console session support
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"\/home\/ec2-user\"" /etc/dcv/dcv.conf
@@ -616,7 +661,7 @@ Resources:
 
           # Update OS
           zypper -n update -y
-          # Auto updates : https://documentation.suse.com/sles/15-SP5/html/SLES-all/cha-onlineupdate-you.html#sec-onlineupdate-you-automatically
+          # Automatic updates : https://documentation.suse.com/sles/15-SP5/html/SLES-all/cha-onlineupdate-you.html#sec-onlineupdate-you-automatically
           zypper -n install -y yast2-online-update-configuration
 
           # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
@@ -639,8 +684,8 @@ Resources:
               zypper -n install -y unzip gcc make
               zypper -n install -y vulkan-devel libglvnd-devel
 
-              python3 /usr/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              python3 /usr/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload
               systemctl enable dcv-gpu-install
               ;;
