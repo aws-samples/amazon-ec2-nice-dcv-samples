@@ -124,7 +124,9 @@ Parameters:
     Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
+      - "virtual-with-NVIDIA_Tesla_repo_Driver"
       - "virtual-with-NVIDIA_Tesla_runfile_Driver"
+      - "console-with-NVIDIA_Tesla_repo_Driver"
       - "console-with-NVIDIA_Tesla_runfile_Driver"
       - "console"
     Default: "virtual"
@@ -366,7 +368,7 @@ Resources:
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                
+
                 if (cat /etc/os-release | grep -q 15.); then
                   export CFN_SIGNAL="python3 /usr/bin/cfn-signal"                   
                 else
@@ -390,10 +392,13 @@ Resources:
                 esac
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                zypper -n install -y kernel-source
+                # NOTE: uncomment to enable ( https://documentation.suse.com/sles/15/html/SLES-all/cha-adm-support.html#sec-admsupport-kernel-unsupported )
+                # zypper -n install -y kernel-source
                 zypper -n install -y usbutils
-                # https://documentation.suse.com/sles/15/html/SLES-all/cha-adm-support.html#sec-admsupport-kernel-unsupported
-                # dcvusbdriverinstaller --quiet
+                #if (cat /etc/os-release | grep -q 15.); then
+                #  echo "allow_unsupported_modules 1" >> /etc/modprobe.d/10-unsupported-modules.conf
+                #  dcvusbdriverinstaller --quiet
+                #fi
                 systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
@@ -464,8 +469,8 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
-        05_gpu_nvidia_repo_install:
-          files: # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#sles NOT WORKING
+        05_gpu_nvidia_repo_install: # https://documentation.suse.com/fr-fr/sles/15-SP4/html/SLES-all/article-modules.html#art-modules-nvidia-compute (for HPC SLES only)
+          files: # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#sles
             "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#suse15
               content: |
                 #!/bin/bash
@@ -477,7 +482,7 @@ Resources:
                 zypper -n install -y kernel-source
                 DISTRO=sles15
                 ARCH=$( /bin/arch )
-                zypper -n -t addrepo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
+                zypper -n -t addrepo -G -f https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 zypper -n -t refresh
                 zypper -n install -y cuda-drivers
 
@@ -554,6 +559,9 @@ Resources:
           SUSEConnect -p PackageHub/$VERSION_ID/x86_64          
           zypper refresh
           zypper -n install -y wget tmux unzip tar curl sed
+
+          # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
+          zypper -n install -y ec2-instance-connect
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-sles.html
           zypper -n install -y amazon-ssm-agent
@@ -729,6 +737,11 @@ Outputs:
   EC2console:
     Description: EC2 console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+
+  EC2instanceConnect:
+    Condition: displayPublicIP
+    Description: EC2 Instance Connect
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=ec2-user&sshPort=22#/"
 
   SSMsessionManager:
     Description: SSM Session Manager login ("sudo passwd ec2-user" to change password)
