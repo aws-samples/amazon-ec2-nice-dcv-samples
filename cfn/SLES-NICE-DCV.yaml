@@ -22,7 +22,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: AMI ID. ( https://www.suse.com/c/aws-ssm-parameters/ )
+          default: SLES version
         Parameters:
           - osVersion
       - Label:
@@ -58,7 +58,7 @@ Metadata:
 Parameters:
   osVersion:
     Type: String
-    Description: Version and processor architecture
+    Description: Version
     AllowedValues:
       - SUSE Linux Enterprise Server 15 SP5
       - SUSE Linux Enterprise Server 12 SP5
