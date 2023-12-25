@@ -94,9 +94,11 @@ Refer to [Introduction to NICE DCV sessions](https://docs.aws.amazon.com/dcv/lat
 
 
 ### GPU driver installation
-On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, NICE DCV console sessions have direct access to the GPU, providing features such as NVENC hardware accelerated H.264 video streaming encoding. GPU driver installation may be available for some Linux distros via `sessionType` CloudFormation parameter option.
+On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, NICE DCV console sessions have direct access to the GPU, providing features such as NVENC hardware accelerated H.264 video streaming encoding (screen shot below). For best results, connect to your EC2 instance using [native client](https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/tree/main/cfn#nice-dcv-clients).
 
 <img alternate="NICE DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
+
+GPU driver installation may be available for some Linux distros via `sessionType` CloudFormation parameter option.
 
 For Ubuntu, you can install [Enterprise Ready Drivers (ERD) packages](https://ubuntu.com/server/docs/nvidia-drivers-installation) by selecting `console-with-Ubuntu_repo_Driver`. Use  `ubuntuDriverVersion` parameter value to specify the [driver branch version](https://docs.nvidia.com/datacenter/tesla/drivers/index.html#lifecycle) to install, e.g. `535`.
 
