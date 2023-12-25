@@ -37,4 +37,6 @@ net start dcvserver
 @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html#fleet-rdp-prerequisites
 powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.4.201 -Force"
 powershell -command "Install-Module -Name PSReadLine -Repository PSGallery -MinimumVersion 2.2.2 -Force"
+
+shutdown /r /t 1 /f
 </script>
