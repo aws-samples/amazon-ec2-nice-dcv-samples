@@ -1,6 +1,5 @@
 ## amazon-ec2-nice-dcv-samples 
-Collection of sample [AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates to provision Linux or Windows [Amazon EC2](https://aws.amazon.com/ec2/) instances running [NICE DCV](https://aws.amazon.com/hpc/dcv/) server.
-
+Collection of sample [AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates to provision Linux or Windows [Amazon EC2](https://aws.amazon.com/ec2/) instances running [NICE DCV](https://aws.amazon.com/hpc/dcv/) server. Includes option to install NVIDIA or AMD GPU drivers. 
 
 ## Description
 [NICE DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops and application streaming in the cloud from any device. To use, [install NICE DCV server software](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html) and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) (screenshot below) or [native client](https://www.nice-dcv.com/latest.html). 
@@ -20,12 +19,12 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer-web.html)
 - [USB remotization](https://docs.aws.amazon.com/dcv/latest/userguide/using-usb.html)
 - [Audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html)
-- [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) browser-based terminal access
+- [AWS Systems Manager Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) browser-based terminal access
 - [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html) browser-based SSH (some [Linux distros](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html))
 - [Fleet Manager Remote Desktop](https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html) browser-based RDP (Windows)
 - [AWS CLI v2](https://aws.amazon.com/blogs/developer/aws-cli-v2-is-now-generally-available/) with [partial mode](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html#cli-usage-auto-prompt-modes) [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html) 
 - [gp3 or gp2](https://aws.amazon.com/ebs/general-purpose/) volume type with option to specify volume size
-- [EC2 IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) for [NICE DCV license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2) and S3 bucket access to [NVIDIA](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html) [GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) drivers 
+- [EC2 IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) for [NICE DCV license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2), [AWS Systems Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-permissions.html) and S3 bucket access to [NVIDIA](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html) [GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) drivers 
 - Associate static, public IPv4 address via [Elastic IP](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html) (optional)
 - Specify NICE DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
 - Virtual or console [session](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro)
