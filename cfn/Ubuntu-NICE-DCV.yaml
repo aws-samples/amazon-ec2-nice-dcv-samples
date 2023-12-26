@@ -818,7 +818,7 @@ Resources:
 
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           if (cat /etc/os-release | grep -q 18.04); then
-            apt-get install -q -y install ubuntu-desktop
+            apt-get install -q -y ubuntu-desktop
           else
             apt-get install -q -y ubuntu-desktop-minimal 
           fi
