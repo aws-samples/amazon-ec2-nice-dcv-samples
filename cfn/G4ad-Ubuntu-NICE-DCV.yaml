@@ -539,7 +539,7 @@ Resources:
           apt-get install -q -y ./nice-dcv-web-viewer_*.deb
           usermod -aG video dcv
           apt-get install -q -y ./nice-xdcv_*.deb
-          apt-get install -q -y ./nice-dcv-gltest*.rpm
+          apt-get install -q -y ./nice-dcv-gltest*.deb
 
           # NICE DCV VA-API
           apt-get install -q -y libva2 libva-drm2 vainfo
