@@ -40,7 +40,7 @@ EBS Volume
 
 NICE DCV
 - `listenPort`: NICE DCV server TCP/UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
-- `sessionType` (Linux only): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual`. GPU driver installation may be available for some distros. Refer to [GPU driver installation](#gpu-driver-installation) section below for more details
+- `sessionType` (Linux only): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual` with *multi-user.target* as default systemd target. Selecting `console` will change systemd default to *graphical.target*. GPU driver installation may be available for some distros. Refer to [Console and virtual sessions](https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/tree/main/cfn#console-and-virtual-session) and [GPU driver installation](#gpu-driver-installation) sections below for more details
 - `teslaDriverVersion` (Linux only): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `console-with-Tesla_runfile_Driver` or `virtual-with-Tesla_runfile_Driver` option is selected under `sessionType`
 - `ubuntuDriverVersion` (Ubuntu only): NVIDIA [Enterprise Ready Drivers (ERD)](https://ubuntu.com/server/docs/nvidia-drivers-installation) version to install when `console-with-Ubuntu_repo_Driver` is selected  under `sessionType`
 
@@ -88,7 +88,7 @@ The login user name depends on Linux distributions as follows:
 
 You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder via SSM Session Manager or EC2 Instance Connect to update NICE DCV and AWS CLI. 
 
-### Console and virtual session
+### Console and virtual sessions
 NICE DCV offers two types of sessions: console sessions and virtual sessions. With console sessions, NICE DCV directly captures the content of the desktop screen. With virtual sessions, NICE DCV starts an X server instance, Xdcv, and runs a desktop environment inside the X server. 
 Refer to [Introduction to NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) for more details.
 
