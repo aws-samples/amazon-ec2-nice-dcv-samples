@@ -769,6 +769,26 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
+            "/etc/apt/sources.list.d/amdgpu.list":
+              content: |
+                deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/ROCM_VER/ubuntu DISTRO main
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/etc/apt/sources.list.d/rocm.list":
+              content: |
+                deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/ROCM_VER DISTRO main
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/etc/apt/preferences.d/rocm-pin-600":
+              content: |
+                Package: *
+                Pin: release o=repo.radeon.com
+                Pin-Priority: 600
+              mode: "000644"
+              owner: "root"
+              group: "root"
             "/etc/X11/xorg.conf":
               content: |
                 Section "ServerLayout"
@@ -1055,19 +1075,28 @@ Resources:
               systemctl disable dcv-post-reboot
               rm -f /etc/X11/xorg.conf
 
-              mkdir --parents --mode=0755 /etc/apt/keyrings
-              wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | tee /etc/apt/keyrings/rocm.gpg > /dev/null
-              echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/6.0/ubuntu focal main" | tee /etc/apt/sources.list.d/amdgpu.list
-              echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/6.0 jammy main" | tee --append /etc/apt/sources.list.d/rocm.list
-              echo -e 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600' | tee /etc/apt/preferences.d/rocm-pin-600
-
-              apt-get update -q
-              apt-get install -q -y amdgpu-dkms
-
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload
               systemctl enable dcv-gpu-install
+
+              mkdir --parents --mode=0755 /etc/apt/keyrings
+              wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | tee /etc/apt/keyrings/rocm.gpg > /dev/null
+
+              # update repo file with correct values
+              ROCM_VER=6.0
+              if (cat /etc/os-release | grep -q 22.04); then
+                DISTRO=jammy
+              else
+                DISTRO=focal
+              fi
+              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/apt/sources.list.d/amdgpu.list
+              sed -i "s/DISTRO/$DISTRO/g" /etc/apt/sources.list.d/amdgpu.list
+              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/apt/sources.list.d/rocm.list
+              sed -i "s/DISTRO/$DISTRO/g" /etc/apt/sources.list.d/rocm.list
+
+              apt-get update -q
+              apt-get install -q -y amdgpu-dkms
               ;;
           esac
 

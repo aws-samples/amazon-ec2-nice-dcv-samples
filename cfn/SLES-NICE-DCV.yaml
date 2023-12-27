@@ -555,7 +555,7 @@ Resources:
               content: |
                 [amdgpu]
                 name=amdgpu
-                baseurl=https://repo.radeon.com/amdgpu/6.0/sle/VERSION/main/x86_64/
+                baseurl=https://repo.radeon.com/amdgpu/ROCM_VER/sle/VERSION/main/x86_64/
                 enabled=1
                 gpgcheck=1
                 gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
@@ -564,9 +564,9 @@ Resources:
               group: "root"
             "/etc/zypp/repos.d/rocm.repo": # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/sle.html
               content: |
-                [ROCm-6.0]
-                name=ROCm6.0
-                baseurl=https://repo.radeon.com/rocm/zyp/6.0/main
+                [ROCm-ROCM_VER]
+                name=ROCmROCM_VER
+                baseurl=https://repo.radeon.com/rocm/zyp/ROCM_VER/main
                 enabled=1
                 gpgcheck=1
                 gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
@@ -817,9 +817,12 @@ Resources:
               systemctl enable dcv-gpu-install
 
               # update repo file with correct values
+              ROCM_VER=6.0
               VERSION=$(. /etc/os-release;echo $VERSION_ID)
 
+              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/zypp/repos.d/amdgpu.repo
               sed -i "s/VERSION/$VERSION/g" /etc/zypp/repos.d/amdgpu.repo
+              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/zypp/repos.d/rocm.repo
 
               zypper refresh
               zypper -n --gpg-auto-import-keys install -y amdgpu-dkms
