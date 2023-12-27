@@ -664,7 +664,11 @@ Resources:
 
                 dnf install -q -y kernel-devel-$(uname -r)
                 DISTRO=$(. /etc/os-release;echo rhel$VERSION_ID | sed -e 's/\..*//g')
-                ARCH=$( /bin/arch )
+                if (uname -a | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
                 dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 dnf clean all
                 dnf -q -y module install nvidia-driver:latest-dkms

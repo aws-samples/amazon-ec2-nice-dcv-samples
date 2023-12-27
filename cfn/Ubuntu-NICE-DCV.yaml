@@ -665,7 +665,7 @@ Resources:
                 if (uname -a | grep x86); then
                   ARCH=x86_64
                 else
-                  ARCH=arm64
+                  ARCH=sbsa
                 fi
                 curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
                 apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
