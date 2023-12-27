@@ -482,7 +482,11 @@ Resources:
 
                 zypper -n install -y kernel-source
                 DISTRO=sles15
-                ARCH=$( /bin/arch )
+                if (uname -a | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
                 zypper -n -t addrepo -G -f https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 zypper -n -t refresh
                 zypper -n install -y cuda-drivers
