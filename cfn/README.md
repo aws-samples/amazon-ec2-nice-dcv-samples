@@ -94,7 +94,7 @@ Refer to [Introduction to NICE DCV sessions](https://docs.aws.amazon.com/dcv/lat
 
 
 ### GPU driver installation
-On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, NICE DCV console sessions have direct access to the GPU, providing features such as NVENC hardware accelerated H.264 video streaming encoding (screen shot below). For best results, connect to your EC2 instance using [native client](https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/tree/main/cfn#nice-dcv-clients).
+On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, NICE DCV console sessions have direct access to the GPU, providing features such as GPU accelerated OpenGL and hardware accelerated video streaming encoding (screen shot below). For best results, connect to your EC2 instance using [native client](https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/tree/main/cfn#nice-dcv-clients).
 
 <img alternate="NICE DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
 
