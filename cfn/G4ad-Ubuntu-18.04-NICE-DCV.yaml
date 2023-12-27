@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Ubuntu on G4ad instance with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
+Description: Ubuntu on G4ad instance with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 
 Metadata:
   License:
@@ -333,6 +333,12 @@ Resources:
               content: !Sub |
                 #!/bin/bash
 
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                apt-get install -q -y linux-headers-$(uname -r)
+                apt install -q -y usbutils
+                dcvusbdriverinstaller --quiet
+                systemctl restart dcvserver
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
@@ -346,12 +352,6 @@ Resources:
                     systemctl isolate graphical.target
                     ;;
                 esac
-
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                apt-get install -q -y linux-headers-$(uname -r)
-                apt install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -389,21 +389,18 @@ Resources:
 
                 apt-get install -q -y linux-modules-extra-$(uname -r) -y
                 apt-get install -q -y linux-headers-$(uname -r)
-
                 aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ .
+
                 tar -xf amdgpu-pro*ubuntu*.xz
                 rm -f *.xz
                 cd amdgpu-pro*
                 ./amdgpu-pro-install -y --opencl=pal,legacy
                 apt install -y ./amf-amdgpu-pro_20.20-*_amd64.deb
 
-                # for verification and acceleration
-                apt update -y
-                apt install -q -y clinfo
-                echo PREFERRED=/usr/bin/mate-session > /etc/default/desktop
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                sed -i "/^#target-fps/a target-fps=60" /etc/dcv/dcv.conf
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -539,13 +536,14 @@ Resources:
           apt-get install -q -y ./nice-dcv-web-viewer_*.deb
           usermod -aG video dcv
           apt-get install -q -y ./nice-xdcv_*.deb
-          apt-get install -q -y ./nice-dcv-gltest*.deb
+          apt-get install -q -y ./nice-dcv-gltes_*.deb
 
-          # NICE DCV VA-API
-          apt-get install -q -y libva2 libva-drm2 vainfo
-
-          # USB and AMD driver DKMS
+          # USB and GPU driver DKMS
           apt-get install -q -y dkms
+
+          # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+          apt-get install -q -y mesa-utils
+          apt-get install -q -y libva2 libva-drm2 vainfo
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -582,7 +580,7 @@ Resources:
           export SESSION="${sessionType}"
           case $SESSION in
             console*)
-              sed -i "/^\[session-management\]/a create-session = true" /etc/dcv/dcv.conf
+              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
               ;;
             virtual*)
               systemctl enable dcv-virtual-session

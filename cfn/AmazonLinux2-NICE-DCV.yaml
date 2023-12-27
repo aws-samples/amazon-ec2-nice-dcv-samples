@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Amazon Linux 2 with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
+Description: Amazon Linux 2 with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 
 Metadata:
   License:
@@ -133,7 +133,7 @@ Parameters:
     Default: "virtual"
   teslaDriverVersion:
     Type: String
-    Description: "[*-NVIDIA_Tesla_runfile_Driver] Driver version. ( https://www.nvidia.com/Download/index.aspx : Product Type=Data Center/Tesla )"
+    Description: "[*-NVIDIA_Tesla_runfile_Driver] Driver version ( https://www.nvidia.com/Download/index.aspx : Product Type = Data Center/Tesla )"
     Default: 535.129.03
 
   volumeSize:
@@ -305,9 +305,10 @@ Resources:
                   tar -xvzf nice-dcv-el7-aarch64.tgz && cd nice-dcv-*-el7-aarch64
                 fi
                 sudo systemctl stop dcvserver
-                sudo yum install -y nice-dcv-server-*.rpm
-                sudo yum install -y nice-dcv-web-viewer-*.rpm
-                sudo yum install -y nice-xdcv-*.rpm
+                sudo yum install -y ./nice-dcv-server-*.rpm
+                sudo yum install -y ./nice-dcv-web-viewer-*.rpm
+                sudo yum install -y ./nice-xdcv-*.rpm
+                sudo yum install -y ./nice-dcv-gltest-*.rpm
                 sudo systemctl restart dcvserver
               mode: "000755"
               owner: "ec2-user"
@@ -377,6 +378,12 @@ Resources:
               content: !Sub |
                 #!/bin/bash
 
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                yum install -q -y kernel-devel-$(uname -r)
+                yum install -q -y usbutils
+                dcvusbdriverinstaller --quiet
+                systemctl restart dcvserver
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
@@ -395,12 +402,6 @@ Resources:
                     systemctl isolate graphical.target
                     ;;
                 esac
-
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                yum install -q -y kernel-devel-$(uname -r)
-                yum install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -638,6 +639,7 @@ Resources:
                 yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 yum clean expire-cache
                 yum install -q -y nvidia-driver-latest-dkms
+                yum install -q -y nvidia-settings
 
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
                 cd /usr/src/nvidia-*
@@ -715,12 +717,14 @@ Resources:
           sysctl -w net.ipv6.conf.all.disable_ipv6=1
           sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-          export CFN_INIT="/opt/aws/bin/cfn-init"
-          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
-
           yum clean all
           yum install -q -y deltarpm wget tmux unzip tar curl sed
-          # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
+
+          export CFN_INIT="/opt/aws/bin/cfn-init"
+
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+
+          # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           yum install -q -y gdm gnome-session gnome-classic-session gnome-session-xsession
           yum install -q -y xorg-x11-server-Xorg xorg-x11-fonts-Type1 xorg-x11-drivers 
           yum install -q -y gnome-terminal gnu-free-fonts-common gnu-free-mono-fonts gnu-free-sans-fonts gnu-free-serif-fonts
@@ -744,12 +748,17 @@ Resources:
           yum install -q -y ./nice-dcv-server-*.rpm
           yum install -q -y ./nice-dcv-web-viewer-*.rpm
           yum install -q -y ./nice-xdcv-*.rpm
+          yum install -q -y ./nice-dcv-gltest-*.rpm
 
           # EPEL: https://docs.fedoraproject.org/en-US/epel/
           amazon-linux-extras install -y epel
 
-          # USB and Nvidia driver DKMS
+          # USB and GPU driver DKMS
           yum install -q -y dkms
+
+          # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+          yum install -q -y glx-utils
+          yum install -q -y libva libva-utils
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -762,7 +771,7 @@ Resources:
           sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
           # remove AWSCLI version 1
-          yum remove awscli -q -y
+          yum remove -q -y awscli
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
@@ -797,7 +806,7 @@ Resources:
           export SESSION="${sessionType}"
           case $SESSION in
             console*)
-              sed -i "/^\[session-management\]/a create-session = true" /etc/dcv/dcv.conf
+              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
               ;;
             virtual*)
               systemctl enable dcv-virtual-session

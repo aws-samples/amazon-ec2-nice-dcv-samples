@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CentOS 7 with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
+Description: CentOS 7 with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 
 Metadata:
   License:
@@ -128,7 +128,7 @@ Parameters:
     Description: Volume size in GiB
     MinValue: 10
     MaxValue: 16384
-    Default: 10
+    Default: 20
   volumeType:
     Type: String
     Description: EBS volume type
@@ -271,9 +271,10 @@ Resources:
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
                 tar -xvzf nice-dcv-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
                 sudo systemctl stop dcvserver
-                sudo yum install -y nice-dcv-server-*.rpm
-                sudo yum install -y nice-dcv-web-viewer-*.rpm
-                sudo yum install -y nice-xdcv-*.rpm
+                sudo yum install -y ./nice-dcv-server-*.rpm
+                sudo yum install -y ./nice-dcv-web-viewer-*.rpm
+                sudo yum install -y ./nice-xdcv-*.rpm
+                sudo yum install -y ./nice-dcv-gltest-*.rpm
                 sudo systemctl restart dcvserver
               mode: "000755"
               owner: "centos"
@@ -339,6 +340,12 @@ Resources:
               content: !Sub |
                 #!/bin/bash
 
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                yum install -q -y kernel-devel-$(uname -r)
+                yum install -q -y usbutils
+                dcvusbdriverinstaller --quiet
+                systemctl restart dcvserver
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 python2 /usr/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
@@ -352,12 +359,6 @@ Resources:
                     systemctl isolate graphical.target
                     ;;
                 esac
-
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                yum install -q -y kernel-devel-$(uname -r)
-                yum install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -578,12 +579,17 @@ Resources:
           yum install -q -y ./nice-dcv-server-*.rpm
           yum install -q -y ./nice-dcv-web-viewer-*.rpm
           yum install -q -y ./nice-xdcv-*.rpm
+          yum install -q -y ./nice-dcv-gltest-*.rpm
 
           # EPEL: https://docs.fedoraproject.org/en-US/epel/
           yum install -q -y epel-release
 
-          # USB and Nvidia driver DKMS
+          # USB and GPU driver DKMS
           yum install -q -y dkms
+
+          # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+          yum install -q -y glx-utils
+          yum install -q -y libva libva-utils
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -596,7 +602,7 @@ Resources:
           sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
           # remove AWSCLI version 1
-          yum remove awscli -q -y
+          yum remove -q -y awscli
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
@@ -634,7 +640,7 @@ Resources:
           export SESSION="${sessionType}"
           case $SESSION in
             console*)
-              sed -i "/^\[session-management\]/a create-session = true" /etc/dcv/dcv.conf
+              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
               ;;
             virtual*)
               systemctl enable dcv-virtual-session

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Kali Linux with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
+Description: Kali Linux with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 
 Metadata:
   License:
@@ -273,8 +273,8 @@ Resources:
                 sudo systemctl stop dcvserver dcv-virtual-session
                 sudo apt-get install -y ./nice-dcv-server_*.deb
                 sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
-                sudo usermod -aG video dcv
                 sudo apt-get install -y ./nice-xdcv_*.deb
+                sudo apt-get install -y ./nice-dcv-gltest_*.deb
                 sudo systemctl restart dcvserver dcv-virtual-session
               mode: "000755"
               owner: "kali"
@@ -340,17 +340,17 @@ Resources:
               content: !Sub |
                 #!/bin/bash
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 apt-get install -q -y linux-headers-cloud-amd64
                 apt-get install -q -y usbutils
                 dcvusbdriverinstaller --quiet
                 systemctl restart dcvserver
+
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -441,10 +441,11 @@ Resources:
           # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
           export DEBIAN_FRONTEND=noninteractive
 
-          apt-get -q update
+          apt-get clean all
+          apt-get update -q
           apt-get install -q -y wget tmux unzip tar curl sed
 
-          # EC2-instance-connect
+          # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
           curl -s -L -O http://archive.ubuntu.com/ubuntu/pool/main/e/ec2-instance-connect/ec2-instance-connect_1.1.17-0ubuntu1_all.deb
           apt-get install -q -y ./ec2-instance-connect_1.1.17-0ubuntu1_all.deb
 
@@ -457,8 +458,8 @@ Resources:
           snap install amazon-ssm-agent --classic
           snap start amazon-ssm-agent
 
-          # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html    
-          apt-get install -q -y python3 python3-setuptools python3-docutils python3-daemon
+          # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
+          apt-get install -q -y python3 python3-pip python3-setuptools python3-docutils python3-daemon
           curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
           cd aws-cfn-bootstrap-2.0
@@ -470,9 +471,9 @@ Resources:
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
-          apt-get -q -y install kali-desktop-xfce
+          apt-get install -q -y kali-desktop-xfce
           # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
-          apt-get -q -y install pipewire-audio
+          apt-get install -q -y pipewire-audio
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
@@ -484,18 +485,20 @@ Resources:
           mkdir -p /etc/lightdm/lightdm.conf.d
 
           # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
-          apt-get -q -y install ./nice-dcv-server_*.deb
-          apt-get -q -y install ./nice-dcv-web-viewer_*.deb
+          apt-get install -q -y ./nice-dcv-server_*.deb
+          apt-get install -q -y ./nice-dcv-web-viewer_*.deb
           usermod -aG video dcv
           # from /etc/lightdm/lightdm.conf.d
           sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
-          apt-get -q -y install ./nice-xdcv_*.deb
+          apt-get install -q -y ./nice-xdcv_*.deb
+          apt-get install -q -y ./nice-dcv-gltest_*.deb
 
-          # NICE DCV VA-API
-          apt-get install -q -y libva2 libva-drm2
-
-          # USB and Nvidia driver DKMS
+          # USB and GPU driver DKMS
           apt-get install -q -y dkms
+
+          # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+          apt-get install -q -y mesa-utils
+          apt-get install -q -y libva2 libva-drm2 vainfo
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -508,7 +511,7 @@ Resources:
           sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
           # remove AWSCLI version 1
-          apt-get -q -y remove awscli
+          apt-get remove -q -y awscli
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
@@ -521,9 +524,9 @@ Resources:
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
 
           # Update OS
-          apt-get -q update
-          apt-get -q -y full-upgrade
-          apt-get -q -y autoremove
+          apt-get update -q
+          apt-get full-upgrade -q -y
+          apt-get autoremove -q -y
 
           # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           systemctl set-default multi-user.target

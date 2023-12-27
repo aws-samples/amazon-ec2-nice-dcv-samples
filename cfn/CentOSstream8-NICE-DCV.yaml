@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CentOS Stream 8 with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
+Description: CentOS Stream 8 with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 
 Metadata:
   License:
@@ -128,7 +128,7 @@ Parameters:
     Description: Volume size in GiB
     MinValue: 10
     MaxValue: 16384
-    Default: 10
+    Default: 20
   volumeType:
     Type: String
     Description: EBS volume type
@@ -271,9 +271,10 @@ Resources:
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
                 tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
                 sudo systemctl stop dcvserver
-                sudo dnf install -y nice-dcv-server-*.rpm
-                sudo dnf install -y nice-dcv-web-viewer-*.rpm
-                sudo dnf install -y nice-xdcv-*.rpm
+                sudo dnf install -y ./nice-dcv-server-*.rpm
+                sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
+                sudo dnf install -y ./nice-xdcv-*.rpm
+                sudo dnf install -y ./nice-dcv-gltest-*.rpm
                 sudo systemctl restart dcvserver
               mode: "000755"
               owner: "centos"
@@ -339,6 +340,12 @@ Resources:
               content: !Sub |
                 #!/bin/bash
 
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                dnf install -q -y kernel-devel-$(uname -r)
+                dnf install -q -y usbutils
+                dcvusbdriverinstaller --quiet
+                systemctl restart dcvserver
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
@@ -352,12 +359,6 @@ Resources:
                     systemctl isolate graphical.target
                     ;;
                 esac
-
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                dnf install -q -y kernel-devel-$(uname -r)
-                dnf install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -553,16 +554,18 @@ Resources:
           dnf install -q -y ./nice-dcv-server-*.rpm
           dnf install -q -y ./nice-dcv-web-viewer-*.rpm
           dnf install -q -y ./nice-xdcv-*.rpm
-
-          # NICE DCV VA-API
-          dnf install -q -y libva
+          dnf install -q -y ./nice-dcv-gltest-*.rpm
 
           # EPEL: https://docs.fedoraproject.org/en-US/epel/
           dnf config-manager --set-enabled powertools
           dnf install -q -y epel-release epel-next-release
 
-          # USB and Nvidia driver DKMS
+          # USB and GPU driver DKMS
           dnf install -q -y dkms
+
+          # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+          dnf install -q -y glx-utils
+          dnf install -q -y libva libva-utils
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -613,7 +616,7 @@ Resources:
           export SESSION="${sessionType}"
           case $SESSION in
             console*)
-              sed -i "/^\[session-management\]/a create-session = true" /etc/dcv/dcv.conf
+              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
               ;;
             virtual*)
               systemctl enable dcv-virtual-session

@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Amazon Linux 2 on G4ad instance with NICE DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples)
+Description: Amazon Linux 2 on G4ad instance with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 
 Metadata:
   License:
@@ -279,9 +279,10 @@ Resources:
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
                 tar -xvzf nice-dcv-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
                 sudo systemctl stop dcvserver
-                sudo yum install -y nice-dcv-server-*.rpm
-                sudo yum install -y nice-dcv-web-viewer-*.rpm
-                sudo yum install -y nice-xdcv-*.rpm
+                sudo yum install -y ./nice-dcv-server-*.rpm
+                sudo yum install -y ./nice-dcv-web-viewer-*.rpm
+                sudo yum install -y ./nice-xdcv-*.rpm
+                sudo yum install -y ./nice-dcv-gltest-*.rpm
                 sudo systemctl restart dcvserver
               mode: "000755"
               owner: "ec2-user"
@@ -347,6 +348,12 @@ Resources:
               content: !Sub |
                 #!/bin/bash
 
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                yum install -q -y kernel-devel-$(uname -r)
+                yum install -q -y usbutils
+                dcvusbdriverinstaller --quiet
+                systemctl restart dcvserver
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
@@ -360,12 +367,6 @@ Resources:
                     systemctl isolate graphical.target
                     ;;
                 esac
-
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                yum install -q -y kernel-devel-$(uname -r)
-                yum install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -401,20 +402,19 @@ Resources:
 
                 yum install -q -y gcc make
                 yum install -q -y kernel-devel-$(uname -r)
-
                 aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ .
+
                 tar -xf amdgpu-pro-*rhel*.tar.xz
                 rm -f *.xz
                 cd amdgpu-pro*
                 ./amdgpu-pro-install -y --opencl=pal,legacy
 
-                # for verification and acceleration
-                yum update -y
-                yum install -q -y clinfo
-                echo PREFERRED=/usr/bin/mate-session > /etc/sysconfig/desktop
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                sed -i "/^#target-fps/a target-fps=60" /etc/dcv/dcv.conf
+
+                echo PREFERRED=/usr/bin/mate-session > /etc/sysconfig/desktop
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -510,7 +510,6 @@ Resources:
           yum clean all
           yum install -q -y deltarpm wget tmux unzip tar curl sed
 
-          # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
           export CFN_INIT="/opt/aws/bin/cfn-init"
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
@@ -531,13 +530,14 @@ Resources:
           yum install -q -y ./nice-dcv-web-viewer-*.rpm
           usermod -aG video dcv
           yum install -q -y ./nice-xdcv-*.rpm
-          yum install -q -y ./nice-dcv-gltest*.rpm
+          yum install -q -y ./nice-dcv-gltest-*.rpm
 
-          # NICE DCV VA-API
-          yum install -q -y libva libva-utils
-
-          # USB and AMD driver DKMS
+          # USB and GPU driver DKMS
           yum install -q -y dkms
+
+          # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+          yum install -q -y glx-utils
+          yum install -q -y libva libva-utils
 
           # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -584,7 +584,7 @@ Resources:
           export SESSION="${sessionType}"
           case $SESSION in
             console*)
-              sed -i "/^\[session-management\]/a create-session = true" /etc/dcv/dcv.conf
+              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
               ;;
             virtual*)
               systemctl enable dcv-virtual-session
