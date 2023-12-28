@@ -11,7 +11,7 @@ NICE DCV client do not require a license while NICE DCV server requires [licensi
 
 
 The CloudFormation templates provision EC2 instances running NICE DCV server with the following features:
-- [GNOME](https://www.gnome.org/) desktop environment
+- [GNOME](https://www.gnome.org/) desktop environment (Linux)
 - [Web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) 
 - [Adaptable display resolution](https://docs.aws.amazon.com/dcv/latest/userguide/changing-resolution.html)
 - [QUIC UDP transport protocol](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html)
