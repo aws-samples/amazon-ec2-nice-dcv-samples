@@ -770,8 +770,8 @@ Resources:
               group: "root"
             "/etc/yum.repos.d/rocm.repo":
               content: |
-                [ROCm-ROCM_VER]
-                name=ROCmROCM_VER
+                [ROCm-latest]
+                name=ROCm
                 baseurl=https://repo.radeon.com/rocm/DISTRO/latest/main
                 enabled=1
                 priority=50
