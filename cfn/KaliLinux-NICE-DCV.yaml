@@ -351,6 +351,7 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
+                SESSION="${sessionType}"
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
