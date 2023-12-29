@@ -404,7 +404,7 @@ Resources:
         03_gpu_nvidia_install:
           files:
             "/opt/install-gpu-driver": # https://www.kali.org/docs/cloud/aws/
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
@@ -419,7 +419,7 @@ Resources:
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
+                rm -f ${!0}
                 reboot
               mode: "000755"
               owner: "root"
