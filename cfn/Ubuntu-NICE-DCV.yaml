@@ -425,15 +425,18 @@ Resources:
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
+
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
-                    systemctl set-default graphical.target
-                    systemctl isolate graphical.target
+                    systemctl set-default graphical.target && systemctl isolate graphical.target
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
                     ;;
                 esac
-
-                systemctl enable dcvserver
-                systemctl restart dcvserver
+                systemctl enable dcvserver && systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -1031,19 +1034,12 @@ Resources:
           sed -i "s/enabled=1/enable=0/g" /etc/default/apport
           apt-get remove -q -y ubuntu-report whoopsie apport
 
-          # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
-          export SESSION="${sessionType}"
-          case $SESSION in
-            console*)
-              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-              ;;
-            virtual*)
-              systemctl enable dcv-virtual-session
-              ;;
-          esac
           systemctl enable dcv-post-reboot
+
+          export SESSION="${sessionType}"
           case $SESSION in
             *Ubuntu*) # https://ubuntu.com/server/docs/nvidia-drivers-installation
               systemctl disable dcv-post-reboot
@@ -1105,8 +1101,6 @@ Resources:
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
           sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-          systemctl enable dcvserver
 
           sleep 1 && reboot
       Tags:
