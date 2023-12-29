@@ -581,7 +581,7 @@ Resources:
             "/etc/zypp/repos.d/rocm.repo": # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/sle.html
               content: |
                 [ROCm-latest]
-                name=ROCmlatest
+                name=ROCm
                 baseurl=https://repo.radeon.com/rocm/zyp/latest/main
                 enabled=1
                 gpgcheck=1
