@@ -580,8 +580,8 @@ Resources:
               group: "root"
             "/etc/zypp/repos.d/rocm.repo": # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/sle.html
               content: |
-                [ROCm-ROCM_VER]
-                name=ROCmROCM_VER
+                [ROCm-latest]
+                name=ROCmlatest
                 baseurl=https://repo.radeon.com/rocm/zyp/latest/main
                 enabled=1
                 gpgcheck=1
@@ -798,7 +798,7 @@ Resources:
           # Automatic updates : https://documentation.suse.com/sles/15-SP5/html/SLES-all/cha-onlineupdate-you.html#sec-onlineupdate-you-automatically
           zypper -n install -y yast2-online-update-configuration
 
-          # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
