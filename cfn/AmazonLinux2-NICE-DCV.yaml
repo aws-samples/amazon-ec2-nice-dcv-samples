@@ -381,8 +381,7 @@ Resources:
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 yum install -q -y kernel-devel-$(uname -r)
                 yum install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
+                #dcvusbdriverinstaller --quiet
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
@@ -396,12 +395,18 @@ Resources:
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
+
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
-                    systemctl set-default graphical.target
-                    systemctl isolate graphical.target
+                    systemctl set-default graphical.target && systemctl isolate graphical.target
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
                     ;;
                 esac
+                systemctl enable dcvserver && systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -635,7 +640,11 @@ Resources:
                 yum install -q -y tar bzip2 make automake gcc gcc-c++ pciutils elfutils-libelf-devel libglvnd-devel iptables vim bind-utils wget
 
                 DISTRO=rhel7
-                ARCH=$( /bin/arch )
+                if (uname -a | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
                 yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 yum clean expire-cache
                 yum install -q -y nvidia-driver-latest-dkms
@@ -788,7 +797,7 @@ Resources:
           yum install -q -y xorg-x11-drv-dummy
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
-          # Console session support
+          # Console session support: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"\/home\/ec2-user\"" /etc/dcv/dcv.conf
           # Higher web client max resolution
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
@@ -800,19 +809,12 @@ Resources:
           sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/yum/yum-cron.conf
           systemctl enable yum-cron
 
-          # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
-          export SESSION="${sessionType}"
-          case $SESSION in
-            console*)
-              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-              ;;
-            virtual*)
-              systemctl enable dcv-virtual-session
-              ;;
-          esac
           systemctl enable dcv-post-reboot
+
+          export SESSION="${sessionType}"
           case $SESSION in
             *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
@@ -830,8 +832,6 @@ Resources:
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
           sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-          systemctl enable dcvserver
 
           sleep 1 && reboot
       Tags:

@@ -54,7 +54,6 @@ Metadata:
           - listenPort
           - sessionType
           - teslaDriverVersion
-          - ubuntuDriverVersion
 
 Parameters:
   osVersion:
@@ -146,10 +145,6 @@ Parameters:
     Type: String
     Description: "[*-NVIDIA_Tesla_runfile_Driver] Driver version. ( https://www.nvidia.com/Download/index.aspx : Product Type=Data Center/Tesla )"
     Default: 535.129.03
-  ubuntuDriverVersion:
-    Type: String
-    Description: "[*-Ubuntu_repo_Driver] Driver version ( https://ubuntu.com/server/docs/nvidia-drivers-installation )"
-    Default: 535
 
   volumeSize:
     Type: Number
@@ -410,11 +405,10 @@ Resources:
                 #!/bin/bash
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                apt-get install -q -y linux-headers-$(uname -r)
+                apt-get install -q -y linux-headers-aws
                 apt-get install -q -y linux-modules-extra-aws
                 apt-get install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
+                # dcvusbdriverinstaller --quiet
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
@@ -437,6 +431,9 @@ Resources:
                     systemctl isolate graphical.target
                     ;;
                 esac
+
+                systemctl enable dcvserver
+                systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -593,7 +590,7 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                apt-get install -q -y linux-headers-$(uname -r)
+                apt-get install -q -y linux-headers-aws
                 apt-get install -q -y linux-modules-extra-aws
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
 
@@ -623,7 +620,7 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                apt-get install -q -y linux-headers-$(uname -r)
+                apt-get install -q -y linux-headers-aws
                 apt-get install -q -y linux-modules-extra-aws
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
 
@@ -660,9 +657,10 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                apt-get install -q -y linux-headers-$(uname -r)
+                apt-get install -q -y linux-headers-aws
+                apt-get install -q -y linux-modules-extra-aws
                 DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
-                if (uname -a | grep x86); then
+                if (uname -a | grep -q x86); then
                   ARCH=x86_64
                 else
                   ARCH=sbsa
@@ -693,7 +691,7 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                apt-get install -q -y linux-headers-$(uname -r)
+                apt-get install -q -y linux-headers-aws
                 apt-get install -q -y linux-modules-extra-aws
                 DRIVER_VERSION="${teslaDriverVersion}"
                 ARCH=$( /bin/arch )
@@ -725,9 +723,11 @@ Resources:
                 export DEBIAN_FRONTEND=noninteractive
                 apt-get update -q
                 apt-get install -q -y ubuntu-drivers-common
-                ubuntu-drivers install --gpgpu nvidia:${ubuntuDriverVersion}-server
-                apt-get install -q -y nvidia-driver-${ubuntuDriverVersion}-server
-                apt-get install -q -y nvidia-utils-${ubuntuDriverVersion}-server
+                # Ubnutu-drivers list => nvidia-driver-535-server, ....
+                VERSION=$(ubuntu-drivers list --gpgpu | grep "-server" | cut -d"-" -f3 | sort -r | head -n 1)
+                ubuntu-drivers install --gpgpu nvidia:$VERSION-server
+                apt-get install -q -y nvidia-driver-$VERSION-server
+                apt-get install -q -y nvidia-utils-$VERSION-server
                 apt-get install -q -y nvidia-settings
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -750,12 +750,13 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                apt-get install -q -y linux-headers-$(uname -r)
+                apt-get install -q -y linux-headers-aws
                 apt-get install -q -y linux-modules-extra-aws
 
                 usermod -aG video,render ubuntu
 
-                apt-get install -q -y rocm-hip-runtime
+                apt-get install -q -y amdgpu
+                apt-get install -q -y rocminfo
 
                 sed -i "/^#target-fps/a target-fps=60" /etc/dcv/dcv.conf
 
@@ -771,13 +772,13 @@ Resources:
               group: "root"
             "/etc/apt/sources.list.d/amdgpu.list":
               content: |
-                deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/ROCM_VER/ubuntu DISTRO main
+                deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/latest/ubuntu DISTRO main
               mode: "000644"
               owner: "root"
               group: "root"
             "/etc/apt/sources.list.d/rocm.list":
               content: |
-                deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/ROCM_VER DISTRO main
+                deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/latest DISTRO main
               mode: "000644"
               owner: "root"
               group: "root"
@@ -1026,6 +1027,10 @@ Resources:
           apt-get upgrade -q -y
           apt-get autoremove -q -y
 
+          # Disable reporting : https://wiki.ubuntu.com/Apport
+          sed -i "s/enabled=1/enable=0/g" /etc/default/apport
+          apt-get remove -q -y ubuntu-report whoopsie apport
+
           # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           systemctl set-default multi-user.target
           systemctl daemon-reload
@@ -1084,15 +1089,12 @@ Resources:
               wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | tee /etc/apt/keyrings/rocm.gpg > /dev/null
 
               # update repo file with correct values
-              ROCM_VER=6.0
               if (cat /etc/os-release | grep -q 22.04); then
                 DISTRO=jammy
               else
                 DISTRO=focal
               fi
-              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/apt/sources.list.d/amdgpu.list
               sed -i "s/DISTRO/$DISTRO/g" /etc/apt/sources.list.d/amdgpu.list
-              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/apt/sources.list.d/rocm.list
               sed -i "s/DISTRO/$DISTRO/g" /etc/apt/sources.list.d/rocm.list
 
               apt-get update -q

@@ -343,14 +343,25 @@ Resources:
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 apt-get install -q -y linux-headers-cloud-amd64
                 apt-get install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
+                #dcvusbdriverinstaller --quiet
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                case $SESSION in
+                  console*)
+                    systemctl set-default graphical.target && systemctl isolate graphical.target
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                esac
+                systemctl enable dcvserver && systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -466,7 +477,7 @@ Resources:
           python3 setup.py build
           python3 setup.py install
           cd /tmp/cfn
-          export CFN_INIT="python3 /usr/local/bin/cfn-init"
+          export CFN_INIT="/usr/local/bin/cfn-init"
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
@@ -528,14 +539,13 @@ Resources:
           apt-get full-upgrade -q -y
           apt-get autoremove -q -y
 
-          # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
+          systemctl enable dcv-post-reboot
+
           export SESSION="${sessionType}"
           case $SESSION in
-            virtual)
-              systemctl enable dcv-post-reboot
-              ;;
             *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
 
@@ -549,8 +559,6 @@ Resources:
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
           sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-          systemctl enable dcvserver
 
           sleep 1 && reboot
       Tags:

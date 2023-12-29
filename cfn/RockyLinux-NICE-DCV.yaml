@@ -138,6 +138,7 @@ Parameters:
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_Tesla_repo_Driver"
       - "console-with-NVIDIA_Tesla_runfile_Driver"
+      - "console-with-AMD_ROCm_repo_Driver"
       - "console"
     Default: "virtual"
   teslaDriverVersion:
@@ -319,6 +320,8 @@ Resources:
             - 05_gpu_nvidia_repo_install
           virtual-with-NVIDIA_Tesla_runfile_Driver:
             - 06_gpu_nvidia_tesla_install
+          console-with-AMD_ROCm_repo_Driver:
+            - 08_gpu_amd_rocm_repo_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/rocky/update-dcv":
@@ -419,10 +422,10 @@ Resources:
                 #!/bin/bash
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                dnf install -q -y kernel-devel-$(uname -r)
+                dnf install -q -y kernel-devel
+                dnf install -q -y kernel-modules-extra
                 dnf install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
+                #dcvusbdriverinstaller --quiet
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
@@ -436,12 +439,18 @@ Resources:
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
+
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
-                    systemctl set-default graphical.target
-                    systemctl isolate graphical.target
+                    systemctl set-default graphical.target && systemctl isolate graphical.target
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
                     ;;
                 esac
+                systemctl enable dcvserver && systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -598,7 +607,8 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                dnf install -q -y kernel-devel-$(uname -r)
+                dnf install -q -y kernel-devel
+                dnf install -q -y kernel-modules-extra
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -627,7 +637,8 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                dnf install -q -y kernel-devel-$(uname -r)
+                dnf install -q -y kernel-devel
+                dnf install -q -y kernel-modules-extra
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -663,7 +674,8 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                dnf install -q -y kernel-devel-$(uname -r)
+                dnf install -q -y kernel-devel
+                dnf install -q -y kernel-modules-extra
                 DISTRO=$(. /etc/os-release;echo rhel$VERSION_ID | sed -e 's/\..*//g')
                 if (uname -a | grep -q x86); then
                   ARCH=x86_64
@@ -695,7 +707,8 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                dnf install -q -y kernel-devel-$(uname -r)
+                dnf install -q -y kernel-devel
+                dnf install -q -y kernel-modules-extra
                 DRIVER_VERSION="${teslaDriverVersion}"
                 ARCH=$( /bin/arch )
                 curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
@@ -724,12 +737,13 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 dnf update -y
-                dnf install -q -y kernel-devel-$(uname -r)
+                dnf install -q -y kernel-devel
                 dnf install -q -y kernel-modules-extra
 
-                usermod -a -G render,video rocky
+                usermod -aG video,render rocky
 
-                dnf install -q -y rocm-hip-runtime
+                dnf install -q -y amdgpu
+                dnf install -q -y rocminfo
 
                 sed -i "/^#target-fps/a target-fps=60" /etc/dcv/dcv.conf
 
@@ -747,7 +761,7 @@ Resources:
               content: |
                 [amdgpu]
                 name=amdgpu
-                baseurl=https://repo.radeon.com/amdgpu/ROCM_VER/rhel/VERSION/main/x86_64/
+                baseurl=https://repo.radeon.com/amdgpu/latest/rhel/VERSION/main/x86_64/
                 enabled=1
                 priority=50
                 gpgcheck=1
@@ -759,7 +773,7 @@ Resources:
               content: |
                 [ROCm-ROCM_VER]
                 name=ROCmROCM_VER
-                baseurl=https://repo.radeon.com/rocm/DISTRO/ROCM_VER/main
+                baseurl=https://repo.radeon.com/rocm/DISTRO/latest/main
                 enabled=1
                 priority=50
                 gpgcheck=1
@@ -883,7 +897,7 @@ Resources:
           systemctl enable --now amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-          dnf install -q -y python3 python3-pip python3-setuptools python3-docutils
+          dnf install -q -y python3 python3-pip python3-setuptools
           curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
           cd aws-cfn-bootstrap-2.0
@@ -982,7 +996,7 @@ Resources:
           dnf install -q -y xorg-x11-drv-dummy
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
-          # Console session support
+          # Console session support: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"rocky\"\nstorage-root=\"\/home\/rocky\"" /etc/dcv/dcv.conf
           # Higher web client max resolution
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
@@ -994,19 +1008,12 @@ Resources:
           sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
           systemctl enable dnf-automatic.timer
 
-          # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
-          export SESSION="${sessionType}"
-          case $SESSION in
-            console*)
-              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-              ;;
-            virtual*)
-              systemctl enable dcv-virtual-session
-              ;;
-          esac
           systemctl enable dcv-post-reboot
+
+          export SESSION="${sessionType}"
           case $SESSION in
             *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
@@ -1030,9 +1037,9 @@ Resources:
               systemctl daemon-reload
               systemctl enable dcv-gpu-install
               ;;
-            *AMD*)
-              rm -f /etc/X11/xorg.conf
+            *AMD*) # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/rhel.html
               systemctl disable dcv-post-reboot
+              rm -f /etc/X11/xorg.conf
 
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
@@ -1040,13 +1047,10 @@ Resources:
               systemctl enable dcv-gpu-install
 
               # update repo file with correct values
-              ROCM_VER=6.0
               VERSION=$(. /etc/os-release;echo $VERSION_ID)
               DISTRO=$(. /etc/os-release;echo rhel$VERSION_ID | sed -e 's/\..*//g')
 
-              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/yum.repos.d/amdgpu.repo
               sed -i "s/VERSION/$VERSION/g" /etc/yum.repos.d/amdgpu.repo
-              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/yum.repos.d/rocm.repo
               sed -i "s/DISTRO/$DISTRO/g" /etc/yum.repos.d/rocm.repo
 
               yum install -q -y amdgpu-dkms
@@ -1056,8 +1060,6 @@ Resources:
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
           sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-          systemctl enable dcvserver
 
           sleep 1 && reboot
       Tags:

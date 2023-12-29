@@ -128,6 +128,7 @@ Parameters:
       - "virtual-with-NVIDIA_Tesla_runfile_Driver"
       - "console-with-NVIDIA_Tesla_repo_Driver"
       - "console-with-NVIDIA_Tesla_runfile_Driver"
+      - "console-with-AMD_ROCm_repo_Driver"
       - "console"
     Default: "virtual"
   teslaDriverVersion:
@@ -282,6 +283,8 @@ Resources:
             - 05_gpu_nvidia_repo_install
           virtual-with-NVIDIA_Tesla_runfile_Driver:
             - 06_gpu_nvidia_tesla_install
+          console-with-AMD_ROCm_repo_Driver:
+            - 08_gpu_amd_rocm_repo_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/ec2-user/update-dcv":
@@ -368,14 +371,13 @@ Resources:
                 #!/bin/bash
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                # NOTE: uncomment to enable ( https://documentation.suse.com/sles/15/html/SLES-all/cha-adm-support.html#sec-admsupport-kernel-unsupported )
+                # https://documentation.suse.com/sles/15/html/SLES-all/cha-adm-support.html#sec-admsupport-kernel-unsupported )
                 # zypper -n install -y kernel-source
                 zypper -n install -y usbutils
                 #if (cat /etc/os-release | grep -q 15.); then
                 #  echo "allow_unsupported_modules 1" >> /etc/modprobe.d/10-unsupported-modules.conf
                 #  dcvusbdriverinstaller --quiet
                 #fi
-                systemctl restart dcvserver
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
@@ -395,12 +397,18 @@ Resources:
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
+
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
-                    systemctl set-default graphical.target
-                    systemctl isolate graphical.target
+                    systemctl set-default graphical.target && systemctl isolate graphical.target
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
                     ;;
                 esac
+                systemctl enable dcvserver && systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -542,8 +550,12 @@ Resources:
 
                 zypper -n install -y kernel-source
 
-                usermod -a -G render,video ec2-user
-                zypper -n --gpg-auto-import-keys install -y rocm-hip-runtime
+                usermod -aG video,render ec2-user
+
+                zypper -n install -y amdgpu
+                zypper -n install -y rocminfo
+
+                sed -i "/^#target-fps/a target-fps=60" /etc/dcv/dcv.conf
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -559,7 +571,7 @@ Resources:
               content: |
                 [amdgpu]
                 name=amdgpu
-                baseurl=https://repo.radeon.com/amdgpu/ROCM_VER/sle/VERSION/main/x86_64/
+                baseurl=https://repo.radeon.com/amdgpu/latest/sle/VERSION/main/x86_64/
                 enabled=1
                 gpgcheck=1
                 gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
@@ -570,7 +582,7 @@ Resources:
               content: |
                 [ROCm-ROCM_VER]
                 name=ROCmROCM_VER
-                baseurl=https://repo.radeon.com/rocm/zyp/ROCM_VER/main
+                baseurl=https://repo.radeon.com/rocm/zyp/latest/main
                 enabled=1
                 gpgcheck=1
                 gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
@@ -776,7 +788,7 @@ Resources:
           zypper -n install -y xf86-video-dummy
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
-          # Console session support
+          # Console session support: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"\/home\/ec2-user\"" /etc/dcv/dcv.conf
           # Higher web client max resolution
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
@@ -789,16 +801,9 @@ Resources:
           # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           systemctl set-default multi-user.target
           systemctl daemon-reload
-          export SESSION="${sessionType}"
-          case $SESSION in
-            console*)
-              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-              ;;
-            virtual*)
-              systemctl enable dcv-virtual-session
-              ;;
-          esac
           systemctl enable dcv-post-reboot
+
+          export SESSION="${sessionType}"
           case $SESSION in
             *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
@@ -812,8 +817,8 @@ Resources:
               systemctl enable dcv-gpu-install
               ;;
             *AMD*) # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/sle.html
-              rm -f /etc/X11/xorg.conf
               systemctl disable dcv-post-reboot
+              rm -f /etc/X11/xorg.conf
 
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
@@ -821,12 +826,9 @@ Resources:
               systemctl enable dcv-gpu-install
 
               # update repo file with correct values
-              ROCM_VER=6.0
               VERSION=$(. /etc/os-release;echo $VERSION_ID)
 
-              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/zypp/repos.d/amdgpu.repo
               sed -i "s/VERSION/$VERSION/g" /etc/zypp/repos.d/amdgpu.repo
-              sed -i "s/ROCM_VER/$ROCM_VER/g" /etc/zypp/repos.d/rocm.repo
 
               zypper refresh
               zypper -n --gpg-auto-import-keys install -y amdgpu-dkms
@@ -836,8 +838,6 @@ Resources:
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
           sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-          systemctl enable dcvserver
 
           sleep 1 && reboot
       Tags:

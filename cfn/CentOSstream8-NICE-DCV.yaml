@@ -343,8 +343,7 @@ Resources:
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 dnf install -q -y kernel-devel-$(uname -r)
                 dnf install -q -y usbutils
-                dcvusbdriverinstaller --quiet
-                systemctl restart dcvserver
+                #dcvusbdriverinstaller --quiet
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
@@ -353,12 +352,17 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 SESSION="${sessionType}"
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
-                    systemctl set-default graphical.target
-                    systemctl isolate graphical.target
+                    systemctl set-default graphical.target && systemctl isolate graphical.target
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
                     ;;
                 esac
+                systemctl enable dcvserver && systemctl restart dcvserver
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -598,7 +602,7 @@ Resources:
           dnf install -q -y xorg-x11-drv-dummy
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
-          # Console session support
+          # Console session support: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"centos\"\nstorage-root=\"\/home\/centos\"" /etc/dcv/dcv.conf
           # Higher web client max resolution
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
@@ -610,25 +614,15 @@ Resources:
           sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
           systemctl enable dnf-automatic.timer
 
-          # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
-          export SESSION="${sessionType}"
-          case $SESSION in
-            console*)
-              sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-              ;;
-            virtual*)
-              systemctl enable dcv-virtual-session
-              ;;
-          esac
           systemctl enable dcv-post-reboot
+
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
           sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-          systemctl enable dcvserver
 
           sleep 1 && reboot
       Tags:
