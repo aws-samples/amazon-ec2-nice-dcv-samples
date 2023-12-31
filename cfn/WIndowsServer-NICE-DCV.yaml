@@ -71,7 +71,7 @@ Parameters:
       - NVIDIA-Gaming
       - NVIDIA-GRID
       - none
-    Default: NICE-DCV
+    Default: none
 
   ec2Name:
     Type: String
