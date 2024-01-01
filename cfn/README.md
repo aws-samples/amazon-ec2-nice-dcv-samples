@@ -41,7 +41,7 @@ EBS Volume
 NICE DCV
 - `listenPort`: NICE DCV server TCP/UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
 - `sessionType` (Linux only): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual` with *multi-user.target* as default systemd target. Selecting `console` will change systemd default to *graphical.target*. GPU driver installation may be available for some distros. Refer to [Console and virtual sessions](#console-and-virtual-sessions) and [GPU driver installation](#gpu-driver-installation) sections below for more details
-- `teslaDriverVersion` (Linux only): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `console-with-Tesla_runfile_Driver` or `virtual-with-Tesla_runfile_Driver` option is selected under `sessionType`
+- `teslaDriverVersion` (Linux only): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `console-with-Tesla_runfile_Driver` option is selected under `sessionType`
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html) settings, and click **Create Stack** to launch your stack. 
 
@@ -97,7 +97,7 @@ On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accel
 
 <img alternate="NICE DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
 
-GPU driver installation may be available for some Linux distros via the following `sessionType` parameter options:
+GPU driver installation is available for the some Linux distros ([AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [Rocky Linux](RockyLinux-NICE-DCV.yaml), [SLES](SLES-NICE-DCV.yaml), [Ubuntu](Ubuntu-NICE-DCV.yaml)) via the following `sessionType` parameter options:
 
 - `console-with-Ubuntu_repo_Driver` (Ubuntu only): install latest NVIDIA [Enterprise Ready Drivers (ERD)](https://ubuntu.com/server/docs/nvidia-drivers-installation) from Ubuntu repository
 - `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/) and [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance)#: install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) (also known as [NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/)) or [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers. 

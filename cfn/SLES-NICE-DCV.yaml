@@ -124,8 +124,6 @@ Parameters:
     Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
-      - "virtual-with-NVIDIA_Tesla_repo_Driver"
-      - "virtual-with-NVIDIA_Tesla_runfile_Driver"
       - "console-with-NVIDIA_Tesla_repo_Driver"
       - "console-with-NVIDIA_Tesla_runfile_Driver"
       - "console-with-AMD_ROCm_repo_Driver"
