@@ -746,11 +746,6 @@ Resources:
           zypper -n install -y ./nice-xdcv-*.rpm
           zypper -n install -y ./nice-dcv-gltest-*.rpm
 
-          # USB and GPU driver DKMS
-          if (cat /etc/os-release | grep -q 15.); then
-            zypper -n install -y dkms
-          fi
-
           # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
           zypper -n install -y Mesa-demo-x
           zypper -n install -y libva2 libva-drm2 libva-utils
@@ -797,6 +792,11 @@ Resources:
           zypper -n update -y
           # Automatic updates : https://documentation.suse.com/sles/15-SP5/html/SLES-all/cha-onlineupdate-you.html#sec-onlineupdate-you-automatically
           zypper -n install -y yast2-online-update-configuration
+
+          # USB and GPU driver DKMS
+          if (cat /etc/os-release | grep -q 15.); then
+            zypper -n install -y dkms
+          fi
 
           # 
           systemctl set-default multi-user.target

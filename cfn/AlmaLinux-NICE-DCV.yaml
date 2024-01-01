@@ -953,9 +953,6 @@ Resources:
             dnf install -q -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
           fi
 
-          # USB and GPU driver DKMS
-          dnf install -q -y dkms
-
           # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
           dnf install -q -y glx-utils
           dnf install -q -y libva libva-utils
@@ -1006,6 +1003,9 @@ Resources:
           dnf install -q -y dnf-automatic
           sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
           systemctl enable dnf-automatic.timer
+
+          # USB and GPU driver DKMS
+          dnf install -q -y dkms
 
           # 
           systemctl set-default multi-user.target

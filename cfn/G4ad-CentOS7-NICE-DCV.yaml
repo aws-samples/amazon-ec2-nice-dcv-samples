@@ -577,9 +577,6 @@ Resources:
           yum install -q -y ./nice-xdcv-*.rpm
           yum install -q -y ./nice-dcv-gltest-*.rpm
 
-          # USB and GPU driver DKMS
-          yum install -q -y dkms
-
           # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
           yum install -q -y glx-utils
           yum install -q -y libva libva-utils
@@ -622,6 +619,9 @@ Resources:
           yum install -q -y yum-cron
           sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/yum/yum-cron.conf
           systemctl enable yum-cron
+
+          # USB and GPU driver DKMS
+          yum install -q -y dkms
 
           # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           systemctl set-default multi-user.target

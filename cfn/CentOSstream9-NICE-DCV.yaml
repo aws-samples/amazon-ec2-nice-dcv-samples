@@ -566,9 +566,6 @@ Resources:
           dnf config-manager --set-enabled crb
           dnf install -q -y epel-release epel-next-release
 
-          # USB and GPU driver DKMS
-          dnf install -q -y dkms
-
           # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
           dnf install -q -y glx-utils
           dnf install -q -y libva libva-utils
@@ -615,6 +612,9 @@ Resources:
           dnf install -q -y dnf-automatic
           sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
           systemctl enable dnf-automatic.timer
+
+          # USB and GPU driver DKMS
+          dnf install -q -y dkms
 
           # 
           systemctl set-default multi-user.target

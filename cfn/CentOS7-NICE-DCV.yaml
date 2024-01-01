@@ -588,9 +588,6 @@ Resources:
           # EPEL: https://docs.fedoraproject.org/en-US/epel/
           yum install -q -y epel-release
 
-          # USB and GPU driver DKMS
-          yum install -q -y dkms
-
           # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
           yum install -q -y glx-utils
           yum install -q -y libva libva-utils
@@ -637,6 +634,9 @@ Resources:
           yum install -q -y yum-cron
           sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/yum/yum-cron.conf
           systemctl enable yum-cron
+
+          # USB and GPU driver DKMS
+          yum install -q -y dkms
 
           # 
           systemctl set-default multi-user.target

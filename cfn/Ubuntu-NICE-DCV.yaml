@@ -985,9 +985,6 @@ Resources:
           apt-get install -q -y ./nice-xdcv_*.deb
           apt-get install -q -y ./nice-dcv-gltest_*.deb
 
-          # USB and GPU driver DKMS
-          apt-get install -q -y dkms
-
           # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
           apt-get install -q -y mesa-utils
           apt-get install -q -y libva2 libva-drm2 vainfo
@@ -1029,6 +1026,9 @@ Resources:
           apt-get update -q
           apt-get upgrade -q -y
           apt-get autoremove -q -y
+
+          # USB and GPU driver DKMS
+          apt-get install -q -y dkms
 
           # Disable reporting : https://wiki.ubuntu.com/Apport
           sed -i "s/enabled=1/enable=0/g" /etc/default/apport
