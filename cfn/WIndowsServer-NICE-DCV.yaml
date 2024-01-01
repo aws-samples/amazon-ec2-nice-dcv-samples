@@ -404,14 +404,14 @@ Resources:
               msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
           )            
           IF %DRIVER_TYPE% EQU NVIDIA-GRID (
-              @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-installation-options
+              @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver
               "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
               reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
               forfiles /M *.exe /C "cmd /c 7z x @file"
               start /wait setup.exe -s
           )
           IF %DRIVER_TYPE% EQU NVIDIA-Gaming (
-              @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-installation-options
+              @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver
               "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
               reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
               reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
