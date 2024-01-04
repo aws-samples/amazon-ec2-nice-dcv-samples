@@ -3,15 +3,17 @@ Operating systems such as AlmaLinux, Kali Linux, and those that have reached end
 
 
 ## About CloudFormation templates
+EC2 instances must be provisioned in a subnet with IPv4 internet connectivity. 
+
 When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d), [AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4) or [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), subscribe before using. 
 
-If you specify a different instance type, do [verify its availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html). Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error). Marketplace AMIs may only support specific [instance types](https://docs.aws.amazon.com/marketplace/latest/userguide/ami-single-ami-products.html#single-ami-adding-instance-types), visit the correspnding Marketplace page to view available options.
 
-For templates that offers both x86_64 and arm64 options, ensure that the instance type you specify matches your selected processor architecture. 
+For templates that offers both x86_64 and arm64 options, ensure that the instance type you specify matches your selected processor architecture. Verify [availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html) of the instance type that you specify. (Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error)) Marketplace AMIs may only support specific [instance types](https://docs.aws.amazon.com/marketplace/latest/userguide/ami-single-ami-products.html#single-ami-adding-instance-types), visit the corresponding Marketplace page to view available options.
+
 
 
 ## Deployment via CloudFormation console
-Download desired template file and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Choose **Create Stack**, **Upload a template file**, **Choose File**, select your `.yaml` file and choose **Next**. Enter a **Stack name** and specify parameters values. 
+Download desired template file and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Start the [Create Stack wizard](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html#cfn-using-console-initiating-stack-creation) by choosing **Create Stack**. [Select stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html) by selecting **Upload a template file**, **Choose File**, your `.yaml` file and click **Next**. Enter a **Stack name** and specify parameters values. 
 
 ### CloudFormation Parameters
 In most cases, the default values are sufficient. You will need to specify values for `ec2KeyPair`, `vpcID` and `subnetID`. 
@@ -46,7 +48,7 @@ NICE DCV
 - `sessionType` (Linux only): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual` with *multi-user.target* as default systemd target. Selecting `console` will change systemd default to *graphical.target*. GPU driver installation may be available for some distros. Refer to [Console and virtual sessions](#console-and-virtual-sessions) and [GPU driver installation](#gpu-driver-installation) sections below for more details
 - `teslaDriverVersion` (Linux only): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `console-with-Tesla_runfile_Driver` option is selected under `sessionType`
 
-Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html) settings, and click **Create Stack** to launch your stack. 
+Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html), and click **Submit** to launch your stack. 
 
 It may take more than 30 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
 
