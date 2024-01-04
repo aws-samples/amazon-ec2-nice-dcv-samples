@@ -30,7 +30,7 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) GPU drivers (optional: Windows and some Linux distros)
 
 
-## Deployment and using NICE DCV
+## Deployment
 Refer to [cfn](cfn) section for instructions.
 
 ## Security
