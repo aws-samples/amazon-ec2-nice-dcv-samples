@@ -2,7 +2,7 @@
 Collection of sample [AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates to provision Linux or Windows [Amazon EC2](https://aws.amazon.com/ec2/) instances with GUI (graphical user interface) running [NICE DCV](https://aws.amazon.com/hpc/dcv/) server. Includes option to install NVIDIA or AMD GPU drivers. 
 
 ## Description
-[NICE DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops and application streaming in the cloud from any device. To use, [install NICE DCV server software](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html) and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) (screenshot below) or [native client](https://www.nice-dcv.com/latest.html). 
+[NICE DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops and application streaming in the cloud from any device. To use, install a [desktop environment and desktop manager](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gui) (Linux), [install NICE DCV server software](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html) and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) (screenshot below) or [native client](https://www.nice-dcv.com/latest.html). 
 
 <img alternate="NICE DCV web browser client" src="images/nice-dcv-Ubuntu.png">
 
