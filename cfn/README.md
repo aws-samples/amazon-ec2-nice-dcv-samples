@@ -77,7 +77,7 @@ Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrie
 
 If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), you can choose to specify which graphics driver to install. Note that the drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). 
 
-Use `download-<DRIVER-TYPE>-driver.cmd` helper batch files in *C:\Users\Administrator\* folder to download the latest NVIDIA GRID, NVIDIA gaming or AMD GPU drivers from AWS. Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for driver installation and configuration instructions. 
+Use `download-<DRIVER-TYPE>-driver.cmd` helper batch files in *C:\\Users\\Administrator\\* folder to download the latest NVIDIA GRID, NVIDIA gaming or AMD GPU drivers from AWS. Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for driver installation and configuration instructions. 
 
 To update NICE DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
