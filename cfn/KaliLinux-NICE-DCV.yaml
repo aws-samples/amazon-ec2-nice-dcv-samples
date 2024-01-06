@@ -118,9 +118,11 @@ Parameters:
     Type: String
     Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
-      - "virtual"
-      - "virtual-with-NVIDIA_Driver"
-    Default: "virtual"
+      - "virtual_(xfce)"
+      - "virtual_(gnome)"
+      - "virtual-with-NVIDIA_Driver_(xfce)"
+      - "console-with-NVIDIA_Driver_(gnome)"
+    Default: "virtual_(xfce)"
 
   volumeSize:
     Type: Number
@@ -256,9 +258,13 @@ Resources:
         configSets:
           setup:
             - 00_setup
+          console:
+            - 01_console
           dcv_gpu_install:
             - 02_dcv_gpu_install
-          virtual-with-NVIDIA_Driver:
+          virtual-with-NVIDIA_Driver_(xfce):
+            - 03_gpu_nvidia_install
+          console-with-NVIDIA_Driver_(gnome):
             - 03_gpu_nvidia_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -352,6 +358,12 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 SESSION="${sessionType}"
+                case $SESSION in
+                  console-with-NVIDIA*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
+                esac
+
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
@@ -386,6 +398,52 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+        01_console:
+          files:
+            "/etc/X11/xorg.conf": # Modeline generator at http://xtiming.sourceforge.net/
+              content: |
+                Section "Device"
+                    Identifier "DummyDevice"
+                    Driver "dummy"
+                    Option "ConstantDPI" "true"
+                    Option "IgnoreEDID" "true"
+                    Option "NoDDC" "true"
+                    VideoRam 2048000
+                EndSection
+
+                Section "Monitor"
+                    Identifier "DummyMonitor"
+                    HorizSync   5.0 - 1000.0
+                    VertRefresh 5.0 - 200.0
+                    Modeline "4096x2160" 760.00 4096 4432 4880 5664 2160 2163 2173 2237
+                    Modeline "3840x2160" 712.75 3840 4160 4576 5312 2160 2163 2168 2237
+                    Modeline "2560x1440" 312.25 2560 2752 3024 3488 1440 1443 1448 1493
+                    Modeline "2048x1536" 80.06 2048 2104 2312 2576 1536 1537 1540 1554
+                    Modeline "1920x1440" 69.47 1920 1960 2152 2384 1440 1441 1444 1457
+                    Modeline "1920x1200" 26.28 1920 1952 2048 2080 1200 1229 1231 1261
+                    Modeline "1920x1080" 23.53 1920 1952 2040 2072 1080 1106 1108 1135
+                    Modeline "1600x900" 33.92 1600 1632 1760 1792 900 921 924 946
+                    Modeline "1440x900" 30.66 1440 1472 1584 1616 900 921 924 946
+                    ModeLine "1366x768" 72.00 1366 1414 1446 1494  768 771 777 803
+                    Modeline "1280x800" 24.15 1280 1312 1400 1432 800 819 822 841
+                    Modeline "1024x768" 18.71 1024 1056 1120 1152 768 786 789 807
+                EndSection
+
+                Section "Screen"
+                    Identifier "DummyScreen"
+                    Device "DummyDevice"
+                    Monitor "DummyMonitor"
+                    DefaultDepth 24
+                    SubSection "Display"
+                        Viewport 0 0
+                        Depth 24
+                        Modes "4096x2160" "3840x2160" "2560x1440" "2048x1536" "1920x1440" "1920x1200" "1920x1080" "1600x900" "1440x900" "1366x768" "1280x800" "1024x768"                        
+                        virtual 4096 2160
+                    EndSubSection
+                EndSection
+              mode: "000644"
+              owner: "root"
+              group: "root"
         02_dcv_gpu_install:
           files:
             "/etc/systemd/system/dcv-gpu-install.service":
@@ -414,6 +472,7 @@ Resources:
 
                 apt-get install -q -y linux-headers-cloud-amd64
                 apt-get install -q -y nvidia-driver nvidia-cuda-toolkit
+                apt-get install -q -y nvidia-xconfig
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -482,8 +541,17 @@ Resources:
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
+          export SESSION="${sessionType}"
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
-          apt-get install -q -y kali-desktop-xfce
+          case $SESSION in
+            *xfce*)
+              apt-get install -q -y kali-desktop-xfce
+              ;;
+            *gnome*)
+              apt-get install -q -y kali-desktop-gnome
+              ;;
+          esac
+
           # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           apt-get install -q -y pipewire-audio
 
@@ -493,7 +561,7 @@ Resources:
           curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
           tar -xvzf nice-dcv-ubuntu2204-x86_64.tgz && cd nice-dcv-*-ubuntu2204-x86_64
 
-          # tweaks for installation on Kali
+          # tweaks for installation on Kali xfce
           mkdir -p /etc/lightdm/lightdm.conf.d
 
           # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
@@ -529,8 +597,14 @@ Resources:
           ./aws/install -b /usr/bin
           echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/kali/.zshrc
 
-          # Higher web client max resolution
+          # X11 dummy driver for non GPU instance console session
+          apt-get install -q -y xserver-xorg-video-dummy
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+
+          # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
+          # Console session support
+          sed -i "/^\[session-management\/automatic-console-session/a owner=\"kali\"\nstorage-root=\"\/home\/kali\"" /etc/dcv/dcv.conf
 
           # Update OS
           apt-get update -q

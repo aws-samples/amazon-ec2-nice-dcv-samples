@@ -608,10 +608,10 @@ Resources:
           firewall-offline-cmd --add-port ${listenPort}/udp
           systemctl disable firewalld
 
+          # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
           # Console session support
           sed -i "/^\[session-management\/automatic-console-session/a owner=\"centos\"\nstorage-root=\"\/home\/centos\"" /etc/dcv/dcv.conf
-          # Higher web client max resolution
-          sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
 
           # Update OS
           yum update -q -y
@@ -623,7 +623,7 @@ Resources:
           # USB and GPU driver DKMS
           yum install -q -y dkms
 
-          # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot

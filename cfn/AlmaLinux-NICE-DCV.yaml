@@ -995,10 +995,10 @@ Resources:
           dnf install -q -y xorg-x11-drv-dummy
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
-          # Console session support: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-          sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"\/home\/ec2-user\"" /etc/dcv/dcv.conf
-          # Higher web client max resolution
+          # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
+          # Console session support
+          sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"\/home\/ec2-user\"" /etc/dcv/dcv.conf
 
           # Update OS
           dnf update -q -y
