@@ -573,6 +573,12 @@ Resources:
           apt-get install -q -y ./nice-xdcv_*.deb
           apt-get install -q -y ./nice-dcv-gltest_*.deb
 
+          # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
+          apt-get install -q -y cups
+          GROUP=$(cat /etc/cups/cups-files.conf | grep -oP "SystemGroup\s\K\w+")
+          usermod -a -G $GROUP dcv
+          systemctl enable cups
+
           # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
           apt-get install -q -y mesa-utils
           apt-get install -q -y libva2 libva-drm2 vainfo

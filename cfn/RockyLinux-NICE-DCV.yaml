@@ -946,6 +946,12 @@ Resources:
           dnf install -q -y ./nice-xdcv-*.rpm
           dnf install -q -y ./nice-dcv-gltest-*.rpm
 
+          # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
+          dnf install -q -y cups
+          GROUP=$(cat /etc/cups/cups-files.conf | grep -oP "SystemGroup\s\K\w+")
+          usermod -a -G $GROUP dcv
+          systemctl enable cups
+
           # EPEL: https://docs.fedoraproject.org/en-US/epel/
           # Rocky Linux: https://wiki.rockylinux.org/rocky/repo/#base-repositories
           if (cat /etc/os-release | grep -q 8.); then

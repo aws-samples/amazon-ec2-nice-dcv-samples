@@ -585,6 +585,12 @@ Resources:
           yum install -q -y ./nice-xdcv-*.rpm
           yum install -q -y ./nice-dcv-gltest-*.rpm
 
+          # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
+          yum install -q -y cups
+          GROUP=$(cat /etc/cups/cups-files.conf | grep "^SystemGroup" | cut -d" " -f2)
+          usermod -a -G $GROUP dcv
+          systemctl enable cups
+
           # EPEL: https://docs.fedoraproject.org/en-US/epel/
           yum install -q -y epel-release
 

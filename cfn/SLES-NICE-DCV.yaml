@@ -744,6 +744,13 @@ Resources:
           zypper -n install -y ./nice-xdcv-*.rpm
           zypper -n install -y ./nice-dcv-gltest-*.rpm
 
+          # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
+          zypper -n install -y cups
+          GROUP=$(cat /etc/cups/cups-files.conf | grep -oP "SystemGroup\s\K\w+")
+          usermod -a -G $GROUP dcv
+          systemctl enable cups
+          chgrp -R $GROUP /var/run/cups/certs/ && chmod g+x /var/run/cups/certs
+
           # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
           zypper -n install -y Mesa-demo-x
           zypper -n install -y libva2 libva-drm2 libva-utils

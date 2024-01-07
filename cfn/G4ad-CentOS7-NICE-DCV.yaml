@@ -577,6 +577,12 @@ Resources:
           yum install -q -y ./nice-xdcv-*.rpm
           yum install -q -y ./nice-dcv-gltest-*.rpm
 
+          # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
+          yum install -q -y cups
+          GROUP=$(cat /etc/cups/cups-files.conf | grep -oP "SystemGroup\s\K\w+")
+          usermod -a -G $GROUP dcv
+          systemctl enable cups
+
           # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
           yum install -q -y glx-utils
           yum install -q -y libva libva-utils
