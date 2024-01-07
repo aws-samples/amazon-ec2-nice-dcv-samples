@@ -13,7 +13,7 @@ Verify [availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/inst
 For templates that offers both x86_64 and arm64 options, ensure that the instance type you specify matches your selected processor architecture.
 
 ## Deployment via CloudFormation console
-Download template file for your desired operating system and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Start the [Create Stack wizard](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html#cfn-using-console-initiating-stack-creation) by choosing **Create Stack**. [Select stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html) by selecting **Upload a template file**, **Choose File**, your `.yaml` file and click **Next**. Enter a **Stack name** and specify parameters values. 
+Download the `<OS>-NICE-DCV.yaml` CloudFormation file for your desired operating system and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Start the [Create Stack wizard](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html#cfn-using-console-initiating-stack-creation) by choosing **Create Stack**. [Select stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html) by selecting **Upload a template file**, **Choose File**, select your `.yaml` file and click **Next**. Enter a **Stack name** and specify parameters values. 
 
 ### CloudFormation Parameters
 In most cases, the default values are sufficient. You will need to specify values for `ec2KeyPair`, `vpcID` and `subnetID`. 
@@ -57,7 +57,7 @@ The following are available in **Outputs** section
 - `SSMSessionManager`: [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to change login user password. Password change command is in *Description* field.
 - `DCVwebConsole`: NICE DCV web browser console URL link. Login as user specified in *Description* field. 
 - `EC2console`: EC2 console URL link to manage EC2 instance or to get the latest IPv4 (or IPv6 if enabled) address.
-- `EC2instanceConnect` (Linux only): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionaliy requires your security group to allow inbound SSH from [EC2_INSTANCE_CONNECT](https://github.com/aws-samples/ec2-lamp-server#ec2-instance-connect-ip-prefixes) IP address range and under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html).
+- `EC2instanceConnect` (Linux only): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality requires your security group to allow inbound SSH from [EC2_INSTANCE_CONNECT](https://github.com/aws-samples/ec2-lamp-server#ec2-instance-connect-ip-prefixes) IP address range and works under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html).
 - `RDPconnect` (Windows only): in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update NICE DCV server.
 
 ## Using NICE DCV
