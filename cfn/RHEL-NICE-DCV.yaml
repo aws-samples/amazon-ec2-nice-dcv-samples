@@ -861,7 +861,7 @@ Resources:
           elif ((uname -a | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_arm64/ec2-instance-connect.rhel8.rpm
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
-            dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.rpm
+            dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
           elif (uname -a | grep -q x86); then
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rpm
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
