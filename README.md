@@ -15,9 +15,10 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - [Web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) 
 - [Adaptable display resolution](https://docs.aws.amazon.com/dcv/latest/userguide/changing-resolution.html)
 - [QUIC UDP transport protocol](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html)
-- [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html#using-copy-paste-browser)
-- [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer-web.html)
+- [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html)
+- [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html)
 - [Audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html)
+- [Printing](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html)
 - [AWS Systems Manager Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) browser-based terminal access
 - [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html) browser-based SSH (Linux)
 - [Fleet Manager Remote Desktop](https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html) browser-based RDP (Windows)
