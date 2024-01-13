@@ -52,8 +52,7 @@ Metadata:
           default: NICE DCV configuration
         Parameters:
           - listenPort
-          - sessionType
-          - teslaDriverVersion
+          - sessionType 
 
 Parameters:
   osVersion:
@@ -336,6 +335,9 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                export DEBIAN_FRONTEND=noninteractive
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 if (arch | grep -q x86); then
@@ -346,8 +348,6 @@ Resources:
                 apt-get install -q -y usbutils
                 # dcvusbdriverinstaller --quiet
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
