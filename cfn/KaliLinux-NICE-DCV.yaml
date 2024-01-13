@@ -345,14 +345,15 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                export DEBIAN_FRONTEND=noninteractive
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 apt-get install -q -y linux-headers-cloud-amd64
                 apt-get install -q -y usbutils
                 #dcvusbdriverinstaller --quiet
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -469,6 +470,7 @@ Resources:
                 cd /tmp/gpu
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                export DEBIAN_FRONTEND=noninteractive
 
                 apt-get install -q -y linux-headers-cloud-amd64
                 apt-get install -q -y nvidia-driver nvidia-cuda-toolkit
@@ -520,7 +522,7 @@ Resources:
           curl -s -L -O http://archive.ubuntu.com/ubuntu/pool/main/e/ec2-instance-connect/ec2-instance-connect_1.1.17-0ubuntu1_all.deb
           apt-get install -q -y ./ec2-instance-connect_1.1.17-0ubuntu1_all.deb
 
-          # https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
+          # SM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
           apt-get install -q -y snapd
           systemctl enable snapd
           systemctl start snapd
@@ -554,6 +556,9 @@ Resources:
 
           # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           apt-get install -q -y pipewire-audio
+
+          # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
+          sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/daemon.conf
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
