@@ -502,7 +502,7 @@ Resources:
           apt-get install -q -y gnome-shell-extension-manager
 
           # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
-          sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/custom.conf
+          sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/daemon.conf
 
           # resolve "/var/lib/dpkg/info/nice-dcv-server.postinst: 8: dpkg-architecture: not found" when installing dcv-server
           apt-get install -q -y dpkg-dev
