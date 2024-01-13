@@ -1,0 +1,620 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Debian with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
+
+Metadata:
+  License:
+    Description: >
+      Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+      SPDX-License-Identifier: MIT-0
+
+      Permission is hereby granted, free of charge, to any person obtaining a copy of this
+      software and associated documentation files (the "Software"), to deal in the Software
+      without restriction, including without limitation the rights to use, copy, modify,
+      merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+      permit persons to whom the Software is furnished to do so.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+      INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+      PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+      HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+      OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+      SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Debian version
+        Parameters:
+          - osVersion
+      - Label:
+          default: EC2 configuration
+        Parameters:
+          - ec2Name
+          - ec2KeyPair
+          - instanceType
+      - Label:
+          default: Network configuration
+        Parameters:
+          - vpcID
+          - subnetID
+          - displayPublicIP
+          - assignStaticIP
+      - Label:
+          default: Allowed source IP
+        Parameters:
+          - ingressIPv4
+          - ingressIPv6
+      - Label:
+          default: EBS volume configuration
+        Parameters:
+          - volumeSize
+          - volumeType
+      - Label:
+          default: NICE DCV configuration
+        Parameters:
+          - listenPort
+          - sessionType
+          - teslaDriverVersion
+
+Parameters:
+  osVersion:
+    Type: String
+    Description: Version and processor architecture
+    AllowedValues:
+      - Debian 12 (arm64)
+      - Debian 12 (x86_64)
+    Default: Debian 12 (arm64)
+  instanceType:
+    Type: String
+    Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
+    Default: t4g.medium
+
+  ec2Name:
+    Type: String
+    Description: EC2 instance name
+    Default: Debian-NICE-DCV
+  ec2KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
+    ConstraintDescription: Specify a key pair
+    AllowedPattern: ".+"
+
+  vpcID:
+    Type: AWS::EC2::VPC::Id
+    Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
+    ConstraintDescription: Specify a valid value
+    AllowedPattern: ".+"
+  subnetID:
+    Type: AWS::EC2::Subnet::Id
+    Description: "Subnet with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#subnets: )"
+    ConstraintDescription: Specify a valid value
+    AllowedPattern: ".+"
+  displayPublicIP:
+    Type: String
+    Description: Display EC2 public IP in CloudFormation Outputs (select No if EC2 has no public IP)
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "Yes"
+  assignStaticIP:
+    Type: String
+    Description: Associate static public IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "Yes"
+
+  ingressIPv4:
+    Type: String
+    Description: Allowed source prefix (IPv4) ( e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com )
+    Default: 0.0.0.0/0
+  ingressIPv6:
+    Type: String
+    Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
+    Default: ::/0
+
+  listenPort:
+    Type: Number
+    Description: NICE DCV server TCP/UDP port
+    MinValue: 1024
+    MaxValue: 65535
+    Default: 8443
+  sessionType:
+    Type: String
+    Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
+    AllowedValues:
+      - "virtual"
+      - "console"
+    Default: "virtual"
+
+  volumeSize:
+    Type: Number
+    Description: Volume size in GiB
+    MinValue: 10
+    MaxValue: 16384
+    Default: 20
+  volumeType:
+    Type: String
+    Description: EBS volume type
+    AllowedValues:
+      - "gp3"
+      - "gp2"
+    Default: "gp3"
+
+Conditions:
+  useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
+  useDebian12x86: !Equals [!Ref osVersion, "Debian 12 (x86_64)"]
+  displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
+
+Resources:
+  securityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound DCV and SSH
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - Description: SSH (IPv4)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref ingressIPv4
+        - Description: SSH (IPv6)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIpv6: !Ref ingressIPv6
+        - Description: NICE DCV (IPv4)
+          IpProtocol: "tcp"
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: !Ref ingressIPv4
+        - Description: NICE DCV (IPv6)
+          IpProtocol: "tcp"
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: !Ref ingressIPv6
+        - Description: NICE DCV QUIC (IPv4)
+          IpProtocol: "udp"
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: !Ref ingressIPv4
+        - Description: NICE DCV QUIC (IPv6)
+          IpProtocol: "udp"
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: !Ref ingressIPv6
+      SecurityGroupEgress:
+        - Description: Allow all outbound traffic (IPv4)
+          IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+        - Description: Allow all outbound traffic (IPv6)
+          IpProtocol: "-1"
+          CidrIpv6: ::/0
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: Name
+          Value: !Sub "[${AWS::StackName}] - ${ec2Name}"
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  instanceIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      Path: /
+      Policies: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
+        - PolicyName: dcvLicensing
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:${AWS::Partition}:s3:::dcv-license.${AWS::Region}/*"
+        - PolicyName: gpuDrivers
+          PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:Get*
+                  - s3:List*
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming"
+                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers/*"
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  instanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref instanceIamRole
+
+  ec2Instance:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT90M
+    Metadata:
+      Comment: Install Update files
+      AWS::CloudFormation::Init:
+        configSets:
+          setup:
+            - 00_setup
+          console:
+            - 01_console
+        00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
+          files:
+            "/home/admin/update-dcv":
+              content: |
+                #!/bin/bash
+                cd /tmp
+                sudo dcv close-session admin
+                sudo dcv close-session console
+                if (arch | grep -q x86); then
+                  rm -f /tmp/nice-dcv-ubuntu2204-x86_64.tgz
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
+                  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+                else
+                  rm -f /tmp/nice-dcv-ubuntu2204-aarch64.tgz
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-aarch64.tgz
+                  tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
+                fi
+                sudo systemctl stop dcvserver
+                sudo apt-get install -y ./nice-dcv-server_*.deb
+                sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
+                sudo apt-get install -y ./nice-xdcv_*.deb
+                sudo apt-get install -y ./nice-dcv-gltest_*.deb
+                sudo systemctl restart dcvserver
+              mode: "000755"
+              owner: "admin"
+              group: "admin"
+            "/etc/systemd/system/dcv-virtual-session.service":
+              content: |
+                [Unit]
+                Description=Create DCV virtual session
+                After=default.target network.target
+
+                [Service]
+                ExecStart=/opt/dcv-virtual-session.sh
+
+                [Install]
+                WantedBy=default.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/opt/dcv-virtual-session.sh":
+              content: |
+                #!/bin/bash
+                dcvUser=admin
+                while true;
+                do
+                  if (/usr/bin/dcv list-sessions | grep -q $dcvUser); then
+                    sleep 5
+                  else
+                    /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root /home/$dcvUser
+                    /usr/bin/dcv list-sessions
+                  fi
+                done
+              mode: "000755"
+              owner: "root"
+              group: "root"
+            "/etc/systemd/system/dcv-post-reboot.service":
+              content: |
+                [Unit]
+                Description=Post install tasks
+                After=default.target network.target
+
+                [Service]
+                ExecStart=/opt/dcv-post-reboot.sh
+
+                [Install]
+                WantedBy=default.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/opt/dcv-post-reboot.sh":
+              content: !Sub |
+                #!/bin/bash
+
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                if (arch | grep -q x86); then
+                  apt-get install -q -y linux-headers-cloud-amd64
+                else
+                  apt-get install -q -y linux-headers-cloud-arm64
+                fi
+                apt-get install -q -y usbutils
+                # dcvusbdriverinstaller --quiet
+
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                SESSION="${sessionType}"
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                case $SESSION in
+                  console*)
+                    systemctl set-default graphical.target && systemctl isolate graphical.target
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                esac
+                systemctl enable dcvserver && systemctl restart dcvserver
+
+                rm -f /etc/systemd/system/dcv-post-reboot.service
+                rm -f ${!0}
+                systemctl daemon-reload
+              mode: "000755"
+              owner: "root"
+              group: "root"
+            "/etc/polkit-1/rules.d/admin.rules":
+              content: |
+                polkit.addRule(function(action, subject) {
+                   if ((action.id == "org.freedesktop.color-manager.create-device" ||
+                        action.id == "org.freedesktop.color-manager.create-profile" ||
+                        action.id == "org.freedesktop.color-manager.delete-device" ||
+                        action.id == "org.freedesktop.color-manager.delete-profile" ||
+                        action.id == "org.freedesktop.color-manager.modify-device" ||
+                        action.id == "org.freedesktop.color-manager.modify-profile") &&
+                       subject.isInGroup("admin")) {
+                      return polkit.Result.YES;
+                   }
+                });
+              mode: "000644"
+              owner: "root"
+              group: "root"
+        01_console:
+          files:
+            "/etc/X11/xorg.conf": # Modeline generator at http://xtiming.sourceforge.net/
+              content: |
+                Section "Device"
+                    Identifier "DummyDevice"
+                    Driver "dummy"
+                    Option "ConstantDPI" "true"
+                    Option "IgnoreEDID" "true"
+                    Option "NoDDC" "true"
+                    VideoRam 2048000
+                EndSection
+
+                Section "Monitor"
+                    Identifier "DummyMonitor"
+                    HorizSync   5.0 - 1000.0
+                    VertRefresh 5.0 - 200.0
+                    Modeline "4096x2160" 760.00 4096 4432 4880 5664 2160 2163 2173 2237
+                    Modeline "3840x2160" 712.75 3840 4160 4576 5312 2160 2163 2168 2237
+                    Modeline "2560x1440" 312.25 2560 2752 3024 3488 1440 1443 1448 1493
+                    Modeline "2048x1536" 80.06 2048 2104 2312 2576 1536 1537 1540 1554
+                    Modeline "1920x1440" 69.47 1920 1960 2152 2384 1440 1441 1444 1457
+                    Modeline "1920x1200" 26.28 1920 1952 2048 2080 1200 1229 1231 1261
+                    Modeline "1920x1080" 23.53 1920 1952 2040 2072 1080 1106 1108 1135
+                    Modeline "1600x900" 33.92 1600 1632 1760 1792 900 921 924 946
+                    Modeline "1440x900" 30.66 1440 1472 1584 1616 900 921 924 946
+                    ModeLine "1366x768" 72.00 1366 1414 1446 1494  768 771 777 803
+                    Modeline "1280x800" 24.15 1280 1312 1400 1432 800 819 822 841
+                    Modeline "1024x768" 18.71 1024 1056 1120 1152 768 786 789 807
+                EndSection
+
+                Section "Screen"
+                    Identifier "DummyScreen"
+                    Device "DummyDevice"
+                    Monitor "DummyMonitor"
+                    DefaultDepth 24
+                    SubSection "Display"
+                        Viewport 0 0
+                        Depth 24
+                        Modes "4096x2160" "3840x2160" "2560x1440" "2048x1536" "1920x1440" "1920x1200" "1920x1080" "1600x900" "1440x900" "1366x768" "1280x800" "1024x768"                        
+                        virtual 4096 2160
+                    EndSubSection
+                EndSection
+              mode: "000644"
+              owner: "root"
+              group: "root"
+    Properties:
+      ImageId: # https://wiki.debian.org/Cloud/AmazonEC2Image/Bookworm
+        !If [
+          useDebian12x86,
+          "{{resolve:ssm:/aws/service/debian/release/12/latest/amd64}}",
+          "{{resolve:ssm:/aws/service/debian/release/12/latest/arm64}}",
+        ]
+      InstanceType: !Ref instanceType
+      IamInstanceProfile: !Ref instanceProfile
+      KeyName: !Ref ec2KeyPair
+      SubnetId: !Ref subnetID
+      Monitoring: true
+      SecurityGroupIds:
+        - !Ref securityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: !Ref volumeType
+            VolumeSize: !Ref volumeSize
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          mkdir -p /tmp/cfn
+          cd /tmp/cfn
+
+          # disable IPv6 during setup
+          sysctl -w net.ipv6.conf.all.disable_ipv6=1
+          sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+          # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
+          export DEBIAN_FRONTEND=noninteractive
+
+          apt-get clean all
+          apt-get update -q
+          apt-get install -q -y wget tmux unzip tar curl sed
+
+          # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
+
+          # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-deb.html
+          if (arch| grep -q x86); then
+            curl -s -L -O https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
+          else
+            curl -s -L -O https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb
+          fi
+          apt-get install -q -y ./amazon-ssm-agent.deb
+          systemctl enable --now amazon-ssm-agent
+
+          # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
+          apt-get install -q -y python3 python3-pip python3-setuptools python3-docutils python3-daemon
+          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+          tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
+          cd aws-cfn-bootstrap-2.0
+          python3 setup.py build
+          python3 setup.py install
+          cd /tmp/cfn
+          export CFN_INIT="python3 /usr/local/bin/cfn-init"
+
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+
+          # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
+          apt-get install -q -y gnome-core
+          apt-get install -q -y gdm3
+          # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+          apt-get install -q -y pulseaudio-utils
+          apt-get install -q -y gnome-tweaks
+          apt-get install -q -y gnome-shell-extension-manager
+
+          # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
+          sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/custom.conf
+
+          # resolve "/var/lib/dpkg/info/nice-dcv-server.postinst: 8: dpkg-architecture: not found" when installing dcv-server
+          apt-get install -q -y dpkg-dev
+
+          # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
+          gpg --import NICE-GPG-KEY
+          if (arch | grep -q x86); then
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
+            tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
+          else
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-aarch64.tgz
+            tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
+          fi
+          apt-get install -q -y ./nice-dcv-server_*.deb
+          apt-get install -q -y ./nice-dcv-web-viewer_*.deb
+          usermod -aG video dcv
+          apt-get install -q -y ./nice-xdcv_*.deb
+          apt-get install -q -y ./nice-dcv-gltest_*.deb
+
+          # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
+          apt-get install -q -y cups
+          GROUP=$(cat /etc/cups/cups-files.conf | grep -oP "SystemGroup\s\K\w+")
+          usermod -a -G $GROUP dcv
+          systemctl enable cups
+
+          # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+          apt-get install -q -y mesa-utils
+          apt-get install -q -y libva2 libva-drm2 vainfo
+
+          # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
+          cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
+          sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
+
+          # Listen port: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+          sed -i "/^web-port=/d" /etc/dcv/dcv.conf
+          sed -i "/^quic-port=/d" /etc/dcv/dcv.conf
+          sed -i "/^\[connectivity\]/a web-port=${listenPort}" /etc/dcv/dcv.conf
+          sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
+
+          echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/admin/.bashrc
+
+          # X11 dummy driver for non GPU instance console session
+          apt-get install -q -y xserver-xorg-video-dummy
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+
+          # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+          sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
+          # Console session support
+          sed -i "/^\[session-management\/automatic-console-session/a owner=\"admin\"\nstorage-root=\"\/home\/admin\"" /etc/dcv/dcv.conf
+
+          # Update OS
+          apt-get update -q
+          apt-get upgrade -q -y
+          apt-get autoremove -q -y
+
+          # USB and GPU driver DKMS
+          apt-get install -q -y dkms
+
+          # 
+          systemctl set-default multi-user.target
+          systemctl daemon-reload
+          systemctl enable dcv-post-reboot
+
+          # enable back IPv6
+          sysctl -w net.ipv6.conf.all.disable_ipv6=0
+          sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+          sleep 1 && reboot
+      Tags:
+        - Key: Name
+          Value: !Ref ec2Name
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  elasticIP:
+    Condition: useElasticIP
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      NetworkBorderGroup: !Ref AWS::Region
+      InstanceId: !Ref ec2Instance
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: Name
+          Value: !Sub "[${AWS::StackName}] - ${ec2Name}"
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+Outputs:
+  EC2console:
+    Description: EC2 console
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+
+  SSMsessionManager:
+    Description: SSM Session Manager login ("sudo passwd admin" to change password)
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
+
+  DCVwebConsole:
+    Description: NICE DCV web browser client (login as admin)
+    Value: !Sub
+      - "https://${IpAddress}:${listenPort}"
+      - IpAddress:
+          !If [
+            displayPublicIP,
+            !GetAtt ec2Instance.PublicIp,
+            !GetAtt ec2Instance.PrivateIp,
+          ]
