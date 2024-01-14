@@ -472,9 +472,9 @@ Resources:
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-deb.html
           if (arch | grep -q x86); then
-            curl -s -L -O https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
+            curl -s -L -O https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/debian_amd64/amazon-ssm-agent.deb
           else
-            curl -s -L -O https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb
+            curl -s -L -O https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/debian_arm64/amazon-ssm-agent.deb
           fi
           apt-get install -q -y ./amazon-ssm-agent.deb
           systemctl enable --now amazon-ssm-agent
