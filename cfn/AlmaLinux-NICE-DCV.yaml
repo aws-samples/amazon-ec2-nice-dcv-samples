@@ -324,15 +324,15 @@ Resources:
                 cd /tmp
                 sudo dcv close-session ec2-user
                 sudo dcv close-session console
-                if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
+                if ((arch | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
                   rm -f nice-dcv-el8-x86_64.tgz
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
                   tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
-                elif ((uname -a | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
+                elif ((arch | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
                   rm -f nice-dcv-el8-aarch64.tgz
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
                   tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
-                elif (uname -a | grep -q x86); then
+                elif (arch | grep -q x86); then
                   rm -f nice-dcv-el9-x86_64.tgz
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
                   tar -xvzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64
@@ -355,7 +355,7 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 rm -f awscliv2.zip
-                if (uname -a | grep -q x86); then
+                if (arch | grep -q x86); then
                   curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
                 else
                   curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
@@ -414,6 +414,8 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 dnf install -q -y kernel-devel
@@ -421,8 +423,6 @@ Resources:
                 dnf install -q -y usbutils
                 #dcvusbdriverinstaller --quiet
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -671,7 +671,7 @@ Resources:
                 dnf install -q -y kernel-devel
                 dnf install -q -y kernel-modules-extra
                 DISTRO=$(. /etc/os-release;echo rhel$VERSION_ID | sed -e 's/\..*//g')
-                if (uname -a | grep -q x86); then
+                if (arch | grep -q x86); then
                   ARCH=x86_64
                 else
                   ARCH=sbsa
@@ -872,15 +872,15 @@ Resources:
           dnf install -q -y wget tmux unzip tar curl sed
 
           # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
-          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
+          if ((arch | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
             dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
-          elif ((uname -a | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
+          elif ((arch | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_arm64/ec2-instance-connect.rhel8.rpm
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
             dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
-          elif (uname -a | grep -q x86); then
+          elif (arch | grep -q x86); then
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rpm
             curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
             dnf install -q -y ./ec2-instance-connect.rpm ./ec2-instance-connect-selinux.noarch.rpm
@@ -891,7 +891,7 @@ Resources:
           fi
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
-          if (uname -a | grep -q x86); then
+          if (arch | grep -q x86); then
             dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
           else
             dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_arm64/amazon-ssm-agent.rpm
@@ -928,13 +928,13 @@ Resources:
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
+          if ((arch | grep -q x86) && (cat /etc/os-release | grep -q 8.)); then
             curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
             tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
-          elif ((uname -a | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
+          elif ((arch | grep -q aarch64) && (cat /etc/os-release | grep -q 8.)); then
             curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
             tar -xzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
-          elif (uname -a | grep -q x86); then
+          elif (arch | grep -q x86); then
             curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el9-x86_64.tgz
             tar -xzf nice-dcv-el9-x86_64.tgz && cd nice-dcv-*-el9-x86_64
           else
@@ -981,7 +981,7 @@ Resources:
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          if (uname -a | grep -q x86); then
+          if (arch | grep -q x86); then
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
           else
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip

@@ -315,11 +315,11 @@ Resources:
                 cd /tmp
                 sudo dcv close-session ubuntu
                 sudo dcv close-session console
-                if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 22.04)); then
+                if ((arch | grep -q x86) && (cat /etc/os-release | grep -q 22.04)); then
                   rm -f /tmp/nice-dcv-ubuntu2204-x86_64.tgz
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
                   tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
-                elif ((uname -a | grep -q aarch) && (cat /etc/os-release | grep -q 22.04)); then
+                elif ((arch | grep -q aarch) && (cat /etc/os-release | grep -q 22.04)); then
                   rm -f /tmp/nice-dcv-ubuntu2204-aarch64.tgz
                   wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-aarch64.tgz
                   tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
@@ -342,7 +342,7 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 rm -f awscliv2.zip
-                if (uname -a | grep -q x86); then
+                if (arch | grep -q x86); then
                   curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
                 else
                   curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
@@ -401,6 +401,8 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 apt-get install -q -y linux-headers-aws
@@ -408,8 +410,6 @@ Resources:
                 apt-get install -q -y usbutils
                 # dcvusbdriverinstaller --quiet
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -661,7 +661,7 @@ Resources:
                 apt-get install -q -y linux-headers-aws
                 apt-get install -q -y linux-modules-extra-aws
                 DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
-                if (uname -a | grep -q x86); then
+                if (arch | grep -q x86); then
                   ARCH=x86_64
                 else
                   ARCH=sbsa
@@ -727,7 +727,7 @@ Resources:
                 apt-get install -q -y linux-modules-extra-aws
                 apt-get install -q -y ubuntu-drivers-common
                 # Ubnutu-drivers list (x86_64 only)=> nvidia-driver-535-server, .... 
-                if (uname -a | grep -q x86); then 
+                if (arch | grep -q x86); then 
                   VERSION=$(ubuntu-drivers list --gpgpu | grep "-server" | cut -d"-" -f3 | sort -r | head -n 1)
                   ubuntu-drivers install --gpgpu nvidia:$VERSION-server
                 else
@@ -965,13 +965,13 @@ Resources:
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
           gpg --import NICE-GPG-KEY
-          if ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 22.04)); then
+          if ((arch | grep -q x86) && (cat /etc/os-release | grep -q 22.04)); then
             curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
             tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
-          elif ((uname -a | grep -q aarch) && (cat /etc/os-release | grep -q 22.04)); then
+          elif ((arch | grep -q aarch) && (cat /etc/os-release | grep -q 22.04)); then
             curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-aarch64.tgz
             tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-aarch64
-          elif ((uname -a | grep -q x86) && (cat /etc/os-release | grep -q 18.04)); then
+          elif ((arch | grep -q x86) && (cat /etc/os-release | grep -q 18.04)); then
             rm -f /home/ubuntu/update-dcv
             curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2023.0/Servers/nice-dcv-2023.0-15487-ubuntu1804-x86_64.tgz
             tar -xvzf nice-dcv-*-x86_64.tgz && cd nice-dcv-*-x86_64
@@ -1014,7 +1014,7 @@ Resources:
 
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          if (uname -a | grep -q x86); then
+          if (arch | grep -q x86); then
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
           else
             curl -s https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip

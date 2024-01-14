@@ -276,12 +276,12 @@ Resources:
                 rm -f /tmp/nice-dcv-ubuntu2204-x86_64.tgz
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
                 tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-x86_64
-                sudo systemctl stop dcvserver dcv-virtual-session
+                sudo systemctl stop dcvserver
                 sudo apt-get install -y ./nice-dcv-server_*.deb
                 sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
                 sudo apt-get install -y ./nice-xdcv_*.deb
                 sudo apt-get install -y ./nice-dcv-gltest_*.deb
-                sudo systemctl restart dcvserver dcv-virtual-session
+                sudo systemctl restart dcvserver
               mode: "000755"
               owner: "kali"
               group: "kali"

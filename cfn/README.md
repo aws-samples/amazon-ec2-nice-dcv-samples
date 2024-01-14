@@ -86,10 +86,11 @@ To update NICE DCV Server, connect via Fleet Manager Remote Desktop console usin
 ## About Linux templates
 The login user name depends on Linux distributions as follows:
 - [AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml), [CentOS Stream 9](CentOSstream9-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [SLES](SLES-NICE-DCV.yaml) : ec2-user
+- [CentOS 7](CentOS7-NICE-DCV.yaml), [CentOS Stream 8](CentOSstream8-NICE-DCV.yaml) : centos
+- [Debian](Debian-NICE-DCV.yaml) : admin
+- [Kali Linux](KaliLinux-NICE-DCV.yaml) : kali
 - [Rocky Linux](RockyLinux-NICE-DCV.yaml) : rocky
 - [Ubuntu, Ubuntu Pro](Ubuntu-NICE-DCV.yaml) : ubuntu
-- [Kali Linux](KaliLinux-NICE-DCV.yaml) : kali
-- [CentOS 7](CentOS7-NICE-DCV.yaml), [CentOS Stream 8](CentOSstream8-NICE-DCV.yaml) : centos
 
 You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder via SSM Session Manager or EC2 Instance Connect to update NICE DCV and AWS CLI. 
 

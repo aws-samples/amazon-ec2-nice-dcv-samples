@@ -470,10 +470,8 @@ Resources:
           apt-get update -q
           apt-get install -q -y wget tmux unzip tar curl sed
 
-          # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
-
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-deb.html
-          if (arch| grep -q x86); then
+          if (arch | grep -q x86); then
             curl -s -L -O https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb
           else
             curl -s -L -O https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb

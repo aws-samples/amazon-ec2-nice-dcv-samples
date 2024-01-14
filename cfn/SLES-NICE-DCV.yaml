@@ -367,6 +367,8 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
                 # https://documentation.suse.com/sles/15/html/SLES-all/cha-adm-support.html#sec-admsupport-kernel-unsupported )
@@ -376,9 +378,6 @@ Resources:
                 #  echo "allow_unsupported_modules 1" >> /etc/modprobe.d/10-unsupported-modules.conf
                 #  dcvusbdriverinstaller --quiet
                 #fi
-
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 if (cat /etc/os-release | grep -q 15.); then
                   export CFN_SIGNAL="python3 /usr/bin/cfn-signal"                   
@@ -488,7 +487,7 @@ Resources:
 
                 zypper -n install -y kernel-devel
                 DISTRO=sles15
-                if (uname -a | grep -q x86); then
+                if (arch | grep -q x86); then
                   ARCH=x86_64
                 else
                   ARCH=sbsa
