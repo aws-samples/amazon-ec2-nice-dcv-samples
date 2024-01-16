@@ -52,7 +52,7 @@ Metadata:
           default: NICE DCV configuration
         Parameters:
           - listenPort
-          - sessionType 
+          - sessionType
 
 Parameters:
   osVersion:
@@ -470,6 +470,10 @@ Resources:
           apt-get update -q
           apt-get install -q -y wget tmux unzip tar curl sed
 
+          # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
+          curl -s -L -O http://archive.ubuntu.com/ubuntu/pool/main/e/ec2-instance-connect/ec2-instance-connect_1.1.17-0ubuntu1_all.deb
+          apt-get install -q -y ./ec2-instance-connect_1.1.17-0ubuntu1_all.deb
+
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-deb.html
           if (arch | grep -q x86); then
             curl -s -L -O https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/debian_amd64/amazon-ssm-agent.deb
@@ -601,6 +605,11 @@ Outputs:
   EC2console:
     Description: EC2 console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+
+  EC2instanceConnect:
+    Condition: displayPublicIP
+    Description: EC2 Instance Connect
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=admin&sshPort=22#/"
 
   SSMsessionManager:
     Description: SSM Session Manager login ("sudo passwd admin" to change password)
