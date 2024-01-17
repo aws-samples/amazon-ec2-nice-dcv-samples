@@ -22,10 +22,6 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: AMI ID. Get RHEL 7 ID from https://access.redhat.com/solutions/15356
-        Parameters:
-          - imageId
-      - Label:
           default: EC2 configuration
         Parameters:
           - ec2Name
@@ -56,11 +52,6 @@ Metadata:
           - teslaDriverVersion
 
 Parameters:
-  imageId:
-    Type: String
-    Description: RHEL7 AMI ID ( aws ec2 describe-images --owners 309956199498 --query "sort_by(Images, &CreationDate)[*].[CreationDate,Name,ImageId]" --filters "Name=name,Values=RHEL-7*" --output table )
-    AllowedPattern: "ami-.+"
-
   instanceType:
     Type: String
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
@@ -137,7 +128,7 @@ Parameters:
     Description: Volume size in GiB
     MinValue: 10
     MaxValue: 16384
-    Default: 20
+    Default: 25
   volumeType:
     Type: String
     Description: EBS volume type
@@ -660,7 +651,7 @@ Resources:
               owner: "root"
               group: "root"
     Properties:
-      ImageId: !Ref imageId
+      ImageId: "{{resolve:ssm:/aws/service/marketplace/prod-7uxpanhrgmoaq/latest}}" # https://aws.amazon.com/marketplace/pp/prodview-4rvgwodhco57y
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair
