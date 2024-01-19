@@ -122,7 +122,7 @@ Parameters:
   teslaDriverVersion:
     Type: String
     Description: "[*-NVIDIA_Tesla_runfile_Driver] Driver version ( https://www.nvidia.com/Download/index.aspx : Product Type = Data Center/Tesla )"
-    Default: 535.129.03
+    Default: 535.154.05
 
   volumeSize:
     Type: Number
@@ -141,6 +141,19 @@ Parameters:
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
+  hasEIC:
+    !Not [
+      !Equals [
+        !FindInMap [
+          EICprefixMap,
+          !Ref "AWS::Region",
+          "IpPrefix",
+          DefaultValue: 127.0.0.1/32,
+        ],
+        "127.0.0.1/32",
+      ],
+    ]
+  createEICsg: !And [!Condition "hasEIC", !Condition "displayPublicIP"]
 
 Mappings:
   EICprefixMap: # EC2 instance connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html#ec2-instance-connect-setup-security-group
@@ -264,7 +277,7 @@ Resources:
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
   securityGroupForEIC:
-    Condition: displayPublicIP
+    Condition: createEICsg
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow in-browser SSH via EC2 Instance Connect
@@ -767,7 +780,7 @@ Resources:
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
-        - !If [displayPublicIP, !Ref securityGroupForEIC, !Ref "AWS::NoValue"]
+        - !If [createEICsg, !Ref securityGroupForEIC, !Ref "AWS::NoValue"]
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -987,7 +1000,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 
   EC2instanceConnect:
-    Condition: displayPublicIP
+    Condition: createEICsg
     Description: EC2 Instance Connect
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=ec2-user&sshPort=22#/"
 

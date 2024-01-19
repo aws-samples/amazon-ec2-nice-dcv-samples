@@ -58,7 +58,7 @@ The following are available in **Outputs** section
 - `SSMSessionManager`: [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to change login user password. Password change command is in *Description* field.
 - `DCVwebConsole`: NICE DCV web browser console URL link. Login as user specified in *Description* field. 
 - `EC2console`: EC2 console URL link to manage EC2 instance or to get the latest IPv4 (or IPv6 if enabled) address.
-- `EC2instanceConnect` (Linux only): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality is only available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html).
+- `EC2instanceConnect` (if available, Linux only): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality is only available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html).
 - `RDPconnect` (Windows only): in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update NICE DCV server.
 
 ## Using NICE DCV
