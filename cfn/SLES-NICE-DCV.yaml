@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: SUSE Linux Enterprise Server with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
+Transform: "AWS::LanguageExtensions"
 
 Metadata:
   License:
@@ -132,7 +133,7 @@ Parameters:
   teslaDriverVersion:
     Type: String
     Description: "[*-NVIDIA_Tesla_runfile_Driver] Driver version ( https://www.nvidia.com/Download/index.aspx : Product Type = Data Center/Tesla )"
-    Default: 535.129.03
+    Default: 535.154.05
 
   volumeSize:
     Type: Number
@@ -152,6 +153,73 @@ Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   useSles15: !Equals [!Ref osVersion, "SUSE Linux Enterprise Server 15 SP5"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
+
+Mappings:
+  EICprefixMap: # EC2 instance connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html#ec2-instance-connect-setup-security-group
+    af-south-1:
+      IpPrefix: 13.244.121.196/30
+    ap-east-1:
+      IpPrefix: 43.198.192.104/29
+    ap-northeast-1:
+      IpPrefix: 3.112.23.0/29
+    ap-northeast-2:
+      IpPrefix: 13.209.1.56/29
+    ap-northeast-3:
+      IpPrefix: 15.168.105.160/29
+    ap-south-1:
+      IpPrefix: 13.233.177.0/29
+    ap-south-2:
+      IpPrefix: 18.60.252.248/29
+    ap-southeast-1:
+      IpPrefix: 3.0.5.32/29
+    ap-southeast-2:
+      IpPrefix: 13.239.158.0/29
+    ap-southeast-3:
+      IpPrefix: 43.218.193.64/29
+    ap-southeast-4:
+      IpPrefix: 16.50.248.80/29
+    ca-central-1:
+      IpPrefix: 35.183.92.176/29
+    cn-north-1:
+      IpPrefix: 43.196.20.40/29
+    cn-northwest-1:
+      IpPrefix: 43.192.155.8/29
+    eu-central-1:
+      IpPrefix: 3.120.181.40/29
+    eu-central-2:
+      IpPrefix: 16.63.77.8/29
+    eu-north-1:
+      IpPrefix: 13.48.4.200/30
+    eu-south-1:
+      IpPrefix: 15.161.135.164/30
+    eu-south-2:
+      IpPrefix: 18.101.90.48/29
+    eu-west-1:
+      IpPrefix: 18.202.216.48/29
+    eu-west-2:
+      IpPrefix: 3.8.37.24/29
+    eu-west-3:
+      IpPrefix: 35.180.112.80/29
+    il-central-1:
+      IpPrefix: 51.16.183.224/29
+    me-central-1:
+      IpPrefix: 3.29.147.40/29
+    me-south-1:
+      IpPrefix: 16.24.46.56/29
+    sa-east-1:
+      IpPrefix: 18.228.70.32/29
+    us-east-1:
+      IpPrefix: 18.206.107.24/29
+    us-east-2:
+      IpPrefix: 3.16.146.0/29
+    us-gov-east-1:
+      IpPrefix: 18.252.4.0/30
+    us-gov-west-1:
+      IpPrefix: 15.200.28.80/30
+    us-west-1:
+      IpPrefix: 13.52.6.112/29
+    us-west-2:
+      IpPrefix: 18.237.140.160/29
 
 Resources:
   securityGroup:
@@ -204,6 +272,46 @@ Resources:
           Value: !Sub ${AWS::StackId}
         - Key: Name
           Value: !Sub "[${AWS::StackName}] - ${ec2Name}"
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  securityGroupForEIC:
+    Condition: displayPublicIP
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow in-browser SSH via EC2 Instance Connect
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - Description: SSH from EIC IP (if available)
+          IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp:
+            !FindInMap [
+              EICprefixMap,
+              !Ref "AWS::Region",
+              "IpPrefix",
+              DefaultValue: 127.0.0.1/32,
+            ]
+      SecurityGroupEgress:
+        - Description: Allow ICMP to EIC IP
+          IpProtocol: "icmp"
+          FromPort: -1
+          ToPort: -1
+          CidrIp:
+            !FindInMap [
+              EICprefixMap,
+              !Ref "AWS::Region",
+              "IpPrefix",
+              DefaultValue: 127.0.0.1/32,
+            ]
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: Name
+          Value: !Sub "[${AWS::StackName}] - ${ec2Name} - EIC"
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -659,6 +767,7 @@ Resources:
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
+        - !If [displayPublicIP, !Ref securityGroupForEIC, !Ref "AWS::NoValue"]
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
