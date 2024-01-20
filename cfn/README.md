@@ -125,7 +125,7 @@ The CloudFormation templates are designed to provision EC2 instances in [public 
 
 
 ## EC2 in Local Zones
-To use templates in [AWS Local Zones](https://aws.amazon.com/about-aws/global-infrastructure/localzones/), verify [available services features](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/) and adjust CloudFormation parameters accordingly. For example, you may have to change `version`, `instanceType` and `volumeType`  with `assignStaticIP` set to `No`.
+To use templates in [AWS Local Zones](https://aws.amazon.com/about-aws/global-infrastructure/localzones/), verify [available services features](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/) and adjust CloudFormation parameters accordingly. For example, you may have to change `osVersion`, `instanceType` and `volumeType`, and set `assignStaticIP` to `No`.
 
 ## Securing EC2 instance
 To futher secure your EC2 instance, you may want to
