@@ -121,11 +121,11 @@ Note that due to different combinations of drivers, OSs and instance types, GPU 
 
 
 ## EC2 in private subnet
-The CloudFormation templates are designed to provision EC2 instances in [public subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html). To use them for EC2 instances in [private subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) with internet connectivity, set `displayPublicIP` parameter value to `No`  
+The CloudFormation templates are designed to provision EC2 instances in [public subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html). To use them for EC2 instances in [private subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) with internet connectivity, set `displayPublicIP` and `assignStaticIP` parameter values to `No`.
 
 
 ## EC2 in Local Zones
-To use template in [AWS Local Zones](https://aws.amazon.com/about-aws/global-infrastructure/localzones/), verify [available services](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/) and adjust CloudFormation parameters accordingly. For example, you may have to change `version`, `instanceType` and `volumeType`  with `assignStaticIP` set to `No`
+To use templates in [AWS Local Zones](https://aws.amazon.com/about-aws/global-infrastructure/localzones/), verify [available services features](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/) and adjust CloudFormation parameters accordingly. For example, you may have to change `version`, `instanceType` and `volumeType`  with `assignStaticIP` set to `No`.
 
 ## Securing EC2 instance
 To futher secure your EC2 instance, you may want to
