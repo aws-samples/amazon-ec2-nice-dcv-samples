@@ -29,6 +29,12 @@ EC2
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).  Default is `t4g.medium` and `t3.medium` for arm64 and x86_64 architecture respectively. If you specify a [GPU instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) to provision a Linux OS, refer to [GPU driver installation](#gpu-driver-installation) section below for driver installation options
 - `driverType` (Windows only): choose between [NICE-DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general), [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver), [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver) or [AMD Radeon Pro](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver) graphics driver, or select `none` not to install any  driver. Default is `none`. NVIDIA drivers are for [G4dn](https://aws.amazon.com/ec2/instance-types/g4/) and [G5](https://aws.amazon.com/ec2/instance-types/g5/) instances only. If you specify a [NVIDIA GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), select `none`, and install [public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver) from https://www.nvidia.com/Download/Find.aspx
 
+NICE DCV
+- `listenPort`: NICE DCV server TCP/UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
+- `sessionType` (Linux only): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual` with *multi-user.target* as default systemd target. Selecting `console` will change systemd default to *graphical.target*. Refer to [Console and virtual sessions](#console-and-virtual-sessions) section below for more details
+- `teslaDriverVersion` (Linux only): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `console-with-Tesla_runfile_Driver` option is selected under `sessionType`
+
+
 
 Networking
 - `vpcID`: [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
@@ -43,11 +49,6 @@ Allowed IP prefix
 EBS Volume
 - `volumeSize`: EBS root volume size in GiB
 - `volumeType`: `gp2` or `gp3` [general purpose](https://aws.amazon.com/ebs/general-purpose/) EBS type. Default is `gp3`
-
-NICE DCV
-- `listenPort`: NICE DCV server TCP/UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
-- `sessionType` (Linux only): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual` with *multi-user.target* as default systemd target. Selecting `console` will change systemd default to *graphical.target*. Refer to [Console and virtual sessions](#console-and-virtual-sessions) section below for more details
-- `teslaDriverVersion` (Linux only): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `console-with-Tesla_runfile_Driver` option is selected under `sessionType`
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html), and click **Submit** to launch your stack. 
 

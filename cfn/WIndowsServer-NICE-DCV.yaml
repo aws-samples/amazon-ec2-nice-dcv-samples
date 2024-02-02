@@ -26,13 +26,17 @@ Metadata:
         Parameters:
           - imageId
       - Label:
-          default: EC2 configuration
+          default: EC2
         Parameters:
           - ec2Name
-          - driverType
           - instanceType
+          - driverType
       - Label:
-          default: Network configuration
+          default: NICE DCV
+        Parameters:
+          - listenPort
+      - Label:
+          default: Network
         Parameters:
           - vpcID
           - subnetID
@@ -44,14 +48,10 @@ Metadata:
           - ingressIPv4
           - ingressIPv6
       - Label:
-          default: EBS volume configuration
+          default: EBS volume
         Parameters:
           - volumeSize
           - volumeType
-      - Label:
-          default: NICE DCV configuration
-        Parameters:
-          - listenPort
 
 Parameters:
   imageId:

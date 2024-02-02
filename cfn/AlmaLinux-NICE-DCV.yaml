@@ -27,13 +27,19 @@ Metadata:
         Parameters:
           - osVersion
       - Label:
-          default: EC2 configuration
+          default: EC2
         Parameters:
           - ec2Name
           - ec2KeyPair
           - instanceType
       - Label:
-          default: Network configuration
+          default: NICE DCV
+        Parameters:
+          - sessionType
+          - teslaDriverVersion
+          - listenPort
+      - Label:
+          default: Network
         Parameters:
           - vpcID
           - subnetID
@@ -45,16 +51,10 @@ Metadata:
           - ingressIPv4
           - ingressIPv6
       - Label:
-          default: EBS volume configuration
+          default: EBS volume
         Parameters:
           - volumeSize
           - volumeType
-      - Label:
-          default: NICE DCV configuration
-        Parameters:
-          - listenPort
-          - sessionType
-          - teslaDriverVersion
       - Label:
           default: AMI ID
         Parameters:
@@ -574,7 +574,7 @@ Resources:
               owner: "root"
               group: "root"
             "/home/ec2-user/install-NVIDIA-GRID-driver":
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 clear
                 echo  
@@ -587,7 +587,7 @@ Resources:
                 cd /tmp/drivers
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1                
-                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region ${AWS::Region}
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
@@ -598,7 +598,7 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
             "/home/ec2-user/install-NVIDIA-Gaming-driver":
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 clear
                 echo  
@@ -612,7 +612,7 @@ Resources:
                 pwd
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
+                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region ${AWS::Region}
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
@@ -624,7 +624,7 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
             "/home/ec2-user/install-AMD-driver":
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 clear
                 echo  
@@ -638,7 +638,7 @@ Resources:
                 pwd
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ . --region us-east-1
+                aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ . --region ${AWS::Region}
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
