@@ -71,12 +71,12 @@ Parameters:
       - NICE-DCV
       - NVIDIA-Gaming
       - NVIDIA-GRID
-      - NVIDIA-TESLA
+      - NVIDIA-Tesla
       - none
     Default: none
   teslaDriverVersion:
     Type: String
-    Description: "[NVIDIA-TESLA] Driver version ( https://www.nvidia.com/Download/index.aspx : Product Type = Data Center/Tesla, Operating System = WIndows Server 2022 )"
+    Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/index.aspx : Product Type = Data Center/Tesla, Operating System = WIndows Server 2022 )"
     Default: 538.15
 
   ec2Name:
@@ -428,7 +428,7 @@ Resources:
               forfiles /M *.exe /C "cmd /c 7z x @file"
               start /wait setup.exe -s
           )
-          IF %DRIVER_TYPE% EQU NVIDIA-TESLA (
+          IF %DRIVER_TYPE% EQU NVIDIA-Tesla (
               @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver
               powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2019-2022-dch-international.exe', 'nvidia-driver.exe')"
               start /wait nvidia-driver.exe -s
