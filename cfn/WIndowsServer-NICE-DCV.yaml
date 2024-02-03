@@ -76,7 +76,7 @@ Parameters:
     Default: none
   teslaDriverVersion:
     Type: String
-    Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/index.aspx : Product Type = Data Center/Tesla, Operating System = WIndows Server 2022 )"
+    Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/index.aspx : Product Type = Data Center/Tesla, Operating System = Windows Server 2022 )"
     Default: 538.15
 
   ec2Name:
