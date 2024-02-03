@@ -152,14 +152,14 @@ Conditions:
       !Equals [
         !FindInMap [
           EICprefixMap,
-          !Ref "AWS::Region",
+          !Ref AWS::Region,
           "IpPrefix",
           DefaultValue: 127.0.0.1/32,
         ],
         "127.0.0.1/32",
       ],
     ]
-  createEICsg: !And [!Condition "hasEIC", !Condition "displayPublicIP"]
+  createEICsg: !And [!Condition hasEIC, !Condition displayPublicIP]
 
 Mappings:
   EICprefixMap: # EC2 instance connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html#ec2-instance-connect-setup-security-group
@@ -289,14 +289,14 @@ Resources:
       GroupDescription: Allow in-browser SSH via EC2 Instance Connect
       VpcId: !Ref vpcID
       SecurityGroupIngress:
-        - Description: SSH from EIC IP (if available)
+        - Description: SSH from EIC IP
           IpProtocol: "tcp"
           FromPort: 22
           ToPort: 22
           CidrIp:
             !FindInMap [
               EICprefixMap,
-              !Ref "AWS::Region",
+              !Ref AWS::Region,
               "IpPrefix",
               DefaultValue: 127.0.0.1/32,
             ]
@@ -308,7 +308,7 @@ Resources:
           CidrIp:
             !FindInMap [
               EICprefixMap,
-              !Ref "AWS::Region",
+              !Ref AWS::Region,
               "IpPrefix",
               DefaultValue: 127.0.0.1/32,
             ]
