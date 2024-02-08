@@ -348,68 +348,82 @@ Resources:
             c:\\windows\\temp\\install-gpu-driver.cmd:
               content: !Sub |
                 @echo off
+                start /wait c:\windows\temp\install-psreadline.cmd
+
                 SET DRIVER_TYPE=${driverType}
                 SET "PATH=%PATH%;C:\Program Files\7-zip"
                 cd \windows\temp
                 md driver && cd driver
                 IF %DRIVER_TYPE% EQU NICE-DCV (
-                    @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general
-                    powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
-                    msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
+                  @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general
+                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
+                  msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
                 )            
                 IF %DRIVER_TYPE% EQU NVIDIA-GRID (
-                    @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver
-                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
-                    reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
-                    forfiles /M *.exe /C "cmd /c 7z x @file"
-                    start /wait setup.exe -s
+                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver
+                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
+                  reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
+                  forfiles /M *.exe /C "cmd /c 7z x @file"
+                  start /wait setup.exe -s
                 )
                 IF %DRIVER_TYPE% EQU NVIDIA-Gaming (
-                    @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver
-                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
-                    reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
-                    reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
-                    powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
-                    powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCertWindows_2023_9_22.txt')"
-                    powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCert-Windows_2020_04.cert',  'C:\Users\Public\Documents\GridSwCert-Windows_2020_04.txt')"
-                    powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCert-Windows_2019_09.cert',  'C:\Users\Public\Documents\GridSwCert-Windows_2019_09.txt')"
-                    forfiles /M *.exe /C "cmd /c 7z x @file"
-                    start /wait setup.exe -s
+                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver
+                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
+                  reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
+                  reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
+                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
+                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCertWindows_2023_9_22.txt')"
+                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCert-Windows_2020_04.cert',  'C:\Users\Public\Documents\GridSwCert-Windows_2020_04.txt')"
+                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCert-Windows_2019_09.cert',  'C:\Users\Public\Documents\GridSwCert-Windows_2019_09.txt')"
+                  forfiles /M *.exe /C "cmd /c 7z x @file"
+                  start /wait setup.exe -s
                 )
                 IF %DRIVER_TYPE% EQU NVIDIA-Tesla (
-                    @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver
-                    copy \windows\temp\install-if-available.cmd \windows\temp\driver\
-                    install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2022-dch-international.exe
-                    install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2019-2022-dch-international.exe
-                    install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2016-2019-2022-dch-international.exe
-                    install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2019-2016-international.exe
-                    install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver2016-international.exe
-                    install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2012r2-64bit-international.exe
-                    install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver2008-2012r2-64bit-international.exe
+                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver
+                  if not exist c:\windows\system32\curl.exe choco install --no-progress -y curl
+                  copy \windows\temp\install-if-available.cmd \windows\temp\driver\
+                  install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2022-dch-international.exe
+                  install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2019-2022-dch-international.exe
+                  install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2016-2019-2022-dch-international.exe
+                  install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2019-2016-international.exe
+                  install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver2016-international.exe
+                  install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2012r2-64bit-international.exe
+                  install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver2008-2012r2-64bit-international.exe
                 )
                 IF %DRIVER_TYPE% EQU AMD (
-                    @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver
-                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --region us-east-1
-                    forfiles /M *.zip /C "cmd /c 7z x @file"
-                    cd Packages\Drivers\Display\*INF
-                    pnputil /add-driver *.inf /install /subdirs
-                    cd \windows\temp\driver\Packages\Drivers\Audio\HDMI\W*\
-                    pnputil /add-driver *.inf /install /subdirs
+                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver
+                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --region us-east-1
+                  forfiles /M *.zip /C "cmd /c 7z x @file"
+                  cd Packages\Drivers\Display\*INF
+                  pnputil /add-driver *.inf /install /subdirs
+                  cd \windows\temp\driver\Packages\Drivers\Audio\HDMI\W*\
+                  pnputil /add-driver *.inf /install /subdirs
                 )
                 shutdown /r /t 1 /f
                 exit
-            c:\\windows\\temp\\install-if-available.cmd:
-              content: !Sub |
+            c:\\windows\\temp\\install-psreadline.cmd:
+              content: |
                 @echo off
-                  echo %1
-                  curl -s -I %1 | findstr /C:"200 OK">nul && (
-                    echo Download and install
-                    powershell -command "(New-Object System.Net.WebClient).DownloadFile('%1', 'nvidia-driver.exe')"
-                    start /wait nvidia-driver -s
-                    shutdown /r /t 1 /f
-                  ) || (
-                    echo.
-                  )
+                systeminfo | findstr /C:"Server 2022">nul && (
+                  @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html#fleet-rdp-prerequisites
+                  powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.4.201 -Force"
+                  powershell -command "Install-Module -Name PSReadLine -Repository PSGallery -MinimumVersion 2.2.2 -Force"
+                ) || (
+                  echo.
+                )
+                exit
+            c:\\windows\\temp\\install-if-available.cmd:
+              content: |
+                @echo off
+                echo %1
+                curl -s -I %1 | findstr /C:" 200">nul && (
+                  echo Download and install
+                  curl -s -L %1 -o nvidia-driver.exe
+                  start /wait nvidia-driver -s
+                  shutdown /r /t 1 /f
+                ) || (
+                  echo.
+                )
           commands: # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             restart-computer:
               command: "cmd /c c:\\windows\\temp\\install-gpu-driver.cmd > c:\\windows\\temp\\gpu-install.log"
@@ -470,10 +484,6 @@ Resources:
 
           @Echo ** install 7-zip
           choco install --no-progress -y 7zip.install
-
-          @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html#fleet-rdp-prerequisites
-          powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.4.201 -Force"
-          powershell -command "Install-Module -Name PSReadLine -Repository PSGallery -MinimumVersion 2.2.2 -Force"
 
           @echo ** install graphics driver
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_gpu_install
