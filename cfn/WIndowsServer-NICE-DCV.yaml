@@ -83,6 +83,7 @@ Parameters:
     Type: String
     Description: EC2 instance name
     Default: Windows Server-NICE-DCV
+
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
@@ -404,7 +405,7 @@ Resources:
             c:\\windows\\temp\\install-psreadline.cmd:
               content: |
                 @echo off
-                systeminfo | findstr /C:"Server 2022">nul && (
+                reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 2022">nul && (
                   @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html#fleet-rdp-prerequisites
                   powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.4.201 -Force"
                   powershell -command "Install-Module -Name PSReadLine -Repository PSGallery -MinimumVersion 2.2.2 -Force"
@@ -427,6 +428,7 @@ Resources:
           commands: # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             restart-computer:
               command: "cmd /c c:\\windows\\temp\\install-gpu-driver.cmd > c:\\windows\\temp\\gpu-install.log"
+              ignoreErrors: true
               waitAfterCompletion: forever
     Properties:
       ImageId: !Ref imageId
