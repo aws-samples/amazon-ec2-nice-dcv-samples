@@ -791,7 +791,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=centos&sshPort=22#/"
 
   SSMsessionManager:
-    Description: SSM Session Manager login ("sudo passwd centos" to change password)
+    Description: SSM Session Manager ("sudo passwd centos" to change password)
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:

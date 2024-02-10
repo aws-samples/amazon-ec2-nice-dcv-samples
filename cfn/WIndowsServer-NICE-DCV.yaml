@@ -529,7 +529,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 
   SSMsessionManager:
-    Description: SSM Session Manager login ("net user administrator <MyStr@ngAdminPassw0rd>" to change administrator password)
+    Description: SSM Session Manager ("net user administrator <MyStr@ngAdminPassw0rd>" to change administrator password)
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
