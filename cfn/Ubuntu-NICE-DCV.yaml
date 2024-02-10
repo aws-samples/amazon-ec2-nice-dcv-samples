@@ -72,10 +72,6 @@ Parameters:
       - Ubuntu Pro 18.04 (arm64)
       - Ubuntu Pro 18.04 (x86_64)
     Default: Ubuntu 22.04 (arm64)
-  instanceType:
-    Type: String
-    Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
-    Default: t4g.medium
 
   ec2Name:
     Type: String
@@ -86,6 +82,34 @@ Parameters:
     Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
     ConstraintDescription: Specify a key pair
     AllowedPattern: ".+"
+  instanceType:
+    Type: String
+    Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
+    Default: t4g.medium
+
+  sessionType:
+    Type: String
+    Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
+    AllowedValues:
+      - "virtual"
+      - "console-with-Ubuntu_repo_Driver"
+      - "console-with-NVIDIA_GRID_Driver"
+      - "console-with-NVIDIA_Gaming_Driver"
+      - "console-with-NVIDIA_Tesla_repo_Driver"
+      - "console-with-NVIDIA_Tesla_runfile_Driver"
+      - "console-with-AMD_ROCm_repo_Driver"
+      - "console"
+    Default: "virtual"
+  teslaDriverVersion:
+    Type: String
+    Description: "[*-NVIDIA_Tesla_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
+    Default: 535.154.05
+  listenPort:
+    Type: Number
+    Description: NICE DCV server TCP/UDP port
+    MinValue: 1024
+    MaxValue: 65535
+    Default: 8443
 
   vpcID:
     Type: AWS::EC2::VPC::Id
@@ -120,30 +144,6 @@ Parameters:
     Type: String
     Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
     Default: ::/0
-
-  listenPort:
-    Type: Number
-    Description: NICE DCV server TCP/UDP port
-    MinValue: 1024
-    MaxValue: 65535
-    Default: 8443
-  sessionType:
-    Type: String
-    Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
-    AllowedValues:
-      - "virtual"
-      - "console-with-Ubuntu_repo_Driver"
-      - "console-with-NVIDIA_GRID_Driver"
-      - "console-with-NVIDIA_Gaming_Driver"
-      - "console-with-NVIDIA_Tesla_repo_Driver"
-      - "console-with-NVIDIA_Tesla_runfile_Driver"
-      - "console-with-AMD_ROCm_repo_Driver"
-      - "console"
-    Default: "virtual"
-  teslaDriverVersion:
-    Type: String
-    Description: "[*-NVIDIA_Tesla_runfile_Driver] Driver version ( https://www.nvidia.com/Download/index.aspx : Product Type = Data Center/Tesla )"
-    Default: 535.154.05
 
   volumeSize:
     Type: Number

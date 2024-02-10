@@ -60,10 +60,6 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Description: Kali AMI ID ( aws ssm get-parameters-by-path --path /aws/service/marketplace/prod-tsqyof4l3a3aa/ --query "Parameters[].Name" )
     Default: /aws/service/marketplace/prod-tsqyof4l3a3aa/latest
-  instanceType:
-    Type: String
-    Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
-    Default: t3.medium
 
   ec2Name:
     Type: String
@@ -74,6 +70,26 @@ Parameters:
     Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
     ConstraintDescription: Specify a key pair
     AllowedPattern: ".+"
+  instanceType:
+    Type: String
+    Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
+    Default: t3.medium
+
+  sessionType:
+    Type: String
+    Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
+    AllowedValues:
+      - "virtual_(xfce)"
+      - "virtual_(gnome)"
+      - "virtual-with-NVIDIA_Driver_(xfce)"
+      - "console-with-NVIDIA_Driver_(gnome)"
+    Default: "virtual_(xfce)"
+  listenPort:
+    Type: Number
+    Description: NICE DCV server TCP/UDP port
+    MinValue: 1024
+    MaxValue: 65535
+    Default: 8443
 
   vpcID:
     Type: AWS::EC2::VPC::Id
@@ -108,22 +124,6 @@ Parameters:
     Type: String
     Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
     Default: ::/0
-
-  listenPort:
-    Type: Number
-    Description: NICE DCV server TCP/UDP port
-    MinValue: 1024
-    MaxValue: 65535
-    Default: 8443
-  sessionType:
-    Type: String
-    Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
-    AllowedValues:
-      - "virtual_(xfce)"
-      - "virtual_(gnome)"
-      - "virtual-with-NVIDIA_Driver_(xfce)"
-      - "console-with-NVIDIA_Driver_(gnome)"
-    Default: "virtual_(xfce)"
 
   volumeSize:
     Type: Number

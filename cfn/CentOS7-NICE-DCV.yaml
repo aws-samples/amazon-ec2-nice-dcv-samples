@@ -61,11 +61,6 @@ Parameters:
     Description: CentOS 7 (x86_64) AMI ID
     Default: /aws/service/marketplace/prod-a77hqdkwpdk3o/latest
 
-  instanceType:
-    Type: String
-    Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
-    Default: t3.medium
-
   ec2Name:
     Type: String
     Description: EC2 instance name
@@ -75,6 +70,24 @@ Parameters:
     Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
     ConstraintDescription: Specify a key pair
     AllowedPattern: ".+"
+  instanceType:
+    Type: String
+    Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
+    Default: t3.medium
+
+  sessionType:
+    Type: String
+    Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
+    AllowedValues:
+      - "virtual"
+      - "console"
+    Default: "virtual"
+  listenPort:
+    Type: Number
+    Description: NICE DCV server TCP/UDP port
+    MinValue: 1024
+    MaxValue: 65535
+    Default: 8443
 
   vpcID:
     Type: AWS::EC2::VPC::Id
@@ -109,20 +122,6 @@ Parameters:
     Type: String
     Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
     Default: ::/0
-
-  listenPort:
-    Type: Number
-    Description: NICE DCV server TCP/UDP port
-    MinValue: 1024
-    MaxValue: 65535
-    Default: 8443
-  sessionType:
-    Type: String
-    Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
-    AllowedValues:
-      - "virtual"
-      - "console"
-    Default: "virtual"
 
   volumeSize:
     Type: Number

@@ -59,10 +59,16 @@ Parameters:
     Description: AMI ID ( aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name" )
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
+
+  ec2Name:
+    Type: String
+    Description: EC2 instance name
+    Default: Windows Server-NICE-DCV
   instanceType:
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Type: String
     Default: t3.medium
+
   driverType:
     Description: Graphics driver to install
     Type: String
@@ -76,13 +82,14 @@ Parameters:
     Default: none
   teslaDriverVersion:
     Type: String
-    Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/index.aspx : Product Type = Data Center/Tesla, Operating System = Windows Server 2022 )"
+    Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     Default: 538.15
-
-  ec2Name:
-    Type: String
-    Description: EC2 instance name
-    Default: Windows Server-NICE-DCV
+  listenPort:
+    Type: Number
+    Description: NICE DCV server TCP/UDP port
+    MinValue: 1024
+    MaxValue: 65535
+    Default: 8443
 
   vpcID:
     Type: AWS::EC2::VPC::Id
@@ -117,13 +124,6 @@ Parameters:
     Type: String
     Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
     Default: ::/0
-
-  listenPort:
-    Type: Number
-    Description: NICE DCV server TCP/UDP port
-    MinValue: 1024
-    MaxValue: 65535
-    Default: 8443
 
   volumeSize:
     Type: Number
