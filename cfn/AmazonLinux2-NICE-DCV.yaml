@@ -864,6 +864,7 @@ Resources:
           sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
           yum clean all
+          yum update -q -y
           yum install -q -y deltarpm wget tmux unzip tar curl sed
 
           export CFN_INIT="/opt/aws/bin/cfn-init"
