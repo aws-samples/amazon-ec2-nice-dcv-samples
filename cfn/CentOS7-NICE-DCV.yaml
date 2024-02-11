@@ -68,11 +68,13 @@ Parameters:
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
-    ConstraintDescription: Specify a key pair
     AllowedPattern: ".+"
+    ConstraintDescription: Select a key pair
   instanceType:
     Type: String
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
+    AllowedPattern: "^[a-z\\d\\.]+$"
+    ConstraintDescription: Specify valid EC2 instance type
     Default: t3.medium
 
   sessionType:
@@ -92,13 +94,13 @@ Parameters:
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
-    ConstraintDescription: Specify a valid value
     AllowedPattern: ".+"
+    ConstraintDescription: Select a VPC
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: "Subnet with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#subnets: )"
-    ConstraintDescription: Specify a valid value
     AllowedPattern: ".+"
+    ConstraintDescription: Select a Subnet
   displayPublicIP:
     Type: String
     Description: Display EC2 public IP in CloudFormation Outputs (select No if EC2 has no public IP)
@@ -117,10 +119,14 @@ Parameters:
   ingressIPv4:
     Type: String
     Description: Allowed source prefix (IPv4) ( e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com )
+    AllowedPattern: "^\\d+\\.\\d+\\.\\d+\\.\\d+\\/\\d+$"
+    ConstraintDescription: Specify valid IPv4 prefix
     Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
     Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
+    AllowedPattern: ".+"
+    ConstraintDescription: Specify valid IPv6 prefix
     Default: ::/0
 
   volumeSize:
