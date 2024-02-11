@@ -429,15 +429,24 @@ Resources:
             "/opt/dcv-virtual-session.sh":
               content: |
                 #!/bin/bash
-                dcvUser=centos
+                dcvUsers=( "centos" )
                 while true;
                 do
-                  if (/usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                    sleep 5
-                  else
-                    /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root /home/$dcvUser
-                    /usr/bin/dcv list-sessions
-                  fi
+                  for dcvUser in "${dcvUsers[@]}"
+                  do
+                    if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
+                      case $dcvUser in
+                        root)
+                          /usr/bin/dcv create-session $dcvUser --owner root --storage-root /root
+                          ;;
+                        *)
+                          /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root /home/$dcvUser
+                          ;;
+                      esac
+                    fi
+                  done
+                  /usr/bin/dcv list-sessions
+                  sleep 5
                 done
               mode: "000755"
               owner: "root"
@@ -745,7 +754,6 @@ Resources:
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
-
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0

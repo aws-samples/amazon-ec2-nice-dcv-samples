@@ -443,15 +443,24 @@ Resources:
             "/opt/dcv-virtual-session.sh":
               content: |
                 #!/bin/bash
-                dcvUser=ec2-user
+                dcvUsers=( "ec2-user" )
                 while true;
                 do
-                  if (/usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                    sleep 5
-                  else
-                    /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root /home/$dcvUser
-                    /usr/bin/dcv list-sessions
-                  fi
+                  for dcvUser in "${dcvUsers[@]}"
+                  do
+                    if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
+                      case $dcvUser in
+                        root)
+                          /usr/bin/dcv create-session $dcvUser --owner root --storage-root /root
+                          ;;
+                        *)
+                          /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root /home/$dcvUser
+                          ;;
+                      esac
+                    fi
+                  done
+                  /usr/bin/dcv list-sessions
+                  sleep 5
                 done
               mode: "000755"
               owner: "root"

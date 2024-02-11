@@ -505,15 +505,24 @@ Resources:
             "/opt/dcv-virtual-session.sh":
               content: |
                 #!/bin/bash
-                dcvUser=ec2-user
+                dcvUsers=( "ec2-user" )
                 while true;
                 do
-                  if (/usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                    sleep 5
-                  else
-                    /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root /home/$dcvUser
-                    /usr/bin/dcv list-sessions
-                  fi
+                  for dcvUser in "${dcvUsers[@]}"
+                  do
+                    if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
+                      case $dcvUser in
+                        root)
+                          /usr/bin/dcv create-session $dcvUser --owner root --storage-root /root
+                          ;;
+                        *)
+                          /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root /home/$dcvUser
+                          ;;
+                      esac
+                    fi
+                  done
+                  /usr/bin/dcv list-sessions
+                  sleep 5
                 done
               mode: "000755"
               owner: "root"
@@ -574,7 +583,7 @@ Resources:
               owner: "root"
               group: "root"
             "/home/ec2-user/install-NVIDIA-GRID-driver":
-              content: !Sub |
+              content: |
                 #!/bin/bash
                 clear
                 echo  
@@ -587,7 +596,7 @@ Resources:
                 cd /tmp/drivers
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1                
-                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region ${AWS::Region}
+                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
@@ -598,7 +607,7 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
             "/home/ec2-user/install-NVIDIA-Gaming-driver":
-              content: !Sub |
+              content: |
                 #!/bin/bash
                 clear
                 echo  
@@ -612,7 +621,7 @@ Resources:
                 pwd
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region ${AWS::Region}
+                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
@@ -624,7 +633,7 @@ Resources:
               owner: "ec2-user"
               group: "ec2-user"
             "/home/ec2-user/install-AMD-driver":
-              content: !Sub |
+              content: |
                 #!/bin/bash
                 clear
                 echo  
@@ -638,7 +647,7 @@ Resources:
                 pwd
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ . --region ${AWS::Region}
+                aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ . --region us-east-1
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
