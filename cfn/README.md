@@ -123,9 +123,9 @@ Note that due to different combinations of drivers, OSs and instance types, GPU 
 #### CUDA toolkit installation
 Based on the `sessionType` selection, CUDA toolkit can subsequently be installed as follows:
 
-- `console-with-Ubuntu_repo_Driver`: execute command `sudo apt install -y nvidia-cuda-toolkit`
-- `console-with-NVIDIA_Tesla_repo_Driver`: execute command `sudo apt install -y cuda` to install latest CUDA toolkit. Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for other install options.
--  `console-with-NVIDIA_Tesla_runfile_Driver`, `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver` : download CUDA toolkit from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
+- `console-with-Ubuntu_repo_Driver`: execute `sudo apt install -y nvidia-cuda-toolkit`
+- `console-with-NVIDIA_Tesla_repo_Driver`: execute `sudo <command> install -y cuda` where `<command>` is `apt`, `zypper` or `dnf` for Ubuntu, SLES and other Linux OS repsectively to install latest version. Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for other install options
+- `console-with-NVIDIA_Tesla_runfile_Driver`, `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver` : download and install CUDA toolkit from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
 
 
 ## EC2 in private subnet
