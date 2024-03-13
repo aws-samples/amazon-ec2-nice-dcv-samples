@@ -76,7 +76,7 @@ The blog [Building a high-performance Windows workstation on AWS for graphics in
 
 Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console), [AWS CloudShell](https://aws.amazon.com/cloudshell/) or [AWS CLI](https://aws.amazon.com/cli/). Refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog for more information.
 
-If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), you can choose to specify which graphics driver to install. Note that the NVIDIA GRID, NVIDIA Gaming and AMD drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). 
+If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), you can choose to specify which graphics driver to install. Note that the NVIDIA GRID, NVIDIA Gaming and AMD drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). For NVIDIA GPU instances, CUDA Toolkit can be downloaded and installed from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
 
 Use `download-<DRIVER-TYPE>-driver.cmd` helper batch files in *C:\\Users\\Administrator\\* folder to download the latest NVIDIA GRID, NVIDIA gaming or AMD GPU drivers from AWS. Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for driver installation and configuration instructions. 
 
@@ -95,7 +95,7 @@ The login user name depends on Linux distributions as follows:
 You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder via SSM Session Manager or EC2 Instance Connect to update NICE DCV and AWS CLI. 
 
 ### Console and virtual sessions
-NICE DCV offers two types of sessions: console sessions and virtual sessions. With console sessions, NICE DCV directly captures the content of the desktop screen. With virtual sessions, NICE DCV starts an X server instance, Xdcv, and runs a desktop environment inside the X server. 
+NICE DCV offers two types of sessions: console sessions and virtual sessions. With console sessions, NICE DCV directly captures the content of the desktop screen. With virtual sessions, NICE DCV starts an X server instance, Xdcv, and runs a desktop environment inside the X server. Multiple user sessions on a single server are allowed for virtual sessions.
 Refer to [Introduction to NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) for more details.
 
 
@@ -106,10 +106,11 @@ On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accel
 
 GPU driver installation is available for some Linux distros ([AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [Rocky Linux](RockyLinux-NICE-DCV.yaml), [SLES](SLES-NICE-DCV.yaml), [Ubuntu](Ubuntu-NICE-DCV.yaml)) via the following `sessionType` parameter options:
 
-- `console-with-Ubuntu_repo_Driver` (Ubuntu only): install latest NVIDIA [Enterprise Ready Drivers (ERD)](https://ubuntu.com/server/docs/nvidia-drivers-installation) from Ubuntu repository
+- `console-with-Ubuntu_repo_Driver` (Ubuntu only): install latest NVIDIA [Enterprise Ready Drivers (ERD)](https://ubuntu.com/server/docs/nvidia-drivers-installation) from Ubuntu repository. 
+  
 - `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/) and [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance)#: install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) (also known as [NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/)) or [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers
 
-- `console-with-NVIDIA_Tesla_repo_Driver` (NVIDIA [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) such as [G5g instance](https://aws.amazon.com/ec2/instance-types/g5g/)): uses the operating system [package manager](https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#package-manager) to install [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also known as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) drivers from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/contents.html), and provides access to [CUDA packages](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages)
+- `console-with-NVIDIA_Tesla_repo_Driver` (NVIDIA [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) such as [G5g instance](https://aws.amazon.com/ec2/instance-types/g5g/)): uses the operating system [package manager](https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#package-manager) to install [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also known as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) drivers from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/contents.html), and provides access to [CUDA packages](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#available-packages). 
 
 -  `console-with-NVIDIA_Tesla_runfile_Driver`: install NVIDIA Tesla driver using [.run installer package](https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#runfile) from [driver downloads](https://www.nvidia.com/Download/index.aspx). Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
 
@@ -118,6 +119,13 @@ GPU driver installation is available for some Linux distros ([AlmaLinux](AlmaLin
 Note that due to different combinations of drivers, OSs and instance types, GPU driver installation via CloudFormation template may not work. You can select `console` option and install driver manually. Refer to [Prerequisites for Linux NICE DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) for details about NICE DCV GPU driver installation and configuration.
 
 #NVIDIA GRID and NVIDIA gaming drivers are for AWS customers only. You are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html). Helper scripts (`install-<DRIVER_TYPE>-driver`) in */home/{user name}* folder can be used to install or update the GPU drivers. 
+
+#### CUDA toolkit installation
+Based on the `sessionType` selection, CUDA toolkit can subsequently be installed as follows:
+
+- `console-with-Ubuntu_repo_Driver`: execute command `sudo apt install -y nvidia-cuda-toolkit`
+- `console-with-NVIDIA_Tesla_repo_Driver`: execute command `sudo apt install -y cuda` to install latest CUDA toolkit. Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for other install options.
+-  `console-with-NVIDIA_Tesla_runfile_Driver`, `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver` : download CUDA toolkit from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
 
 
 ## EC2 in private subnet
