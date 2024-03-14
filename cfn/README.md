@@ -76,9 +76,11 @@ The blog [Building a high-performance Windows workstation on AWS for graphics in
 
 Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console), [AWS CloudShell](https://aws.amazon.com/cloudshell/) or [AWS CLI](https://aws.amazon.com/cli/). Refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog for more information.
 
-If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), you can choose to specify which graphics driver to install. Note that the NVIDIA GRID, NVIDIA Gaming and AMD drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). For NVIDIA GPU instances, CUDA Toolkit can be downloaded and installed from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
+If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), you can choose to specify which graphics driver to install. Note that the NVIDIA GRID, NVIDIA Gaming and AMD drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). 
 
 Use `download-<DRIVER-TYPE>-driver.cmd` helper batch files in *C:\\Users\\Administrator\\* folder to download the latest NVIDIA GRID, NVIDIA gaming or AMD GPU drivers from AWS. Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for driver installation and configuration instructions. 
+
+For NVIDIA GPU instances, CUDA® Toolkit and cuDNN can be downloaded and installed from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads) and [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) respectively.
 
 To update NICE DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
@@ -120,22 +122,30 @@ Note that due to different combinations of drivers, OSs and instance types, GPU 
 
 #NVIDIA GRID and NVIDIA gaming drivers are for AWS customers only. You are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html). Helper scripts (`install-<DRIVER_TYPE>-driver`) in */home/{user name}* folder can be used to install or update the GPU drivers. 
 
-#### CUDA toolkit installation
-Based on the `sessionType` selection, CUDA toolkit can subsequently be installed as follows:
+#### NVIDIA CUDA Toolkit and cuDNN installation
+[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) and [cuDNN (NVIDIA CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) can subsequently be installed in EC2 instance based on selected `sessionType` option: 
 
-- `console-with-Ubuntu_repo_Driver`: execute `sudo apt install -y nvidia-cuda-toolkit`
-- `console-with-NVIDIA_Tesla_repo_Driver`: execute `sudo <command> install -y cuda` where `<command>` is `apt`, `zypper` or `dnf` for Ubuntu, SLES and other Linux OS respectively to install latest version. Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for other install options
-- `console-with-NVIDIA_Tesla_runfile_Driver`, `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver` : download and install CUDA toolkit from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
+- `console-with-Ubuntu_repo_Driver`
+    - CUDA: `sudo apt install -y nvidia-cuda-toolkit`
+    - cuDNN: `sudo apt install -y nvidia-cudnn`
 
+- `console-with-NVIDIA_Tesla_repo_Driver`
+    - CUDA: `sudo <command> install -y cuda` to install latest version (where `<command>` is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively). Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for other install options
+    - cuDNN: `sudo <command> install -y cudnn` to install latest version (where `<command>` is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively). Refer to [cuDNN documentation site](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) for other install options
 
-## EC2 in private subnet
+- `console-with-NVIDIA_Tesla_runfile_Driver`, `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver`
+    - CUDA: download and install from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
+    - cuDNN: download and install from [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) 
+
+## About EC2
+### Private subnet
 The CloudFormation templates are designed to provision EC2 instances in [public subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html). To use them for EC2 instances in [private subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) with internet connectivity, set `displayPublicIP` and `assignStaticIP` parameter values to `No`.
 
 
-## EC2 in Local Zones
+### Local Zones
 To use templates in [AWS Local Zones](https://aws.amazon.com/about-aws/global-infrastructure/localzones/), verify [available services features](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/) and adjust CloudFormation parameters accordingly. For example, you may have to change `osVersion`, `instanceType` and `volumeType`, and set `assignStaticIP` to `No`.
 
-## Securing EC2 instance
+## Securing
 To futher secure your EC2 instance, you may want to
 - [Remove web browser client](#remove-web-browser-client) and use [native client](https://download.nice-dcv.com/)
 - Restrict NICE DCV and SSH to your IP address only (`ingressIPv4` and `ingressIPv6`).
