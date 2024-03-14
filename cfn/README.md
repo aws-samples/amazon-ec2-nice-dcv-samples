@@ -130,7 +130,7 @@ Note that due to different combinations of drivers, OSs and instance types, GPU 
     - cuDNN: `sudo apt install -y nvidia-cudnn`
 
 - `console-with-NVIDIA_Tesla_repo_Driver`
-    - CUDA: `sudo <command> install -y cuda` to install latest version (where `<command>` is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively). Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for other install options
+    - CUDA: `sudo <command> install -y cuda-toolkit` to install latest version (where `<command>` is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively). Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for other install options
     - cuDNN: `sudo <command> install -y cudnn` to install latest version (where `<command>` is the OS package manager command-line tool, e.g.`apt` or `yum`/`dnf` for Ubuntu and other Linux OSs respectively). Refer to [cuDNN documentation site](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) for other install options
 
 - `console-with-NVIDIA_Tesla_runfile_Driver`, `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver`
