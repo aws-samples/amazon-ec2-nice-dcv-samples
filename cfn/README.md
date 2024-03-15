@@ -65,7 +65,7 @@ The following are available in **Outputs** section
 Refer to [NICE DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getting-started.html)
 
 ### NICE DCV clients
-Besides web browser client, NICE DCV offers Windows, Linux, and macOS native clients with additional features such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html), [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html) and [gamepad support](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-gamepad.html). Native clients can be download from [https://download.nice-dcv.com/](https://download.nice-dcv.com/). 
+Besides web browser client, NICE DCV offers Windows, Linux, and macOS native clients with additional features such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html), [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html) and [printer redirection support](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html). Native clients can be download from [https://download.nice-dcv.com/](https://download.nice-dcv.com/). 
 
 ### Remove web browser client
 On Linux instances, the web browser client can be disabled by removing `nice-dcv-web-viewer` package. On Windows instances, download [nice-dcv-server-x64-Release.msi](https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi) and run the command *msiexec /i nice-dcv-server-x64-Release.msi REMOVE=webClient* from administrator command prompt.
@@ -114,7 +114,7 @@ GPU driver installation is available for some Linux distros ([AlmaLinux](AlmaLin
 
 - `console-with-NVIDIA_Tesla_repo_Driver` (NVIDIA [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) such as [G5g instance](https://aws.amazon.com/ec2/instance-types/g5g/)): uses the operating system [package manager](https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#package-manager) to install [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also known as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) drivers from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/contents.html), and provides access to [CUDA packages](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#available-packages). 
 
--  `console-with-NVIDIA_Tesla_runfile_Driver`: install NVIDIA Tesla driver using [.run installer package](https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#runfile) from [driver downloads](https://www.nvidia.com/Download/index.aspx). Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
+-  `console-with-NVIDIA_Tesla_runfile_Driver`: install NVIDIA Tesla driver using [.run installer package](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile-installation) from [driver downloads](https://www.nvidia.com/Download/Find.aspx). Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
 
 - `console-with-AMD_ROCm_repo_Driver`([G4ad instance](https://aws.amazon.com/ec2/instance-types/g4/)) : uses the operating system [package manager](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/index.html) to install AMD GPU drivers from [AMD](https://rocm.docs.amd.com/en/latest/) repository, and provides access to [ROCm packages](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/package-manager-integration.html#packages-in-rocm-programming-models)
 
@@ -123,7 +123,7 @@ Note that due to different combinations of drivers, OSs and instance types, GPU 
 #NVIDIA GRID and NVIDIA gaming drivers are for AWS customers only. You are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html). Helper scripts (`install-<DRIVER_TYPE>-driver`) in */home/{user name}* folder can be used to install or update the GPU drivers. 
 
 #### NVIDIA CUDA Toolkit and cuDNN installation
-[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) and [cuDNN (NVIDIA CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) can subsequently be installed in EC2 instance based on selected `sessionType` option: 
+[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) and [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) can subsequently be installed in EC2 instance based on selected `sessionType` option: 
 
 - `console-with-Ubuntu_repo_Driver`
     - CUDA: `sudo apt install -y nvidia-cuda-toolkit`
