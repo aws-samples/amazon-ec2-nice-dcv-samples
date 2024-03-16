@@ -29,9 +29,19 @@ EC2
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).  Default is `t4g.medium` and `t3.medium` for arm64 and x86_64 architecture respectively
 
 NICE DCV
-- `driverType` (Windows): choose between [NICE-DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016), [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver) or [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) and [G5](https://aws.amazon.com/ec2/instance-types/g5/)), [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances)), [AMD Radeon Pro](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances)) graphics driver or `none` not to install any driver. Default is `none`.
-- `sessionType` (Linux): `virtual` or `console` [NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro). Default is `virtual` with *multi-user.target* as default systemd target. Selecting `console` will change systemd default to *graphical.target*. [GPU driver installation](#gpu-driver-installation) option may be available for some Linux OSs
-- `teslaDriverVersion` (where applicable): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `console-with-NVIDIA_Tesla_runfile_Driver` option is selected for `driverType` or `sessionType` respectively. To obtain a suitable version, go to [NVIDIA Driver Downloads](https://www.nvidia.com/Download/Find.aspx). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value
+- `driverType` (Windows): graphics driver to install
+    - `none`: do not install any driver (default)
+    - [NICE-DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)
+    - [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver) or [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) and [G5](https://aws.amazon.com/ec2/instance-types/g5/) instances)
+    - [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances))
+    - [AMD Radeon Pro](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
+- `sessionType` (Linux): either `virtual` (default) or `console` [NICE DCV session type](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro)
+    - *multi-user.target* and *graphical.target* are default systemd target for `virtual` and `console` session type respectively
+    - [GPU driver installation](#gpu-driver-installation) option may be available for some Linux OSs
+- `teslaDriverVersion` (where applicable): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `console-with-NVIDIA_Tesla_runfile_Driver` option is selected for `driverType` or `sessionType` respectively.
+    - To obtain a suitable version, go to [NVIDIA Driver Downloads](https://www.nvidia.com/Download/Find.aspx). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value.
+    - [Release 470](https://docs.nvidia.com/datacenter/tesla/index.html#r470-driver-release-notes) is the last driver branch to support GPUs based on the NVIDIA Kepler architecture ([P2 Instance](https://aws.amazon.com/ec2/instance-types/p2/))
+
 - `listenPort`: NICE DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
 
 
@@ -110,7 +120,7 @@ GPU driver installation is available for some Linux distros ([AlmaLinux](AlmaLin
 
 - `console-with-Ubuntu_repo_Driver` (Ubuntu only): install latest NVIDIA [Enterprise Ready Drivers (ERD)](https://ubuntu.com/server/docs/nvidia-drivers-installation) from Ubuntu repository. 
   
-- `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) and [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance)#: install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) (also known as [NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/)) or [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers
+- `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) and [G5](https://aws.amazon.com/ec2/instance-types/g5/) instances)#: install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) (also known as [NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/)) or [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers
 
 - `console-with-NVIDIA_Tesla_repo_Driver` (NVIDIA [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) such as [G5g instance](https://aws.amazon.com/ec2/instance-types/g5g/)): uses the operating system [package manager](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation) to install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also known as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) drivers from NVIDIA repository, and provides access to [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#available-packages) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) packages
 
@@ -138,6 +148,7 @@ Note that due to different combinations of drivers, OSs and instance types, GPU 
     - cuDNN: download and install from [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) 
 
 Refer to [CUDA](https://docs.nvidia.com/cuda/) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/) documentation sites for more details. 
+
 
 ## About EC2
 ### Private subnet
