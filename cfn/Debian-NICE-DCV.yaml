@@ -585,7 +585,7 @@ Resources:
         - !Ref securityGroup
         - !If [createEICsg, !Ref securityGroupForEIC, !Ref "AWS::NoValue"]
       BlockDeviceMappings:
-        - DeviceName: /dev/sda1
+        - DeviceName: /dev/xvda
           Ebs:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
