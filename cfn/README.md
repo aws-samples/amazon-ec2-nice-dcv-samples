@@ -8,7 +8,7 @@ EC2 instances must be provisioned in a subnet with IPv4 internet connectivity.
 When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d), [AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4) or [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), subscribe before using. 
 
 
-Verify [availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html) of the instance type that you specify. (Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error)) Marketplace AMIs may only support specific [instance types](https://docs.aws.amazon.com/marketplace/latest/userguide/ami-single-ami-products.html#single-ami-adding-instance-types), visit the corresponding Marketplace page to view available options.
+Verify [availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html) of the instance type that you specify. (Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error)) Marketplace AMIs may only support specific instance types, visit the corresponding Marketplace page to view available options.
 
 For templates that offers both x86_64 and arm64 options, ensure that the instance type you specify matches your selected processor architecture.
 
@@ -35,7 +35,7 @@ NICE DCV
     - [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver) or [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) and [G5](https://aws.amazon.com/ec2/instance-types/g5/) instances)
     - [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances))
     - [AMD Radeon Pro](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
-- `sessionType` (Linux): either `virtual` (default) or `console` [NICE DCV session type](#console-and-virtual-sessions). [GPU driver installation](#gpu-driver-installation) option may be available for some Linux OSs
+- `sessionType` (Linux): either `virtual` (default) or `console` [session type](#console-and-virtual-sessions). [GPU driver installation](#gpu-driver-installation) option may be available for some Linux OSs
 - `teslaDriverVersion` (where applicable): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `*-NVIDIA_runfile_Driver` option is selected for `driverType` or `sessionType` respectively.
     - To obtain a suitable version, go to [NVIDIA Driver Downloads](https://www.nvidia.com/Download/Find.aspx). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value.
     - [Release 470](https://docs.nvidia.com/datacenter/tesla/index.html#r470-driver-release-notes) is the last driver branch to support GPUs based on the NVIDIA Kepler architecture ([P2 Instance](https://aws.amazon.com/ec2/instance-types/p2/))
@@ -142,12 +142,12 @@ Note that due to different combinations of drivers, OSs and instance types, GPU 
     - cuDNN: `sudo apt install -y nvidia-cudnn`
 
 - `*-NVIDIA_repo_Driver`
-    - CUDA: `sudo <command> install -y cuda-toolkit` to install latest version (where `<command>` is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively). Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for other install options
-    - cuDNN: `sudo <command> install -y cudnn` to install latest version (where `<command>` is the OS package manager command-line tool, e.g.`apt` or `yum`/`dnf` for Ubuntu and other Linux OSs respectively). Refer to [cuDNN documentation site](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) for other install options
+    - CUDA: `sudo <packmgr_cli> install -y cuda-toolkit` to install latest version (where `<packmgr_cli>` is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively). Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for installation options
+    - cuDNN: `sudo <packmgr_cli> install -y cudnn` to install latest version (where `<packmgr_cli>` is the OS package manager command-line tool, e.g.`apt` or `yum`/`dnf` for Ubuntu and other Linux OSs respectively). Refer to [cuDNN documentation site](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) for installation options
 
 - `*-NVIDIA_runfile_Driver`, `*-NVIDIA_GRID_Driver` or `*-NVIDIA_Gaming_Driver`
-    - CUDA: download and install from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
-    - cuDNN: download and install from [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) 
+    - CUDA: install from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
+    - cuDNN: install from [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) 
 
 Refer to [CUDA](https://docs.nvidia.com/cuda/) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/) documentation sites for more details. 
 
@@ -158,7 +158,7 @@ The CloudFormation templates are designed to provision EC2 instances in [public 
 
 
 ### Local Zones
-To use templates in [AWS Local Zones](https://aws.amazon.com/about-aws/global-infrastructure/localzones/), verify [available services features](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/) and adjust CloudFormation parameters accordingly. For example, you may have to change `osVersion`, `instanceType` and `volumeType`, and set `assignStaticIP` to `No`.
+To use templates in [AWS Local Zones](https://aws.amazon.com/about-aws/global-infrastructure/localzones/), verify [available services features](https://aws.amazon.com/about-aws/global-infrastructure/localzones/features/) and adjust CloudFormation parameters accordingly. You may have to change `osVersion`, `instanceType` and `volumeType`, and set `assignStaticIP` to `No`.
 
 ## Securing
 To futher secure your EC2 instance, you may want to
