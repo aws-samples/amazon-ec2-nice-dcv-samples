@@ -87,7 +87,7 @@ Parameters:
     Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 538.15
+    Default: 538.33
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
@@ -413,7 +413,7 @@ Resources:
             c:\\windows\\temp\\install-psreadline.cmd:
               content: |
                 @echo off
-                reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 2022">nul && (
+                reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 202">nul && (
                   @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html#fleet-rdp-prerequisites
                   powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.4.201 -Force"
                   powershell -command "Install-Module -Name PSReadLine -Repository PSGallery -MinimumVersion 2.2.2 -Force"

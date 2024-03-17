@@ -35,10 +35,8 @@ NICE DCV
     - [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver) or [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) and [G5](https://aws.amazon.com/ec2/instance-types/g5/) instances)
     - [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances))
     - [AMD Radeon Pro](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
-- `sessionType` (Linux): either `virtual` (default) or `console` [NICE DCV session type](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro)
-    - *multi-user.target* and *graphical.target* are default systemd target for `virtual` and `console` session type respectively
-    - [GPU driver installation](#gpu-driver-installation) option may be available for some Linux OSs
-- `teslaDriverVersion` (where applicable): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `console-with-NVIDIA_Tesla_runfile_Driver` option is selected for `driverType` or `sessionType` respectively.
+- `sessionType` (Linux): either `virtual` (default) or `console` [NICE DCV session type](#console-and-virtual-sessions). [GPU driver installation](#gpu-driver-installation) option may be available for some Linux OSs
+- `teslaDriverVersion` (where applicable): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `*-NVIDIA_runfile_Driver` option is selected for `driverType` or `sessionType` respectively.
     - To obtain a suitable version, go to [NVIDIA Driver Downloads](https://www.nvidia.com/Download/Find.aspx). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value.
     - [Release 470](https://docs.nvidia.com/datacenter/tesla/index.html#r470-driver-release-notes) is the last driver branch to support GPUs based on the NVIDIA Kepler architecture ([P2 Instance](https://aws.amazon.com/ec2/instance-types/p2/))
 
@@ -107,8 +105,12 @@ The login user name depends on Linux distributions as follows:
 You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder via SSM Session Manager or EC2 Instance Connect to update NICE DCV and AWS CLI. 
 
 ### Console and virtual sessions
-NICE DCV offers two types of sessions: console sessions and virtual sessions. With console sessions, NICE DCV directly captures the content of the desktop screen. With virtual sessions, NICE DCV starts an X server instance, Xdcv, and runs a desktop environment inside the X server. Multiple user sessions on a single server are allowed for virtual sessions.
-Refer to [Introduction to NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) for more details.
+NICE DCV offers two types of sessions: console sessions and virtual sessions. 
+With console sessions, NICE DCV directly captures the content of the desktop screen.
+With virtual sessions, NICE DCV starts an X server instance, Xdcv, and runs a desktop environment inside the X server. Multiple user sessions on a single server are allowed for virtual sessions. Refer to [Introduction to NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) for more details.
+
+The CloudFormation template configure *multi-user.target* and *graphical.target* as default systemd target for `virtual` and `console` session type options respectively.
+
 
 
 ### GPU driver installation
@@ -122,9 +124,9 @@ GPU driver installation is available for some Linux distros ([AlmaLinux](AlmaLin
   
 - `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) and [G5](https://aws.amazon.com/ec2/instance-types/g5/) instances)#: install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) (also known as [NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/)) or [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers
 
-- `console-with-NVIDIA_Tesla_repo_Driver` (NVIDIA [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) such as [G5g instance](https://aws.amazon.com/ec2/instance-types/g5g/)): uses the operating system [package manager](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation) to install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also known as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) drivers from NVIDIA repository, and provides access to [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#available-packages) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) packages
+- `console-with-NVIDIA_repo_Driver` (NVIDIA [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) such as [G5g instance](https://aws.amazon.com/ec2/instance-types/g5g/)): uses the operating system [package manager](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation) to install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also known as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) drivers from NVIDIA repository, and provides access to [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#available-packages) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) packages
 
--  `console-with-NVIDIA_Tesla_runfile_Driver`: install NVIDIA Tesla driver using [runfile installer](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile-installation) from [driver downloads](https://www.nvidia.com/Download/Find.aspx). Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
+-  `console-with-NVIDIA_runfile_Driver`: install NVIDIA Tesla driver using [runfile installer](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile-installation) from [driver downloads](https://www.nvidia.com/Download/Find.aspx). Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
 
 - `console-with-AMD_ROCm_repo_Driver`([G4ad instance](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances)) : uses the operating system [package manager](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/index.html) to install AMD GPU drivers from AMD repository, and provides access to [ROCm packages](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/package-manager-integration.html#packages-in-rocm-programming-models)
 
@@ -135,15 +137,15 @@ Note that due to different combinations of drivers, OSs and instance types, GPU 
 #### NVIDIA CUDA Toolkit and cuDNN installation
 [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) and [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) can subsequently be installed in EC2 instance based on selected `sessionType` option: 
 
-- `console-with-Ubuntu_repo_Driver`
+- `*-Ubuntu_repo_Driver`
     - CUDA: `sudo apt install -y nvidia-cuda-toolkit`
     - cuDNN: `sudo apt install -y nvidia-cudnn`
 
-- `console-with-NVIDIA_Tesla_repo_Driver`
+- `*-NVIDIA_repo_Driver`
     - CUDA: `sudo <command> install -y cuda-toolkit` to install latest version (where `<command>` is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively). Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for other install options
     - cuDNN: `sudo <command> install -y cudnn` to install latest version (where `<command>` is the OS package manager command-line tool, e.g.`apt` or `yum`/`dnf` for Ubuntu and other Linux OSs respectively). Refer to [cuDNN documentation site](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) for other install options
 
-- `console-with-NVIDIA_Tesla_runfile_Driver`, `console-with-NVIDIA_GRID_Driver` or `console-with-NVIDIA_Gaming_Driver`
+- `*-NVIDIA_runfile_Driver`, `*-NVIDIA_GRID_Driver` or `*-NVIDIA_Gaming_Driver`
     - CUDA: download and install from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
     - cuDNN: download and install from [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) 
 

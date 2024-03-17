@@ -80,8 +80,8 @@ Parameters:
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
-    ConstraintDescription: Specify a key pair
     AllowedPattern: ".+"
+    ConstraintDescription: Select a key pair
   instanceType:
     Type: String
     Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
@@ -97,17 +97,19 @@ Parameters:
       - "console-with-Ubuntu_repo_Driver"
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_Gaming_Driver"
-      - "console-with-NVIDIA_Tesla_repo_Driver"
-      - "console-with-NVIDIA_Tesla_runfile_Driver"
+      - "console-with-NVIDIA_repo_Driver"
+      - "console-with-NVIDIA_runfile_Driver"
       - "console-with-AMD_ROCm_repo_Driver"
       - "console"
+      - "virtual-with-NVIDIA_repo_Driver"
+      - "virtual-with-NVIDIA_runfile_Driver"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
-    Description: "[*-NVIDIA_Tesla_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
+    Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 535.154.05
+    Default: 535.161.07
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
@@ -424,14 +426,14 @@ Resources:
             - 03_gpu_nvidia_grid_install
           console-with-NVIDIA_Gaming_Driver:
             - 04_gpu_nvidia_gaming_install
-          console-with-NVIDIA_Tesla_repo_Driver:
+          console-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
-          console-with-NVIDIA_Tesla_runfile_Driver:
-            - 06_gpu_nvidia_tesla_install
-          virtual-with-NVIDIA_Tesla_repo_Driver:
+          console-with-NVIDIA_runfile_Driver:
+            - 06_gpu_nvidia_runfile_install
+          virtual-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
-          virtual-with-NVIDIA_Tesla_runfile_Driver:
-            - 06_gpu_nvidia_tesla_install
+          virtual-with-NVIDIA_runfile_Driver:
+            - 06_gpu_nvidia_runfile_install
           console-with-Ubuntu_repo_Driver:
             - 07_gpu_ubuntu_driver_install
           console-with-AMD_ROCm_repo_Driver:
@@ -810,6 +812,11 @@ Resources:
                 apt-get install -q -y cuda-drivers
                 apt-get install -q -y nvidia-settings
 
+                # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities
+                #apt-get install -q -y cuda-toolkit
+                # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
+                #apt-get install -q -y cudnn
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -820,7 +827,7 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
-        06_gpu_nvidia_tesla_install:
+        06_gpu_nvidia_runfile_install:
           files:
             "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#runfile
               content: !Sub |
@@ -874,6 +881,11 @@ Resources:
                 fi
                 apt-get install -q -y nvidia-driver-$VERSION-server nvidia-utils-$VERSION-server
                 apt-get install -q -y nvidia-settings
+
+                # CUDA toolkit
+                #apt-get install -q -y nvidia-cuda-toolkit
+                # cuDNN
+                #apt-get install -q -y nvidia-cudnn
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0

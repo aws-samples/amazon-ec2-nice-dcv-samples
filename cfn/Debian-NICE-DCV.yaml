@@ -36,6 +36,7 @@ Metadata:
           default: NICE DCV
         Parameters:
           - sessionType
+          - teslaDriverVersion
           - listenPort
       - Label:
           default: Network
@@ -82,11 +83,19 @@ Parameters:
 
   sessionType:
     Type: String
-    Description: Session type ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
+    Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
+      - "console-with-NVIDIA_runfile_Driver"
       - "console"
+      - "virtual-with-NVIDIA_runfile_Driver"
     Default: "virtual"
+  teslaDriverVersion:
+    Type: String
+    Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
+    AllowedPattern: "^[\\d\\.]+$"
+    ConstraintDescription: Specify valid driver version
+    Default: 550.54.14
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
@@ -389,6 +398,18 @@ Resources:
             - 00_setup
           console:
             - 01_console
+          dcv_gpu_install:
+            - 02_dcv_gpu_install
+          console-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
+          console-with-NVIDIA_runfile_Driver:
+            - 06_gpu_nvidia_runfile_install
+          virtual-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
+          virtual-with-NVIDIA_runfile_Driver:
+            - 06_gpu_nvidia_runfile_install
+          console-with-Debian_repo_Driver:
+            - 07_gpu_debian_driver_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/admin/update-dcv":
@@ -489,6 +510,15 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 SESSION="${sessionType}"
+                case $SESSION in
+                  console-with-NVIDIA*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
+                  console-with-Debian*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
+                esac
+
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
@@ -567,6 +597,134 @@ Resources:
                     EndSubSection
                 EndSection
               mode: "000644"
+              owner: "root"
+              group: "root"
+        02_dcv_gpu_install:
+          files:
+            "/etc/systemd/system/dcv-gpu-install.service":
+              content: |
+                [Unit]
+                Description=Install GPU driver
+                After=default.target network.target
+
+                [Service]
+                ExecStart=/opt/install-gpu-driver
+
+                [Install]
+                WantedBy=default.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+        05_gpu_nvidia_repo_install:
+          files: # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu
+            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#ubuntu-lts
+              content: |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                if (arch | grep -q x86); then
+                  apt-get install -q -y linux-headers-cloud-amd64
+                else
+                  apt-get install -q -y linux-headers-cloud-arm64
+                fi
+                DISTRO=debian12
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
+                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
+                apt-get update -q
+                apt-get install -q -y cuda-drivers
+                apt-get install -q -y nvidia-settings
+
+                # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages
+                #apt-get install -q -y cuda
+                # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
+                #apt-get install -q -y cudnn
+
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${0}
+                reboot
+              mode: "000755"
+              owner: "root"
+              group: "root"
+        06_gpu_nvidia_runfile_install:
+          files:
+            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#runfile
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                if (arch | grep -q x86); then
+                  apt-get install -q -y linux-headers-cloud-amd64
+                else
+                  apt-get install -q -y linux-headers-cloud-arm64
+                fi
+                DRIVER_VERSION="${teslaDriverVersion}"
+                ARCH=$( /bin/arch )
+                curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
+
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                chmod +x ./NVIDIA-Linux-*.run
+                ./NVIDIA-Linux-*.run -s
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${!0}
+                reboot
+              mode: "000755"
+              owner: "root"
+              group: "root"
+        07_gpu_debian_driver_install:
+          files:
+            "/opt/install-gpu-driver": # https://ubuntu.com/server/docs/nvidia-drivers-installation
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                export DEBIAN_FRONTEND=noninteractive
+                apt-get update -q
+                if (arch | grep -q x86); then
+                  apt-get install -q -y linux-headers-cloud-amd64
+                else
+                  apt-get install -q -y linux-headers-cloud-arm64
+                fi
+
+                # https://wiki.debian.org/NvidiaGraphicsDrivers#Debian_12_.22Bookworm.22
+                echo "deb http://deb.debian.org/debian/ bookworm main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/nvidia.list
+                apt-get update -q
+                apt-get install -q -y nvidia-driver firmware-misc-nonfree
+
+                # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages
+                #apt-get install -q -y nvidia-cuda-toolkit
+                # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
+                #apt-get install -q -y nvidia-cudnn
+
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${!0}
+                reboot
+              mode: "000755"
               owner: "root"
               group: "root"
     Properties:
@@ -705,6 +863,41 @@ Resources:
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
+
+          export SESSION="${sessionType}"
+          case $SESSION in
+            *Debian*)
+              systemctl disable dcv-post-reboot
+
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              systemctl daemon-reload
+              systemctl enable dcv-gpu-install
+              ;;
+            *NVIDIA*) # install GPU driver after reboot
+              systemctl disable dcv-post-reboot
+
+              apt-get install -q -y unzip gcc make
+              apt-get install -q -y libglvnd-dev pkg-config
+
+              # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#ubuntu
+              if (! cat /etc/modprobe.d/blacklist.conf | grep -q nouveau); then
+                echo "blacklist vga16fb" >> /etc/modprobe.d/blacklist.conf
+                echo "blacklist nouveau" >> /etc/modprobe.d/blacklist.conf
+                echo "blacklist rivafb" >> /etc/modprobe.d/blacklist.conf
+                echo "blacklist nvidiafb" >> /etc/modprobe.d/blacklist.conf
+                echo "blacklist rivatv" >> /etc/modprobe.d/blacklist.conf
+              fi
+              LINE_NUMBER=`grep -n ^GRUB_CMDLINE_LINUX= /etc/default/grub | cut -d ":" -f 1`
+              sed -i "$LINE_NUMBER s/.$/ rdblacklist=nouveau\"/" /etc/default/grub    
+              update-grub
+
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              systemctl daemon-reload
+              systemctl enable dcv-gpu-install
+              ;;
+          esac
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
