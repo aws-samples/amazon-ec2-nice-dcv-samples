@@ -77,11 +77,12 @@ Parameters:
     AllowedValues:
       - AMD
       - NICE-DCV
+      - NICE-DCV-IDD
       - NVIDIA-Gaming
       - NVIDIA-GRID
       - NVIDIA-Tesla
       - none
-    Default: none
+    Default: NICE-DCV-IDD
   teslaDriverVersion:
     Type: String
     Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
@@ -152,6 +153,58 @@ Conditions:
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
 
 Resources:
+  instanceIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      Path: /
+      Policies: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
+        - PolicyName: dcvLicensing
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:${AWS::Partition}:s3:::dcv-license.${AWS::Region}/*"
+        - PolicyName: gpuDrivers
+          PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:Get*
+                  - s3:List*
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming"
+                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-windows-nvidia-drivers"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-windows-nvidia-drivers/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-windows-drivers"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-windows-drivers/*"
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  instanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref instanceIamRole
+
   securityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -205,57 +258,6 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
-  instanceIamRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: [ec2.amazonaws.com]
-            Action: ["sts:AssumeRole"]
-      Path: /
-      Policies: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
-        - PolicyName: dcvLicensing
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                Resource: !Sub "arn:${AWS::Partition}:s3:::dcv-license.${AWS::Region}/*"
-        - PolicyName: gpuDrivers
-          PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:Get*
-                  - s3:List*
-                Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming"
-                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming/*"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-windows-nvidia-drivers"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-windows-nvidia-drivers/*"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-windows-drivers"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-windows-drivers/*"
-      ManagedPolicyArns:
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
-      Tags:
-        - Key: StackName
-          Value: !Sub ${AWS::StackName}
-        - Key: StackId
-          Value: !Sub ${AWS::StackId}
-        - Key: GitHub
-          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
-
-  instanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: /
-      Roles:
-        - !Ref instanceIamRole
-
   ec2Instance:
     Type: AWS::EC2::Instance
     CreationPolicy:
@@ -281,7 +283,7 @@ Resources:
                 net stop dcvserver
                 powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
                 wmic product where "name like 'NICE%%'" get name,version
-                start /wait msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
+                start /wait msiexec.exe /i nice-dcv-server-x64-Release.msi /quiet /norestart /l*v dcv_install_msi.log
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
@@ -357,7 +359,8 @@ Resources:
             c:\\windows\\temp\\install-gpu-driver.cmd:
               content: !Sub |
                 @echo off
-                start /wait c:\windows\temp\install-psreadline.cmd
+                start /wait c:\windows\temp\install-PSReadLine.cmd
+                start /wait c:\windows\temp\install-DisplaySettings.cmd
 
                 SET DRIVER_TYPE=${driverType}
                 SET "PATH=%PATH%;C:\Program Files\7-zip"
@@ -410,7 +413,7 @@ Resources:
                 )
                 shutdown /r /t 1 /f
                 exit
-            c:\\windows\\temp\\install-psreadline.cmd:
+            c:\\windows\\temp\\install-PSReadLine.cmd:
               content: |
                 @echo off
                 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 202">nul && (
@@ -420,6 +423,14 @@ Resources:
                 ) || (
                   echo.
                 )
+                exit
+            c:\\windows\\temp\\install-DisplaySettings.cmd:
+              content: |
+                @echo off
+                @echo ** https://www.powershellgallery.com/packages/DisplaySettings
+                powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
+                powershell -command "Install-Module -Name DisplaySettings  -Force"
+                powershell -command "Set-DisplayResolution -Width 1920 -Height 1080 -Force"
                 exit
             c:\\windows\\temp\\install-if-available.cmd:
               content: |
@@ -464,12 +475,33 @@ Resources:
           powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://amazon-ssm-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
           c:\windows\temp\AmazonSSMAgentSetup.exe /S
 
+          @echo ** https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
+          powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/windows/amd64/latest/amazon-cloudwatch-agent.msi', 'amazon-cloudwatch-agent.msi')
+          msiexec.exe /i amazon-cloudwatch-agent.msi /quiet /norestart /l*v amazon-cloudwatch-agent.log
+          sc config AmazonCloudWatchAgent start=demand
+
           @echo ** https://docs.chocolatey.org/en-us/choco/setup
           @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 
+          @echo ** install AWSCLI
+          choco install --no-progress -y awscli
+          setx /M AWS_CLI_AUTO_PROMPT on-partial
+
+          @echo ** install Chololatey GUI
+          choco install --no-progress -y chocolateygui
+
+          @Echo ** install 7-zip
+          choco install --no-progress -y 7zip.install
+
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
           powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
-          msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
+          SET DRIVER_TYPE=${driverType}          
+          IF %DRIVER_TYPE% EQU NICE-DCV-IDD (
+            msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
+          )
+          IF %DRIVER_TYPE% NEQ NICE-DCV-IDD (
+            msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL REMOVE=iddDriver /quiet /norestart /l*v dcv_install_msi.log
+          )
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-auto
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f 
@@ -484,16 +516,6 @@ Resources:
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v web-port /t REG_DWORD /d ${listenPort} /f
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v quic-port /t REG_DWORD /d ${listenPort} /f
-
-          @echo ** install AWSCLI
-          choco install --no-progress -y awscli
-          setx /M AWS_CLI_AUTO_PROMPT on-partial
-
-          @echo ** install Chololatey GUI
-          choco install --no-progress -y chocolateygui
-
-          @Echo ** install 7-zip
-          choco install --no-progress -y 7zip.install
 
           @echo ** install graphics driver
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_gpu_install
@@ -537,7 +559,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 
   SSMsessionManager:
-    Description: SSM Session Manager ("net user administrator <MyStr@ngAdminPassw0rd>" to change administrator password)
+    Description: SSM Session Manager ("net user administrator MyStr@ngAdminPassw0rd" to change administrator password)
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
