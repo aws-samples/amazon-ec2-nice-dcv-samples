@@ -95,7 +95,7 @@ Parameters:
     Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 550.54.14
+    Default: 550.54.1
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
@@ -241,6 +241,81 @@ Mappings:
       IpPrefix: 18.237.140.160/29
 
 Resources:
+  instanceIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: ["sts:AssumeRole"]
+      Path: /
+      Policies:
+        - PolicyName: dcvLicensing
+          PolicyDocument: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:${AWS::Partition}:s3:::dcv-license.${AWS::Region}/*"
+        - PolicyName: gpuDrivers
+          PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:Get*
+                  - s3:List*
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming"
+                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers"
+                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers/*"
+        - PolicyName: MountPointS3Access
+          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:AbortMultipartUpload
+                  - s3:DeleteObject
+                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET/*"
+        - PolicyName: MountPointS3ExpressAccess
+          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3express:CreateSession
+                Resource: !Sub "arn:${AWS::Partition}:s3express:${AWS::Region}:${AWS::AccountId}:bucket/DOC-EXAMPLE-BUCKET--az_id--x-s3"
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  instanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref instanceIamRole
+
   securityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -334,57 +409,6 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
-  instanceIamRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: [ec2.amazonaws.com]
-            Action: ["sts:AssumeRole"]
-      Path: /
-      Policies: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
-        - PolicyName: dcvLicensing
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                Resource: !Sub "arn:${AWS::Partition}:s3:::dcv-license.${AWS::Region}/*"
-        - PolicyName: gpuDrivers
-          PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:Get*
-                  - s3:List*
-                Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming"
-                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming/*"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers/*"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers/*"
-      ManagedPolicyArns:
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
-      Tags:
-        - Key: StackName
-          Value: !Sub ${AWS::StackName}
-        - Key: StackId
-          Value: !Sub ${AWS::StackId}
-        - Key: GitHub
-          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
-
-  instanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: /
-      Roles:
-        - !Ref instanceIamRole
-
   ec2Instance:
     Type: AWS::EC2::Instance
     CreationPolicy:
@@ -433,6 +457,20 @@ Resources:
                 sudo apt-get install -y ./nice-xdcv_*.deb
                 sudo apt-get install -y ./nice-dcv-gltest_*.deb
                 sudo systemctl restart dcvserver
+              mode: "000755"
+              owner: "admin"
+              group: "admin"
+            "/home/admin/update-mountpoint-s3":
+              content: |
+                #!/bin/bash
+                cd /tmp
+                rm -f mount-s3.rpm
+                if (uname -a | grep -q x86); then
+                  wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb
+                else
+                  wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.deb
+                fi
+                sudo apt-get install -y ./mount-s3.deb
               mode: "000755"
               owner: "admin"
               group: "admin"
@@ -898,6 +936,22 @@ Resources:
               systemctl enable dcv-gpu-install
               ;;
           esac
+
+          # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
+          if (arch | grep -q x86); then
+            curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb
+          else
+            curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
+          fi
+          apt-get install -q -y ./amazon-cloudwatch-agent.deb
+
+          # MountPoint-S3: https://github.com/awslabs/mountpoint-s3
+          if (uname -a | grep -q x86); then
+            curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb
+          else
+            curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.deb
+          fi
+          apt-get install -q -y ./mount-s3.deb
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0

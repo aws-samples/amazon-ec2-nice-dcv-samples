@@ -88,7 +88,7 @@ Parameters:
     Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 538.33
+    Default: 538.46
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
@@ -368,7 +368,7 @@ Resources:
                 md driver && cd driver
                 IF %DRIVER_TYPE% EQU NICE-DCV (
                   @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general
-                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
+                  powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
                   msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
                 )            
                 IF %DRIVER_TYPE% EQU NVIDIA-GRID (
@@ -383,10 +383,7 @@ Resources:
                   "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
                   reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
-                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
-                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCertWindows_2023_9_22.txt')"
-                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCert-Windows_2020_04.cert',  'C:\Users\Public\Documents\GridSwCert-Windows_2020_04.txt')"
-                  powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCert-Windows_2019_09.cert',  'C:\Users\Public\Documents\GridSwCert-Windows_2019_09.txt')"
+                  powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
                   forfiles /M *.exe /C "cmd /c 7z x @file"
                   start /wait setup.exe -s
                 )
@@ -427,10 +424,14 @@ Resources:
             c:\\windows\\temp\\install-DisplaySettings.cmd:
               content: |
                 @echo off
-                @echo ** https://www.powershellgallery.com/packages/DisplaySettings
-                powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
-                powershell -command "Install-Module -Name DisplaySettings  -Force"
-                powershell -command "Set-DisplayResolution -Width 1920 -Height 1080 -Force"
+                reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr "2019 202">nul && ( 
+                  @echo ** https://www.powershellgallery.com/packages/DisplaySettings
+                  powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
+                  powershell -command "Install-Module -Name DisplaySettings  -Force"
+                  powershell -command "Set-DisplayResolution -Width 1920 -Height 1080 -Force"
+                ) || (
+                  echo.
+                )
                 exit
             c:\\windows\\temp\\install-if-available.cmd:
               content: |
@@ -472,11 +473,11 @@ Resources:
           cd \windows\temp\
 
           @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-win.html
-          powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://amazon-ssm-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
+          powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazon-ssm-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
           c:\windows\temp\AmazonSSMAgentSetup.exe /S
 
           @echo ** https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
-          powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/windows/amd64/latest/amazon-cloudwatch-agent.msi', 'amazon-cloudwatch-agent.msi')
+          powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/windows/amd64/latest/amazon-cloudwatch-agent.msi', 'amazon-cloudwatch-agent.msi')
           msiexec.exe /i amazon-cloudwatch-agent.msi /quiet /norestart /l*v amazon-cloudwatch-agent.log
           sc config AmazonCloudWatchAgent start=demand
 
@@ -494,7 +495,7 @@ Resources:
           choco install --no-progress -y 7zip.install
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
-          powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
+          powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
           SET DRIVER_TYPE=${driverType}          
           IF %DRIVER_TYPE% EQU NICE-DCV-IDD (
             msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
