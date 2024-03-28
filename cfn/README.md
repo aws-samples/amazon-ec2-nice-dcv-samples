@@ -39,8 +39,7 @@ NICE DCV
 
 - `sessionType` (Linux): either `virtual` (default) or `console` [session type](#console-and-virtual-sessions). [GPU driver installation](#gpu-driver-installation) option may be available for some Linux OSs
 - `teslaDriverVersion` (where applicable): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `*-NVIDIA_runfile_Driver` option is selected for `driverType` or `sessionType` respectively.
-    - To obtain a suitable version, go to [NVIDIA Driver Downloads](https://www.nvidia.com/Download/Find.aspx). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value.
-    - [Release 470](https://docs.nvidia.com/datacenter/tesla/index.html#r470-driver-release-notes) is the last driver branch to support GPUs based on the NVIDIA Kepler architecture ([P2 Instance](https://aws.amazon.com/ec2/instance-types/p2/))
+    - To obtain a suitable version, go to [NVIDIA Driver Downloads](https://www.nvidia.com/Download/Find.aspx). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value
 
 - `listenPort`: NICE DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
 
