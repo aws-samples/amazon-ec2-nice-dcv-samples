@@ -499,10 +499,11 @@ Resources:
           powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
           SET DRIVER_TYPE=${driverType}          
           IF %DRIVER_TYPE% EQU NICE-DCV-IDD (
+            msiexec.exe /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
+          ) ELSE IF %DRIVER_TYPE% EQU NVIDIA-Tesla (
             msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
-          )
-          IF %DRIVER_TYPE% NEQ NICE-DCV-IDD (
-            msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL REMOVE=iddDriver /quiet /norestart /l*v dcv_install_msi.log
+          ) ELSE (
+            msiexec /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL REMOVE=iddDriver /quiet /norestart /l*v dcv_install_msi.log
           )
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-auto
