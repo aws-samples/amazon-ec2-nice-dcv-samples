@@ -163,9 +163,9 @@ Resources:
               Service: [ec2.amazonaws.com]
             Action: ["sts:AssumeRole"]
       Path: /
-      Policies: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
+      Policies:
         - PolicyName: dcvLicensing
-          PolicyDocument:
+          PolicyDocument: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
@@ -187,6 +187,44 @@ Resources:
                   - !Sub "arn:${AWS::Partition}:s3:::ec2-windows-nvidia-drivers/*"
                   - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-windows-drivers"
                   - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-windows-drivers/*"
+        - PolicyName: Route53CertbotAccess
+          PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
+            Version: "2012-10-17"
+            Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
+              - Effect: Allow
+                Action:
+                  - route53:ListHostedZones
+                  - route53:GetChange
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - route53:ChangeResourceRecordSets
+                Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
+                Condition:
+                  ForAllValues:StringEquals:
+                    "route53:ChangeResourceRecordSetsRecordTypes": ["TXT"]
+                  ForAllValues:StringLike:
+                    "route53:ChangeResourceRecordSetsNormalizedRecordNames":
+                      ["_acme-challenge.*"]
+        - PolicyName: Route53UpdaterAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
+              - Effect: Allow
+                Action:
+                  - route53:ListHostedZones
+                  - route53:GetChange
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - route53:ChangeResourceRecordSets
+                Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
+                Condition:
+                  ForAllValues:StringEquals:
+                    "route53:ChangeResourceRecordSetsRecordTypes": ["A", "AAAA"]
+                  ForAllValues:StringLike:
+                    "route53:ChangeResourceRecordSetsNormalizedRecordNames":
+                      ["site.example.com"]
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
