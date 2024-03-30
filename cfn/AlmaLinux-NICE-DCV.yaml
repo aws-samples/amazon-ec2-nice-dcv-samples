@@ -537,6 +537,39 @@ Resources:
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
+            "/etc/systemd/system/mount-s3-helper.service":
+              content: |
+                # https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md#automatically-mounting-an-s3-bucket-at-boot
+                [Unit]
+                Description=Mountpoint for S3 helper
+                Wants=network.target
+
+                [Service]
+                Type=forking
+                User=root
+                Group=root
+                ExecStart=/opt/mount-s3-helper.sh
+                ExecStop=/usr/bin/fusermount -u /mnt/s3-bucket-mount
+
+                [Install]
+                WantedBy=remote-fs.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/opt/mount-s3-helper.sh":
+              content: |
+                #!/bin/bash
+                S3_BUCKET_NAME=DOC-EXAMPLE-BUCKET
+                MOUNT_FOLDER=/mnt/s3-bucket-mount
+                USER=ec2-user
+                GROUP=ec2-user
+                USERID=$(cat /etc/passwd | grep ^$USER | cut -d":" -f 3)
+                GROUPID=$(cat /etc/group | grep ^$GROUP | cut -d":" -f 3)
+                mkdir -p $MOUNT_FOLDER
+                /usr/bin/mount-s3 --uid $USERID --gid $GROUPID --allow-overwrite --allow-delete --allow-other $S3_BUCKET_NAME $MOUNT_FOLDER
+              mode: "000744"
+              owner: "root"
+              group: "root"
             "/etc/systemd/system/dcv-virtual-session.service":
               content: |
                 [Unit]
