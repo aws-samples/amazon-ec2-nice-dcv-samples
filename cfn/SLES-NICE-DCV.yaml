@@ -554,8 +554,8 @@ Resources:
                 USER=ec2-user
                 GROUP=users
 
-                USERID=$(cat /etc/passwd | grep ^$USER | cut -d":" -f 3)
-                GROUPID=$(cat /etc/group | grep ^$GROUP | cut -d":" -f 3)
+                USERID=$(cat /etc/passwd | grep ^$USER: | cut -d":" -f 3)
+                GROUPID=$(cat /etc/group | grep ^$GROUP: | cut -d":" -f 3)
                 mkdir -p $MOUNT_FOLDER
 
                 /usr/bin/mount-s3 --uid $USERID --gid $GROUPID --allow-overwrite --allow-delete --allow-other $S3_BUCKET_NAME $MOUNT_FOLDER

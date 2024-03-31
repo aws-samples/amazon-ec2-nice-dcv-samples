@@ -518,8 +518,8 @@ Resources:
                 USER=centos
                 GROUP=centos
 
-                USERID=$(cat /etc/passwd | grep ^$USER | cut -d":" -f 3)
-                GROUPID=$(cat /etc/group | grep ^$GROUP | cut -d":" -f 3)
+                USERID=$(cat /etc/passwd | grep ^$USER: | cut -d":" -f 3)
+                GROUPID=$(cat /etc/group | grep ^$GROUP: | cut -d":" -f 3)
                 mkdir -p $MOUNT_FOLDER
 
                 /usr/bin/mount-s3 --uid $USERID --gid $GROUPID --allow-overwrite --allow-delete --allow-other $S3_BUCKET_NAME $MOUNT_FOLDER
@@ -533,7 +533,7 @@ Resources:
                 After=network.target
 
                 [Service]
-                Restart=on-failure
+                Restart=yes
                 RestartSec=5
                 Type=oneshot
                 ExecStart=/opt/route53-updater.sh
