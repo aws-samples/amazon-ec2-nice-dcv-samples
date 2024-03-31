@@ -521,9 +521,9 @@ Resources:
                 Wants=network.target
 
                 [Service]
+                Restart=on-failure
+                RestartSec=5
                 Type=forking
-                User=root
-                Group=root
                 ExecStart=/opt/mount-s3-helper.sh
                 ExecStop=/usr/bin/fusermount -u /mnt/s3-bucket-mount
 
@@ -555,6 +555,8 @@ Resources:
                 After=network.target
 
                 [Service]
+                Restart=on-failure
+                RestartSec=5
                 Type=oneshot
                 ExecStart=/opt/route53-updater.sh
                 RemainAfterExit=true
