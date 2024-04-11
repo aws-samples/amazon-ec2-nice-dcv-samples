@@ -32,10 +32,10 @@ NICE DCV
 - `driverType` (Windows): graphics driver to install
     - [NICE-DCV-IDD](https://aws.amazon.com/about-aws/whats-new/2023/11/nice-dcv-2023-1-webauthn-redirection/): Indirect Display Driver (IDD) that optimizes the graphics pipeline for higher frame rates and significantly reduces overall CPU usage (default)
     - [NICE-DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)
-    - [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance)
-    - [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance)
-    - [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances))
-    - [AMD Radeon Pro](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
+    - [NVIDIA-GRID](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance)
+    - [NVIDIA-Gaming](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance)
+    - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-driver-instance-type))
+    - [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
     - `none`: do not install any driver
 
 - `sessionType` (Linux): either `virtual` (default) or `console` [session type](#console-and-virtual-sessions). [GPU driver installation](#gpu-driver-installation) option may be available for some Linux OSs
@@ -89,7 +89,7 @@ To update NICE DCV Server, connect via Fleet Manager Remote Desktop console usin
 ### GPU Windows instances
 The blog [Building a high-performance Windows workstation on AWS for graphics intensive applications](https://aws.amazon.com/blogs/compute/building-a-high-performance-windows-workstation-on-aws-for-graphics-intensive-applications/) walks through use of [Windows Server template](WIndowsServer-NICE-DCV.yaml) to provision and manage a GPU Windows instance.  
 
-If you provision a supported [GPU graphics instance](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/accelerated-computing-instances.html#gpu-instances), you can choose to specify [which graphics driver](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-driver-instance-type) to install. Note that the NVIDIA GRID, NVIDIA Gaming and AMD drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). 
+Note that the NVIDIA GRID, NVIDIA Gaming and AMD drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). 
 
 For NVIDIA GPU instances, CUDA® Toolkit and cuDNN can be downloaded and installed from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads) and [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) respectively.
 
@@ -109,7 +109,7 @@ NICE DCV offers two types of sessions: console sessions and virtual sessions.
 With console sessions, NICE DCV directly captures the content of the desktop screen.
 With virtual sessions, NICE DCV starts an X server instance, Xdcv, and runs a desktop environment inside the X server. Multiple user sessions on a single server are allowed for virtual sessions. Refer to [Introduction to NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) for more details.
 
-The CloudFormation template configure *multi-user.target* and *graphical.target* as default systemd target for `virtual` and `console` session type options respectively.
+The CloudFormation template configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual` and `console` session type options respectively.
 
 
 
