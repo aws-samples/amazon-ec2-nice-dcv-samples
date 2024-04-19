@@ -494,7 +494,7 @@ Resources:
                 cd /tmp
                 rm -f mount-s3.rpm
                 wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb
-                sudo apt-get install -y ./mount-s3.rpm
+                sudo apt-get install -y ./mount-s3.deb
               mode: "000755"
               owner: "kali"
               group: "kali"
