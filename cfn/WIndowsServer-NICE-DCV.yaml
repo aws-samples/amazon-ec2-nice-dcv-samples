@@ -250,16 +250,6 @@ Resources:
       GroupDescription: Allow inbound DCV
       VpcId: !Ref vpcID
       SecurityGroupIngress:
-        - Description: SSH (IPv4)
-          IpProtocol: "tcp"
-          FromPort: 22
-          ToPort: 22
-          CidrIp: !Ref ingressIPv4
-        - Description: SSH (IPv6)
-          IpProtocol: "tcp"
-          FromPort: 22
-          ToPort: 22
-          CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV (IPv4)
           IpProtocol: "tcp"
           FromPort: !Ref listenPort
