@@ -81,7 +81,7 @@ Besides web browser client, NICE DCV offers Windows, Linux, and macOS native cli
 On Linux instances, the web browser client can be disabled by removing `nice-dcv-web-viewer` package. On Windows instances, download [nice-dcv-server-x64-Release.msi](https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi) and run the command *msiexec /i nice-dcv-server-x64-Release.msi REMOVE=webClient* from administrator command prompt.
 
 ### USB remotization
-NICE DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html), allowing use of specialized USB devices, such as 3D pointing devices and two-factor authentication USB dongles, on Windows and Linux OSs. To use feature on a supported Linux OS, run the command `sudo dcvusbdriverinstaller` and restart EC2 instance. Note that USB remotization support is [supported](https://docs.aws.amazon.com/dcv/latest/userguide/client.html#client-features) on installable Windows clients only. 
+NICE DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html), allowing use of specialized USB devices, such as 3D pointing devices and two-factor authentication USB dongles, on Windows and Linux OSs. To use feature on a supported Linux OS, run the command `sudo dcvusbdriverinstaller` and restart EC2 instance. Note that USB remotization is [supported](https://docs.aws.amazon.com/dcv/latest/userguide/client.html#client-features) on installable Windows clients only. 
 
 
 ## About Windows template
