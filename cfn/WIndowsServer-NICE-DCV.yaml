@@ -221,7 +221,7 @@ Resources:
                 Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
                 Condition:
                   ForAllValues:StringEquals:
-                    "route53:ChangeResourceRecordSetsRecordTypes": ["A", "AAAA"]
+                    "route53:ChangeResourceRecordSetsRecordTypes": ["A"]
                   ForAllValues:StringLike:
                     "route53:ChangeResourceRecordSetsNormalizedRecordNames":
                       ["site.example.com"]

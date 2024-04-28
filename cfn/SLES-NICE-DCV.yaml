@@ -335,7 +335,7 @@ Resources:
                 Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
                 Condition:
                   ForAllValues:StringEquals:
-                    "route53:ChangeResourceRecordSetsRecordTypes": ["A", "AAAA"]
+                    "route53:ChangeResourceRecordSetsRecordTypes": ["A"]
                   ForAllValues:StringLike:
                     "route53:ChangeResourceRecordSetsNormalizedRecordNames":
                       ["site.example.com"]
@@ -394,6 +394,14 @@ Resources:
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
+        - !If
+          - createEICsg
+          - Description: SSH (EC2 Instance Connect IP)
+            IpProtocol: "tcp"
+            FromPort: 22
+            ToPort: 22
+            CidrIp: !FindInMap [EICprefixMap, !Ref AWS::Region, "IpPrefix"]
+          - !Ref AWS::NoValue
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
           IpProtocol: "-1"
@@ -408,46 +416,6 @@ Resources:
           Value: !Sub ${AWS::StackId}
         - Key: Name
           Value: !Sub "[${AWS::StackName}] - ${ec2Name}"
-        - Key: GitHub
-          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
-
-  securityGroupForEIC:
-    Condition: createEICsg
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Allow in-browser SSH via EC2 Instance Connect
-      VpcId: !Ref vpcID
-      SecurityGroupIngress:
-        - Description: SSH from EIC IP
-          IpProtocol: "tcp"
-          FromPort: 22
-          ToPort: 22
-          CidrIp:
-            !FindInMap [
-              EICprefixMap,
-              !Ref AWS::Region,
-              "IpPrefix",
-              DefaultValue: 127.0.0.1/32,
-            ]
-      SecurityGroupEgress:
-        - Description: Allow ICMP to EIC IP
-          IpProtocol: "icmp"
-          FromPort: -1
-          ToPort: -1
-          CidrIp:
-            !FindInMap [
-              EICprefixMap,
-              !Ref AWS::Region,
-              "IpPrefix",
-              DefaultValue: 127.0.0.1/32,
-            ]
-      Tags:
-        - Key: StackName
-          Value: !Sub ${AWS::StackName}
-        - Key: StackId
-          Value: !Sub ${AWS::StackId}
-        - Key: Name
-          Value: !Sub "[${AWS::StackName}] - ${ec2Name} - EIC"
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -963,7 +931,6 @@ Resources:
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
-        - !If [createEICsg, !Ref securityGroupForEIC, !Ref "AWS::NoValue"]
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
