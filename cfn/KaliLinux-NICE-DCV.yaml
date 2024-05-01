@@ -45,10 +45,11 @@ Metadata:
           - displayPublicIP
           - assignStaticIP
       - Label:
-          default: Allowed source IP
+          default: Allowed source IP and ports
         Parameters:
           - ingressIPv4
           - ingressIPv6
+          - allowWebServerPorts
       - Label:
           default: EBS volume
         Parameters:
@@ -130,6 +131,15 @@ Parameters:
     AllowedPattern: ".+"
     ConstraintDescription: Specify valid IPv6 prefix
     Default: ::/0
+  allowWebServerPorts:
+    Type: String
+    Description: Allow HTTP and/or HTTPS inbound
+    AllowedValues:
+      - "No"
+      - "HTTP-and-HTTPS"
+      - "HTTP"
+      - "HTTPS"
+    Default: "No"
 
   volumeSize:
     Type: Number
@@ -160,7 +170,39 @@ Conditions:
         "127.0.0.1/32",
       ],
     ]
-  createEICsg: !And [!Condition hasEIC, !Condition displayPublicIP]
+  createSgEIC: !And [!Condition hasEIC, !Condition displayPublicIP]
+  createSgHTTP:
+    !Or [
+      !Equals [!Ref allowWebServerPorts, "HTTP"],
+      !Equals [!Ref allowWebServerPorts, "HTTP-and-HTTPS"],
+    ]
+  createSgHTTPS:
+    !Or [
+      !Equals [!Ref allowWebServerPorts, "HTTPS"],
+      !Equals [!Ref allowWebServerPorts, "HTTP-and-HTTPS"],
+    ]
+  hasCFprefix:
+    !Not [
+      !Equals [
+        !FindInMap [
+          CFprefixMap,
+          !Ref AWS::Region,
+          "PrefixList",
+          DefaultValue: pl-none,
+        ],
+        pl-none,
+      ],
+    ]
+  createCFsgHTTP:
+    !And [
+      !And [!Condition hasCFprefix, !Condition displayPublicIP],
+      !Condition createSgHTTP,
+    ]
+  createCFsgHTTPS:
+    !And [
+      !And [!Condition hasCFprefix, !Condition displayPublicIP],
+      !Condition createSgHTTPS,
+    ]
 
 Mappings:
   EICprefixMap: # EC2 instance connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html#ec2-instance-connect-setup-security-group
@@ -228,6 +270,66 @@ Mappings:
       IpPrefix: 13.52.6.112/29
     us-west-2:
       IpPrefix: 18.237.140.160/29
+
+  CFprefixMap: # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
+    af-south-1:
+      PrefixList: pl-c0aa4fa9
+    ap-east-1:
+      PrefixList: pl-14b2577d
+    ap-northeast-1:
+      PrefixList: pl-58a04531
+    ap-northeast-2:
+      PrefixList: pl-22a6434b
+    ap-northeast-3:
+      PrefixList: pl-31a14458
+    ap-south-1:
+      PrefixList: pl-9aa247f3
+    ap-south-2:
+      PrefixList: pl-0a25c3463226fcc61
+    ap-southeast-1:
+      PrefixList: pl-31a34658
+    ap-southeast-2:
+      PrefixList: pl-b8a742d1
+    ap-southeast-3:
+      PrefixList: pl-bca247d5
+    ap-southeast-4:
+      PrefixList: pl-0fb7e7cfe038ae0e9
+    ca-central-1:
+      PrefixList: pl-38a64351
+    ca-west-1:
+      PrefixList: pl-0530d4c590b35122b
+    eu-central-1:
+      PrefixList: pl-a3a144ca
+    eu-central-2:
+      PrefixList: pl-00b37293991dbe6a8
+    eu-north-1:
+      PrefixList: pl-fab65393
+    eu-south-1:
+      PrefixList: pl-1bbc5972
+    eu-south-2:
+      PrefixList: pl-052dcbe0f793f19da
+    eu-west-1:
+      PrefixList: pl-4fa04526
+    eu-west-2:
+      PrefixList: pl-93a247fa
+    eu-west-3:
+      PrefixList: pl-75b1541c
+    il-central-1:
+      PrefixList: pl-0dd89524416301988
+    me-central-1:
+      PrefixList: pl-05266a86378662c23
+    me-south-1:
+      PrefixList: pl-17b2577e
+    sa-east-1:
+      PrefixList: pl-5da64334
+    us-east-1:
+      PrefixList: pl-3b927c52
+    us-east-2:
+      PrefixList: pl-b6a144df
+    us-west-1:
+      PrefixList: pl-4ea04527
+    us-west-2:
+      PrefixList: pl-82a045eb
 
 Resources:
   instanceIamRole:
@@ -381,12 +483,44 @@ Resources:
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
         - !If
-          - createEICsg
+          - createSgEIC
           - Description: SSH (EC2 Instance Connect IP)
             IpProtocol: "tcp"
             FromPort: 22
             ToPort: 22
             CidrIp: !FindInMap [EICprefixMap, !Ref AWS::Region, "IpPrefix"]
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTP
+          - Description: HTTP (IPv4)
+            IpProtocol: "tcp"
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTP
+          - Description: HTTP (IPv6)
+            IpProtocol: "tcp"
+            FromPort: 80
+            ToPort: 80
+            CidrIpv6: ::/0
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTPS
+          - Description: HTTPS (IPv4)
+            IpProtocol: "tcp"
+            FromPort: 443
+            ToPort: 443
+            CidrIp: 0.0.0.0/0
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTPS
+          - Description: HTTPS (IPv6)
+            IpProtocol: "tcp"
+            FromPort: 443
+            ToPort: 443
+            CidrIpv6: ::/0
           - !Ref AWS::NoValue
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
@@ -404,6 +538,66 @@ Resources:
           Value: !Sub "[${AWS::StackName}] - ${ec2Name}"
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  securityGroupForCloudFrontHTTP:
+    Type: AWS::EC2::SecurityGroup
+    Condition: createCFsgHTTP
+    Properties:
+      GroupDescription: Allow inbound HTTP from CloudFront
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - Description: HTTP (CloudFront origin IP)
+          IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+          SourcePrefixListId:
+            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+      SecurityGroupEgress:
+        - Description: Ping (CloudFront origin IP)
+          IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          DestinationPrefixListId:
+            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: Name
+          Value: !Sub "[${AWS::StackName}] - ${ec2Name} CloudFront HTTP"
+        - Key: GitHub
+          Value: https://github.com/aws-samples/ec2-lamp-server
+
+  securityGroupForCloudFrontHTTPS:
+    Type: AWS::EC2::SecurityGroup
+    Condition: createCFsgHTTPS
+    Properties:
+      GroupDescription: Allow inbound HTTPS from CloudFront
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - Description: HTTPS (CloudFront origin IP)
+          IpProtocol: "tcp"
+          FromPort: 443
+          ToPort: 443
+          SourcePrefixListId:
+            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+      SecurityGroupEgress:
+        - Description: Ping (CloudFront origin IP)
+          IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          DestinationPrefixListId:
+            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+      Tags:
+        - Key: StackName
+          Value: !Sub ${AWS::StackName}
+        - Key: StackId
+          Value: !Sub ${AWS::StackId}
+        - Key: Name
+          Value: !Sub "[${AWS::StackName}] - ${ec2Name} CloudFront HTTPS"
+        - Key: GitHub
+          Value: https://github.com/aws-samples/ec2-lamp-server
 
   ec2Instance:
     Type: AWS::EC2::Instance
@@ -755,6 +949,16 @@ Resources:
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
+        - !If [
+            createCFsgHTTP,
+            !Ref securityGroupForCloudFrontHTTP,
+            !Ref AWS::NoValue,
+          ]
+        - !If [
+            createCFsgHTTPS,
+            !Ref securityGroupForCloudFrontHTTPS,
+            !Ref AWS::NoValue,
+          ]
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -948,7 +1152,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 
   EC2instanceConnect:
-    Condition: createEICsg
+    Condition: createSgEIC
     Description: EC2 Instance Connect
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=kali&sshPort=22#/"
 
@@ -966,3 +1170,21 @@ Outputs:
             !GetAtt ec2Instance.PublicIp,
             !GetAtt ec2Instance.PrivateIp,
           ]
+
+  SecurityGroup:
+    Description: Security Group
+    Value: !Ref securityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-SecurityGroup
+
+  InstanceID:
+    Description: Instance ID
+    Value: !Ref ec2Instance
+    Export:
+      Name: !Sub ${AWS::StackName}-InstanceID
+
+  IAMRole:
+    Description: IAM Role
+    Value: !Ref instanceIamRole
+    Export:
+      Name: !Sub ${AWS::StackName}-IAMRole
