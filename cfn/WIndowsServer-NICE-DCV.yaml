@@ -641,7 +641,17 @@ Resources:
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --no-sign-request
                   )
                   forfiles /M *.zip /C "cmd /c 7z x @file"
-                  cd Packages\Drivers\Display\*INF
+                  @echo ** AMD_GPU_WINDOWS_2K22_DRIVER*.ZIP?
+                  reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 202">nul && (
+                    cd *22*\Packages\Drivers\Display\*INF
+                  ) || (
+                    echo Not Windows 2022
+                  )
+                  reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 2019">nul) && (
+                    cd *19*\Packages\Drivers\Display\*INF
+                  ) || (
+                    echo Not Windows 2019
+                  )                  
                   pnputil /add-driver *.inf /install /subdirs
                   cd \windows\temp\driver\Packages\Drivers\Audio\HDMI\W*\
                   pnputil /add-driver *.inf /install /subdirs
