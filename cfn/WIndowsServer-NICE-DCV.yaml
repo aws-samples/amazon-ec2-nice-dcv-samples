@@ -537,6 +537,7 @@ Resources:
                 cd
                 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ .
                 IF %ERRORLEVEL% NEQ 0 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
+                IF %ERRORLEVEL% NEQ 0 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --no-sign-request
                 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
                 cd
             c:\\Users\\Administrator\\download-NVIDIA-Gaming-driver.cmd:
@@ -556,6 +557,7 @@ Resources:
                 cd
                 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ .
                 IF %ERRORLEVEL% NEQ 0 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
+                IF %ERRORLEVEL% NEQ 0 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --no-sign-request
                 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
                 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2
                 powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
@@ -577,6 +579,7 @@ Resources:
                 cd
                 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ .
                 IF %ERRORLEVEL% NEQ 0 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --region us-east-1
+                IF %ERRORLEVEL% NEQ 0 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --no-sign-request
                 cd
         02_dcv_gpu_install:
           files:
@@ -597,14 +600,22 @@ Resources:
                 )            
                 IF %DRIVER_TYPE% EQU NVIDIA-GRID (
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver
-                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
+                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
+                  ) || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --no-sign-request
+                  )
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
                   forfiles /M *.exe /C "cmd /c 7z x @file"
                   start /wait setup.exe -s
                 )
                 IF %DRIVER_TYPE% EQU NVIDIA-Gaming (
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver
-                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
+                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
+                  ) || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --no-sign-request
+                  )
                   reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
                   powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
@@ -624,8 +635,11 @@ Resources:
                   install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver2008-2012r2-64bit-international.exe
                 )
                 IF %DRIVER_TYPE% EQU AMD (
-                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html#download-amd-driver
-                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --region us-east-1
+                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --region us-east-1
+                  ) || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --no-sign-request
+                  )
                   forfiles /M *.zip /C "cmd /c 7z x @file"
                   cd Packages\Drivers\Display\*INF
                   pnputil /add-driver *.inf /install /subdirs
@@ -671,7 +685,7 @@ Resources:
                 )
           commands: # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             restart-computer:
-              command: "cmd /c c:\\windows\\temp\\install-gpu-driver.cmd > c:\\windows\\temp\\gpu-install.log"
+              command: "c:\\windows\\temp\\install-gpu-driver.cmd > c:\\windows\\temp\\gpu-install.log"
               ignoreErrors: true
               waitAfterCompletion: forever
     Properties:

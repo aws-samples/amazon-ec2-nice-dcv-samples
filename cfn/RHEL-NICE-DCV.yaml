@@ -904,7 +904,13 @@ Resources:
                 cd /tmp/drivers
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1                
-                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
+                fi
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
@@ -929,7 +935,13 @@ Resources:
                 pwd
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
+                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
+                fi
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
@@ -955,7 +967,13 @@ Resources:
                 pwd
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ . --region us-east-1
+                aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ . --no-sign-request
+                fi
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
@@ -1041,8 +1059,13 @@ Resources:
 
                 dnf install -q -y kernel-devel
                 dnf install -q -y kernel-modules-extra
-                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
-
+                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
+                fi
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -1071,8 +1094,13 @@ Resources:
 
                 dnf install -q -y kernel-devel
                 dnf install -q -y kernel-modules-extra
-                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
-
+                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
+                fi
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
