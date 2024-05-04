@@ -284,12 +284,12 @@ Resources:
                   - s3:Get*
                   - s3:List*
                 Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming"
-                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming/*"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-windows-nvidia-drivers"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-windows-nvidia-drivers/*"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-windows-drivers"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-windows-drivers/*"
+                  - !Sub "arn:*:s3:::nvidia-gaming"
+                  - !Sub "arn:*:s3:::nvidia-gaming/*"
+                  - !Sub "arn:*:s3:::ec2-windows-nvidia-drivers"
+                  - !Sub "arn:*:s3:::ec2-windows-nvidia-drivers/*"
+                  - !Sub "arn:*:s3:::ec2-amd-windows-drivers"
+                  - !Sub "arn:*:s3:::ec2-amd-windows-drivers/*"
         - PolicyName: Route53CertbotAccess
           PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
             Version: "2012-10-17"

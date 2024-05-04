@@ -375,12 +375,12 @@ Resources:
                   - s3:Get*
                   - s3:List*
                 Resource:
-                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming"
-                  - !Sub "arn:${AWS::Partition}:s3:::nvidia-gaming/*"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-linux-nvidia-drivers/*"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers"
-                  - !Sub "arn:${AWS::Partition}:s3:::ec2-amd-linux-drivers/*"
+                  - !Sub "arn:*:s3:::nvidia-gaming"
+                  - !Sub "arn:*:s3:::nvidia-gaming/*"
+                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers"
+                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers/*"
+                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers"
+                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers/*"
         - PolicyName: MountPointS3Access
           PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
             Version: "2012-10-17"
