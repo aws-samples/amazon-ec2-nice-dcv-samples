@@ -701,7 +701,9 @@ Resources:
                 sudo dnf install -y ./nice-dcv-server-*.rpm
                 sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
                 sudo dnf install -y ./nice-xdcv-*.rpm
-                sudo dnf install -y ./nice-dcv-gltest-*.rpm
+                if (arch | grep -q x86); then
+                  sudo dnf install -y ./nice-dcv-gltest-*.rpm
+                fi
                 sudo systemctl restart dcvserver
               mode: "000755"
               owner: "ec2-user"
@@ -914,7 +916,7 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
-            "/home/ec2-user/install-NVIDIA-GRID-driver":
+            "/home/ec2-user/download-NVIDIA-GRID-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -938,13 +940,12 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
-                chmod +x NVIDIA-Linux-x86_64*.run
-                sudo ./NVIDIA-Linux-x86_64*.run
+                ls
                 pwd
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
-            "/home/ec2-user/install-NVIDIA-Gaming-driver":
+            "/home/ec2-user/download-NVIDIA-Gaming-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -969,14 +970,12 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
-                unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
-                chmod +x nvidia-drivers/NVIDIA-Linux-x86_64*-grid.run
-                sudo ./nvidia-drivers/NVIDIA-Linux-x86_64*.run
+                ls
                 pwd
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
-            "/home/ec2-user/install-AMD-driver":
+            "/home/ec2-user/download-AMD-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -1001,10 +1000,7 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
-                tar -xf amdgpu-pro-*rhel*.tar.xz
-                rm -f *.tar.xz
-                cd amdgpu-pro*
-                sudo ./amdgpu-pro-install --opencl=pal,legacy
+                ls
                 pwd
               mode: "000755"
               owner: "ec2-user"
@@ -1129,8 +1125,9 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
-                chmod +x nvidia-drivers/NVIDIA-Linux-x86_64*-grid.run
-                ./nvidia-drivers/NVIDIA-Linux-x86_64*.run -s
+                chmod +x nvidia-drivers/*/NVIDIA-Linux-x86_64*.run
+                cd nvidia-drivers/*/
+                ./NVIDIA-Linux-x86_64*.run -s
 
                 cat << EOF | tee -a /etc/nvidia/gridd.conf
                 vGamingMarketplace=2
@@ -1428,6 +1425,7 @@ Resources:
           if (! cat /etc/os-release | grep -q 8.); then
             dnf install -q -y gnome-extensions-app
           fi
+          dnf install -q -y firefox
 
           # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
           sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
@@ -1450,7 +1448,9 @@ Resources:
           dnf install -q -y ./nice-dcv-server-*.rpm
           dnf install -q -y ./nice-dcv-web-viewer-*.rpm
           dnf install -q -y ./nice-xdcv-*.rpm
-          dnf install -q -y ./nice-dcv-gltest-*.rpm
+          if (arch | grep -q x86); then
+            dnf install -q -y ./nice-dcv-gltest-*.rpm
+          fi
 
           # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
           dnf install -q -y cups

@@ -87,6 +87,8 @@ Parameters:
     Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
+      - "console-with-NVIDIA_GRID_Driver"
+      - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_runfile_Driver"
       - "console"
       - "virtual-with-NVIDIA_runfile_Driver"
@@ -96,7 +98,7 @@ Parameters:
     Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 550.54.1
+    Default: 550.54.15
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
@@ -625,6 +627,10 @@ Resources:
             - 01_console
           dcv_gpu_install:
             - 02_dcv_gpu_install
+          console-with-NVIDIA_GRID_Driver:
+            - 03_gpu_nvidia_grid_install
+          console-with-NVIDIA_Gaming_Driver:
+            - 04_gpu_nvidia_gaming_install
           console-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
           console-with-NVIDIA_runfile_Driver:
@@ -656,7 +662,9 @@ Resources:
                 sudo apt-get install -y ./nice-dcv-server_*.deb
                 sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
                 sudo apt-get install -y ./nice-xdcv_*.deb
-                sudo apt-get install -y ./nice-dcv-gltest_*.deb
+                if (arch | grep -q x86); then
+                  sudo apt-get install -y ./nice-dcv-gltest_*.deb
+                fi
                 sudo systemctl restart dcvserver
               mode: "000755"
               owner: "admin"
@@ -875,6 +883,65 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+            "/home/ubuntu/download-NVIDIA-GRID-driver":
+              content: |
+                #!/bin/bash
+                clear
+                echo  
+                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
+                echo  
+                echo By downloading, you agree to conditions and are bound by license terms as stated on 
+                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
+                echo 
+                mkdir -p /tmp/drivers
+                cd /tmp/drivers
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1                
+                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
+                fi
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                sudo systemctl isolate multi-user.target
+                ls
+                pwd
+              mode: "000755"
+              owner: "admin"
+              group: "admin"
+            "/home/ubuntu/download-NVIDIA-Gaming-driver":
+              content: |
+                #!/bin/bash
+                clear
+                echo  
+                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
+                echo  
+                echo By downloading, you agree to conditions and are bound by license terms as stated on 
+                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
+                echo 
+                mkdir -p /tmp/drivers
+                cd /tmp/drivers
+                pwd
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
+                fi
+                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                sudo systemctl isolate multi-user.target
+                ls
+                pwd
+              mode: "000755"
+              owner: "admin"
+              group: "admin"
         01_console:
           files:
             "/etc/X11/xorg.conf": # Modeline generator at http://xtiming.sourceforge.net/
@@ -935,6 +1002,82 @@ Resources:
                 [Install]
                 WantedBy=default.target
               mode: "000644"
+              owner: "root"
+              group: "root"
+        03_gpu_nvidia_grid_install:
+          files:
+            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
+              content: |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                apt-get install -q -y linux-headers-cloud-amd64
+                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
+                fi
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                chmod +x NVIDIA-Linux-x86_64*.run
+                ./NVIDIA-Linux-x86_64*.run -s
+
+                touch /etc/modprobe.d/nvidia.conf
+                echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${0}
+                reboot
+              mode: "000755"
+              owner: "root"
+              group: "root"
+        04_gpu_nvidia_gaming_install:
+          files:
+            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver
+              content: |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                apt-get install -q -y linux-headers-cloud-amd64
+                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
+                fi
+                sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
+                chmod +x nvidia-drivers/*/NVIDIA-Linux-x86_64*.run
+                cd nvidia-drivers/*/
+                ./NVIDIA-Linux-x86_64*.run -s
+
+                cat << EOF | tee -a /etc/nvidia/gridd.conf
+                vGamingMarketplace=2
+                EOF
+
+                curl -L -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2023_9_22.cert"
+
+                touch /etc/modprobe.d/nvidia.conf
+                echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${0}
+                reboot
+              mode: "000755"
               owner: "root"
               group: "root"
         05_gpu_nvidia_repo_install:
@@ -1128,6 +1271,7 @@ Resources:
           apt-get install -q -y pulseaudio-utils
           apt-get install -q -y gnome-tweaks
           apt-get install -q -y gnome-shell-extension-manager
+          apt-get install -q -y firefox
 
           # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
           sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/daemon.conf
@@ -1149,7 +1293,9 @@ Resources:
           apt-get install -q -y ./nice-dcv-web-viewer_*.deb
           usermod -aG video dcv
           apt-get install -q -y ./nice-xdcv_*.deb
-          apt-get install -q -y ./nice-dcv-gltest_*.deb
+          if (arch | grep -q x86); then
+            apt-get install -q -y ./nice-dcv-gltest_*.deb
+          fi
 
           # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
           apt-get install -q -y cups

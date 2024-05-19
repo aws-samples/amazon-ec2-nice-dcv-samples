@@ -1197,6 +1197,7 @@ Resources:
           fi
           update-alternatives --set default-displaymanager /usr/lib/X11/displaymanagers/gdm
           sed -i "s/DEFAULT_WM=\"\"/DEFAULT_WM=\"gnome\"/" /etc/sysconfig/windowmanager
+          zypper -n install -y firefox
 
           # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           zypper -n install -y pulseaudio-utils

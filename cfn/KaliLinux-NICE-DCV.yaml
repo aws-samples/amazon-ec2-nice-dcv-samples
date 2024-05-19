@@ -1017,6 +1017,7 @@ Resources:
               apt-get install -q -y kali-desktop-gnome
               ;;
           esac
+          apt-get install -q -y firefox
 
           # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           apt-get install -q -y pipewire-audio

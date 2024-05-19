@@ -1027,6 +1027,7 @@ Resources:
 
           # Install AMD drivers: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver
           yum groupinstall -y "MATE Desktop"
+          yum install -q -y firefox
           systemctl disable firewalld
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html

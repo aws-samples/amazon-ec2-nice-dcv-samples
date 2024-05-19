@@ -662,7 +662,9 @@ Resources:
                 sudo yum install -y ./nice-dcv-server-*.rpm
                 sudo yum install -y ./nice-dcv-web-viewer-*.rpm
                 sudo yum install -y ./nice-xdcv-*.rpm
-                sudo yum install -y ./nice-dcv-gltest-*.rpm
+                if (arch | grep -q x86); then
+                  sudo yum install -y ./nice-dcv-gltest-*.rpm
+                fi
                 sudo systemctl restart dcvserver
               mode: "000755"
               owner: "ec2-user"
@@ -874,7 +876,7 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
-            "/home/ec2-user/install-NVIDIA-GRID-driver":
+            "/home/ec2-user/download-NVIDIA-GRID-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -898,13 +900,12 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
-                chmod +x NVIDIA-Linux-x86_64*.run
-                sudo CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-x86_64*.run
+                ls
                 pwd
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
-            "/home/ec2-user/install-NVIDIA-Gaming-driver":
+            "/home/ec2-user/download-NVIDIA-Gaming-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -929,14 +930,12 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
-                unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
-                chmod +x nvidia-drivers/NVIDIA-Linux-x86_64*-grid.run
-                sudo CC=/usr/bin/gcc10-cc ./nvidia-drivers/NVIDIA-Linux-x86_64*.run
+                ls
                 pwd
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
-            "/home/ec2-user/install-AMD-driver":
+            "/home/ec2-user/download-AMD-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -961,10 +960,7 @@ Resources:
                 sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
                 sudo systemctl isolate multi-user.target
-                tar -xf amdgpu-pro-*rhel*.tar.xz
-                rm -f *.tar.xz
-                cd amdgpu-pro*
-                sudo ./amdgpu-pro-install --opencl=pal,legacy
+                ls
                 pwd
               mode: "000755"
               owner: "ec2-user"
@@ -1091,8 +1087,9 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
-                chmod +x nvidia-drivers/NVIDIA-Linux-x86_64*-grid.run
-                CC=/usr/bin/gcc10-cc ./nvidia-drivers/NVIDIA-Linux-x86_64*.run -s
+                chmod +x nvidia-drivers/*/NVIDIA-Linux-x86_64*.run
+                cd nvidia-drivers/*/
+                CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-x86_64*.run -s
 
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
                 cd /usr/src/nvidia-*
@@ -1261,7 +1258,9 @@ Resources:
           yum install -q -y ./nice-dcv-server-*.rpm
           yum install -q -y ./nice-dcv-web-viewer-*.rpm
           yum install -q -y ./nice-xdcv-*.rpm
-          yum install -q -y ./nice-dcv-gltest-*.rpm
+          if (arch | grep -q x86); then
+            yum install -q -y ./nice-dcv-gltest-*.rpm
+          fi
 
           # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
           yum install -q -y cups
