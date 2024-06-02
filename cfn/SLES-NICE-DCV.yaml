@@ -78,7 +78,7 @@ Parameters:
   instanceType:
     Type: String
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
-    AllowedPattern: "^[a-z\\d\\.]+$"
+    AllowedPattern: "^[a-z\\-\\d\\.]+$"
     ConstraintDescription: Specify valid EC2 instance type
     Default: t3.medium
 

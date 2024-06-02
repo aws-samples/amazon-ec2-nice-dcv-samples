@@ -68,7 +68,7 @@ Parameters:
   instanceType:
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Type: String
-    AllowedPattern: "^[a-z\\d\\.]+$"
+    AllowedPattern: "^[a-z\\-\\d\\.]+$"
     ConstraintDescription: Specify valid EC2 instance type
     Default: t3.medium
 
@@ -748,7 +748,7 @@ Resources:
           choco install --no-progress -y awscli
           setx /M AWS_CLI_AUTO_PROMPT on-partial
 
-          @echo ** install Chololatey GUI
+          @echo ** install Chocolatey GUI
           choco install --no-progress -y chocolateygui
 
           @Echo ** install 7-zip

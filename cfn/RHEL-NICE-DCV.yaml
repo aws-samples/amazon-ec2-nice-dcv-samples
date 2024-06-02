@@ -80,7 +80,7 @@ Parameters:
   instanceType:
     Type: String
     Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
-    AllowedPattern: "^[a-z\\d\\.]+$"
+    AllowedPattern: "^[a-z\\-\\d\\.]+$"
     ConstraintDescription: Specify valid EC2 instance type
     Default: t4g.medium
 

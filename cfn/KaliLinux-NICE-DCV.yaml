@@ -74,7 +74,7 @@ Parameters:
   instanceType:
     Type: String
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
-    AllowedPattern: "^[a-z\\d\\.]+$"
+    AllowedPattern: "^[a-z\\-\\d\\.]+$"
     ConstraintDescription: Specify valid EC2 instance type
     Default: t3.medium
 
@@ -1012,6 +1012,8 @@ Resources:
           case $SESSION in
             *xfce*)
               apt-get install -q -y kali-desktop-xfce
+              # tweaks for installation on Kali xfce
+              mkdir -p /etc/lightdm/lightdm.conf.d
               ;;
             *gnome*)
               apt-get install -q -y kali-desktop-gnome
@@ -1031,15 +1033,12 @@ Resources:
           curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-x86_64.tgz
           tar -xvzf nice-dcv-ubuntu2204-x86_64.tgz && cd nice-dcv-*-ubuntu2204-x86_64
 
-          # tweaks for installation on Kali xfce
-          mkdir -p /etc/lightdm/lightdm.conf.d
-
           # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
           apt-get install -q -y ./nice-dcv-server_*.deb
           apt-get install -q -y ./nice-dcv-web-viewer_*.deb
           usermod -aG video dcv
           # from /etc/lightdm/lightdm.conf.d
-          sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
+          # sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
           apt-get install -q -y ./nice-xdcv_*.deb
           apt-get install -q -y ./nice-dcv-gltest_*.deb
 
