@@ -52,9 +52,11 @@ Networking
 - `assignStaticIP`: associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) to prevent assigned IPv4 address from changing every time EC2 instance is stopped and started. There is a hourly charge when instance is stopped as listed at [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addressesv). Default is `Yes`
 
 Allowed IP prefix and ports
-- `ingressIPv4`: allowed IPv4 source prefix to NICE DCV and SSH(Linux) ports, e.g. `1.2.3.4/32`. Get source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
-- `ingressIPv6`: allowed IPv6 source prefix to NICE DCV and SSH(Linux) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
-- `allowWebServerPorts`: allow inbound to HTTP and/or HTTPS ports. Use this option if you intend to setup web server. Default is `No`
+- `ingressIPv4`: allowed IPv4 source prefix to NICE DCV, SSH(Linux) and RDP(Windows) ports, e.g. `1.2.3.4/32`. Get source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
+- `ingressIPv6`: allowed IPv6 source prefix to NICE DCV, SSH(Linux) and RDP(Windows) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
+- `allowRDPport` (Windows): allow inbound RDP. Option is not related to [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) access. Default is `No`
+- `allowSSHport` (Linux): allow inbound SSH. Option is not related to [EC2 Instance Connect](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) access. Default is `Yes`
+- `allowWebServerPorts`: allow inbound HTTP and/or HTTPS. Use this option if you intend to setup web server. Default is `No`
 
 EBS Volume
 - `volumeSize`: EBS root volume size in GiB

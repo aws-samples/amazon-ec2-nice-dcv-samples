@@ -50,6 +50,7 @@ Metadata:
         Parameters:
           - ingressIPv4
           - ingressIPv6
+          - allowSSHport
           - allowWebServerPorts
       - Label:
           default: EBS volume
@@ -145,14 +146,21 @@ Parameters:
     AllowedPattern: ".+"
     ConstraintDescription: Specify valid IPv6 prefix
     Default: ::/0
+  allowSSHport:
+    Type: String
+    Description: Allow SSH inbound
+    AllowedValues:
+      - "Yes"      
+      - "No"
+    Default: "Yes"
   allowWebServerPorts:
     Type: String
     Description: Allow HTTP and/or HTTPS inbound
     AllowedValues:
       - "No"
-      - "HTTP-and-HTTPS"
-      - "HTTP"
-      - "HTTPS"
+      - HTTP-and-HTTPS
+      - HTTP
+      - HTTPS
     Default: "No"
 
   volumeSize:
@@ -165,9 +173,9 @@ Parameters:
     Type: String
     Description: EBS volume type
     AllowedValues:
-      - "gp3"
-      - "gp2"
-    Default: "gp3"
+      - gp3
+      - gp2
+    Default: gp3
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -179,22 +187,22 @@ Conditions:
         !FindInMap [
           EICprefixMap,
           !Ref AWS::Region,
-          "IpPrefix",
+          IpPrefix,
           DefaultValue: 127.0.0.1/32,
         ],
-        "127.0.0.1/32",
+        127.0.0.1/32,
       ],
     ]
   createSgEIC: !And [!Condition hasEIC, !Condition displayPublicIP]
   createSgHTTP:
     !Or [
-      !Equals [!Ref allowWebServerPorts, "HTTP"],
-      !Equals [!Ref allowWebServerPorts, "HTTP-and-HTTPS"],
+      !Equals [!Ref allowWebServerPorts, HTTP],
+      !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
     ]
   createSgHTTPS:
     !Or [
-      !Equals [!Ref allowWebServerPorts, "HTTPS"],
-      !Equals [!Ref allowWebServerPorts, "HTTP-and-HTTPS"],
+      !Equals [!Ref allowWebServerPorts, HTTPS],
+      !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
     ]
   hasCFprefix:
     !Not [
@@ -202,7 +210,7 @@ Conditions:
         !FindInMap [
           CFprefixMap,
           !Ref AWS::Region,
-          "PrefixList",
+          PrefixList,
           DefaultValue: pl-none,
         ],
         pl-none,
@@ -218,6 +226,7 @@ Conditions:
       !And [!Condition hasCFprefix, !Condition displayPublicIP],
       !Condition createSgHTTPS,
     ]
+  createSgSSH: !Equals [!Ref allowSSHport, "Yes"]
 
 Mappings:
   EICprefixMap: # EC2 instance connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html#ec2-instance-connect-setup-security-group
@@ -467,48 +476,54 @@ Resources:
       GroupDescription: Allow inbound DCV and SSH
       VpcId: !Ref vpcID
       SecurityGroupIngress:
-        - Description: SSH (IPv4)
-          IpProtocol: "tcp"
-          FromPort: 22
-          ToPort: 22
-          CidrIp: !Ref ingressIPv4
-        - Description: SSH (IPv6)
-          IpProtocol: "tcp"
-          FromPort: 22
-          ToPort: 22
-          CidrIpv6: !Ref ingressIPv6
+        - !If
+          - createSgSSH
+          - Description: SSH (IPv4)
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: !Ref ingressIPv4
+          - !Ref AWS::NoValue
+        - !If
+          - createSgSSH
+          - Description: SSH (IPv6)
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIpv6: !Ref ingressIPv6
+          - !Ref AWS::NoValue
         - Description: NICE DCV (IPv4)
-          IpProtocol: "tcp"
+          IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV (IPv6)
-          IpProtocol: "tcp"
+          IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV QUIC (IPv4)
-          IpProtocol: "udp"
+          IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV QUIC (IPv6)
-          IpProtocol: "udp"
+          IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
         - !If
           - createSgEIC
           - Description: SSH (EC2 Instance Connect IP)
-            IpProtocol: "tcp"
+            IpProtocol: tcp
             FromPort: 22
             ToPort: 22
-            CidrIp: !FindInMap [EICprefixMap, !Ref AWS::Region, "IpPrefix"]
+            CidrIp: !FindInMap [EICprefixMap, !Ref AWS::Region, IpPrefix]
           - !Ref AWS::NoValue
         - !If
           - createSgHTTP
           - Description: HTTP (IPv4)
-            IpProtocol: "tcp"
+            IpProtocol: tcp
             FromPort: 80
             ToPort: 80
             CidrIp: 0.0.0.0/0
@@ -516,7 +531,7 @@ Resources:
         - !If
           - createSgHTTP
           - Description: HTTP (IPv6)
-            IpProtocol: "tcp"
+            IpProtocol: tcp
             FromPort: 80
             ToPort: 80
             CidrIpv6: ::/0
@@ -524,7 +539,7 @@ Resources:
         - !If
           - createSgHTTPS
           - Description: HTTPS (IPv4)
-            IpProtocol: "tcp"
+            IpProtocol: tcp
             FromPort: 443
             ToPort: 443
             CidrIp: 0.0.0.0/0
@@ -532,7 +547,7 @@ Resources:
         - !If
           - createSgHTTPS
           - Description: HTTPS (IPv6)
-            IpProtocol: "tcp"
+            IpProtocol: tcp
             FromPort: 443
             ToPort: 443
             CidrIpv6: ::/0
@@ -562,18 +577,18 @@ Resources:
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: HTTP (CloudFront origin IP)
-          IpProtocol: "tcp"
+          IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           SourcePrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       SecurityGroupEgress:
         - Description: Ping (CloudFront origin IP)
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
           DestinationPrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       Tags:
         - Key: StackName
           Value: !Sub ${AWS::StackName}
@@ -582,7 +597,7 @@ Resources:
         - Key: Name
           Value: !Sub "[${AWS::StackName}] - ${ec2Name} CloudFront HTTP"
         - Key: GitHub
-          Value: https://github.com/aws-samples/ec2-lamp-server
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
   securityGroupForCloudFrontHTTPS:
     Type: AWS::EC2::SecurityGroup
@@ -592,18 +607,18 @@ Resources:
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: HTTPS (CloudFront origin IP)
-          IpProtocol: "tcp"
+          IpProtocol: tcp
           FromPort: 443
           ToPort: 443
           SourcePrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       SecurityGroupEgress:
         - Description: Ping (CloudFront origin IP)
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
           DestinationPrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       Tags:
         - Key: StackName
           Value: !Sub ${AWS::StackName}
@@ -612,7 +627,7 @@ Resources:
         - Key: Name
           Value: !Sub "[${AWS::StackName}] - ${ec2Name} CloudFront HTTPS"
         - Key: GitHub
-          Value: https://github.com/aws-samples/ec2-lamp-server
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
   ec2Instance:
     Type: AWS::EC2::Instance

@@ -48,6 +48,7 @@ Metadata:
         Parameters:
           - ingressIPv4
           - ingressIPv6
+          - allowRDPport
           - allowWebServerPorts
       - Label:
           default: EBS volume
@@ -134,14 +135,21 @@ Parameters:
     AllowedPattern: ".+"
     ConstraintDescription: Specify valid IPv6 prefix
     Default: ::/0
+  allowRDPport:
+    Type: String
+    Description: Allow remote desktop inbound
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
   allowWebServerPorts:
     Type: String
     Description: Allow HTTP and/or HTTPS inbound
     AllowedValues:
       - "No"
-      - "HTTP-and-HTTPS"
-      - "HTTP"
-      - "HTTPS"
+      - HTTP-and-HTTPS
+      - HTTP
+      - HTTPS
     Default: "No"
 
   volumeSize:
@@ -154,22 +162,22 @@ Parameters:
     Type: String
     Description: EBS volume type
     AllowedValues:
-      - "gp3"
-      - "gp2"
-    Default: "gp3"
+      - gp3
+      - gp2
+    Default: gp3
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   createSgHTTP:
     !Or [
-      !Equals [!Ref allowWebServerPorts, "HTTP"],
-      !Equals [!Ref allowWebServerPorts, "HTTP-and-HTTPS"],
+      !Equals [!Ref allowWebServerPorts, HTTP],
+      !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
     ]
   createSgHTTPS:
     !Or [
-      !Equals [!Ref allowWebServerPorts, "HTTPS"],
-      !Equals [!Ref allowWebServerPorts, "HTTP-and-HTTPS"],
+      !Equals [!Ref allowWebServerPorts, HTTPS],
+      !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
     ]
   hasCFprefix:
     !Not [
@@ -177,7 +185,7 @@ Conditions:
         !FindInMap [
           CFprefixMap,
           !Ref AWS::Region,
-          "PrefixList",
+          PrefixList,
           DefaultValue: pl-none,
         ],
         pl-none,
@@ -193,6 +201,7 @@ Conditions:
       !And [!Condition hasCFprefix, !Condition displayPublicIP],
       !Condition createSgHTTPS,
     ]
+  createSgRDP: !Equals [!Ref allowRDPport, "Yes"]
 
 Mappings:
   CFprefixMap: # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
@@ -354,29 +363,29 @@ Resources:
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: NICE DCV (IPv4)
-          IpProtocol: "tcp"
+          IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV (IPv6)
-          IpProtocol: "tcp"
+          IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
         - Description: NICE DCV QUIC (IPv4)
-          IpProtocol: "udp"
+          IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
         - Description: NICE DCV QUIC (IPv6)
-          IpProtocol: "udp"
+          IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
         - !If
           - createSgHTTP
           - Description: HTTP (IPv4)
-            IpProtocol: "tcp"
+            IpProtocol: tcp
             FromPort: 80
             ToPort: 80
             CidrIp: 0.0.0.0/0
@@ -384,7 +393,7 @@ Resources:
         - !If
           - createSgHTTP
           - Description: HTTP (IPv6)
-            IpProtocol: "tcp"
+            IpProtocol: tcp
             FromPort: 80
             ToPort: 80
             CidrIpv6: ::/0
@@ -392,7 +401,7 @@ Resources:
         - !If
           - createSgHTTPS
           - Description: HTTPS (IPv4)
-            IpProtocol: "tcp"
+            IpProtocol: tcp
             FromPort: 443
             ToPort: 443
             CidrIp: 0.0.0.0/0
@@ -400,10 +409,26 @@ Resources:
         - !If
           - createSgHTTPS
           - Description: HTTPS (IPv6)
-            IpProtocol: "tcp"
+            IpProtocol: tcp
             FromPort: 443
             ToPort: 443
             CidrIpv6: ::/0
+          - !Ref AWS::NoValue
+        - !If
+          - createSgRDP
+          - Description: RDP (IPv4)
+            IpProtocol: tcp
+            FromPort: 3389
+            ToPort: 3389
+            CidrIp: !Ref ingressIPv4
+          - !Ref AWS::NoValue
+        - !If
+          - createSgRDP
+          - Description: RDP (IPv6)
+            IpProtocol: tcp
+            FromPort: 3389
+            ToPort: 3389
+            CidrIpv6: !Ref ingressIPv6
           - !Ref AWS::NoValue
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
@@ -430,18 +455,18 @@ Resources:
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: HTTP (CloudFront origin IP)
-          IpProtocol: "tcp"
+          IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           SourcePrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       SecurityGroupEgress:
         - Description: Ping (CloudFront origin IP)
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
           DestinationPrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       Tags:
         - Key: StackName
           Value: !Sub ${AWS::StackName}
@@ -450,7 +475,7 @@ Resources:
         - Key: Name
           Value: !Sub "[${AWS::StackName}] - ${ec2Name} CloudFront HTTP"
         - Key: GitHub
-          Value: https://github.com/aws-samples/ec2-lamp-server
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
   securityGroupForCloudFrontHTTPS:
     Type: AWS::EC2::SecurityGroup
@@ -460,18 +485,18 @@ Resources:
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: HTTPS (CloudFront origin IP)
-          IpProtocol: "tcp"
+          IpProtocol: tcp
           FromPort: 443
           ToPort: 443
           SourcePrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       SecurityGroupEgress:
         - Description: Ping (CloudFront origin IP)
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
           DestinationPrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, "PrefixList"]
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       Tags:
         - Key: StackName
           Value: !Sub ${AWS::StackName}
@@ -480,7 +505,7 @@ Resources:
         - Key: Name
           Value: !Sub "[${AWS::StackName}] - ${ec2Name} CloudFront HTTPS"
         - Key: GitHub
-          Value: https://github.com/aws-samples/ec2-lamp-server
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
   ec2Instance:
     Type: AWS::EC2::Instance
@@ -697,7 +722,7 @@ Resources:
                 )
           commands: # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             restart-computer:
-              command: "c:\\windows\\temp\\install-gpu-driver.cmd > c:\\windows\\temp\\gpu-install.log"
+              command: "c:\\windows\\temp\\install-gpu-driver.cmd >> c:\\windows\\temp\\gpu-install.log"
               ignoreErrors: true
               waitAfterCompletion: forever
     Properties:
