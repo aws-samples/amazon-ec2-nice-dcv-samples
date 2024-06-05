@@ -147,22 +147,38 @@ Note that due to different combinations of drivers, OSs and instance types, GPU 
 
 #NVIDIA GRID and NVIDIA gaming drivers are for AWS customers only. You are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html). Helper scripts (`install-<DRIVER_TYPE>-driver`) in */home/{user name}* folder can be used to install or update the GPU drivers. 
 
-#### NVIDIA CUDA Toolkit and cuDNN installation
-[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) and [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) can subsequently be installed in EC2 instance based on selected `sessionType` option: 
+#### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
+[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit), [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) can subsequently be installed in EC2 instance based on selected `sessionType` option: 
 
 - `*-Ubuntu_repo_Driver`
     - CUDA: `sudo apt install -y nvidia-cuda-toolkit`
     - cuDNN: `sudo apt install -y nvidia-cudnn`
+    - Container Toolkit: refer to [https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
 - `*-NVIDIA_repo_Driver`
-    - CUDA: `sudo <packmgr_cli> install -y cuda-toolkit` to install latest version (where `<packmgr_cli>` is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively). Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for installation options
-    - cuDNN: `sudo <packmgr_cli> install -y cudnn` to install latest version (where `<packmgr_cli>` is the OS package manager command-line tool, e.g.`apt` or `yum`/`dnf` for Ubuntu and other Linux OSs respectively). Refer to [cuDNN documentation site](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) for installation options
+
+   `<packmgr_cli>` below is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively.
+
+
+    - CUDA: `sudo <packmgr_cli> install -y cuda-toolkit`
+      
+      Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for installation options
+    - cuDNN: `sudo <packmgr_cli> install -y cudnn`
+    
+      Refer to [cuDNN documentation site](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) for installation options
+    - Container Toolkit: `sudo <packmgr_cli> install -y nvidia-container-toolkit`
+    
+      Refer to [NVIDIA Container Toolkit documentation site](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#) for installation details
+
+
+
 
 - `*-NVIDIA_runfile_Driver`, `*-NVIDIA_GRID_Driver` or `*-NVIDIA_Gaming_Driver`
-    - CUDA: install from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
-    - cuDNN: install from [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) 
+    - CUDA: refer to [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
+    - cuDNN: refer to [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) 
+    - Container Toolkit: refer to [https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
-Refer to [CUDA](https://docs.nvidia.com/cuda/) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/) documentation sites for more details. 
+Refer to [CUDA](https://docs.nvidia.com/cuda/), [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) documentation sites for more details. 
 
 
 ## About EC2
