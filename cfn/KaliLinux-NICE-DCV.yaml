@@ -359,7 +359,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub "arn:${AWS::Partition}:s3:::dcv-license.${AWS::Region}/*"
+                Resource: !Sub "arn:*:s3:::dcv-license.${AWS::Region}/*"
         - PolicyName: gpuDrivers
           PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
             Version: "2012-10-17"
