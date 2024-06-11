@@ -225,3 +225,8 @@ After `config.json` file is created, [start CloudWatch agent](https://docs.aws.a
 
 Refer to [How do I install and configure the unified CloudWatch agent to push metrics and logs from my EC2 instance to CloudWatch?](https://repost.aws/knowledge-center/cloudwatch-push-metrics-unified-agent) for more details.
 
+
+
+## Clean Up
+
+The created resources can be removed by [deleting the CloudFormation stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html). Go to [CloudFormation console](https://console.aws.amazon.com/cloudformation/), choose the stack you created and choose *Delete* 
