@@ -150,7 +150,7 @@ On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accel
 #NVIDIA GRID and NVIDIA gaming drivers are for AWS customers only. You are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html). 
 
 #### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
-[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit), [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) can subsequently be installed in EC2 instance based on selected `sessionType` option: 
+[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit), [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) may subsequently be installed in supported** EC2 instances based on selected `sessionType` option: 
 
 - `*-Ubuntu_repo_Driver`
     - CUDA: `sudo apt install -y nvidia-cuda-toolkit`
@@ -173,14 +173,17 @@ On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accel
       Refer to [NVIDIA Container Toolkit documentation site](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#) for installation details
 
 
-
-
 - `*-NVIDIA_runfile_Driver`, `*-NVIDIA_GRID_Driver` or `*-NVIDIA_Gaming_Driver`
     - CUDA: refer to [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)
     - cuDNN: refer to [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads) 
     - Container Toolkit: refer to [https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
-Refer to [CUDA](https://docs.nvidia.com/cuda/), [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) documentation sites for more details. 
+
+**Before installing, refer to NVIDIA site for supported CPU architecture and OS:
+- [CUDA](https://docs.nvidia.com/cuda/): [System Requirements](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#system-requirements)
+- [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/) : [CPU Architecture and OS Requirements](https://docs.nvidia.com/deeplearning/cudnn/latest/reference/support-matrix.html#cpu-architecture-and-os-requirements)
+- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html): [Supported Platforms](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/supported-platforms.html)
+
 
 
 ## About EC2
