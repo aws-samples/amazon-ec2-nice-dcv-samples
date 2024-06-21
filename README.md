@@ -19,7 +19,7 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html)
 - [Audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html)
 - [Printing](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html)
-- [Webcan redirection](https://docs.aws.amazon.com/dcv/latest/userguide/using-webcam.html) (Windows NICE DCV server)
+- [Webcam redirection](https://docs.aws.amazon.com/dcv/latest/userguide/using-webcam.html) (Windows NICE DCV server)
 - [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html) (Windows client)
 - Virtual or console [session](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) (Linux)
 - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) GPU driver installation (optional: Windows and some Linux distros)
