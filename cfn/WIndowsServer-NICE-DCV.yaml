@@ -629,6 +629,8 @@ Resources:
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
                   ) || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --no-sign-request
+                  ) || (
+                    curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-17.2/552.55_grid_win10_win11_server2022_dch_64bit_international_aws_swl.exe
                   )
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
                   forfiles /M *.exe /C "cmd /c 7z x @file"
@@ -640,6 +642,8 @@ Resources:
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
                   ) || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --no-sign-request
+                  ) || (
+                    curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/windows/551.61_Cloud_Gaming_win10_win11_server2019_server2022_dch_64bit_international.exe
                   )
                   reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
@@ -664,6 +668,8 @@ Resources:
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --region us-east-1
                   ) || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --no-sign-request
+                  ) || (
+                    curl -s -L -O https://ec2-amd-windows-drivers.s3.amazonaws.com/AMD_GPU_WINDOWS_2K22_DRIVER-23.10.02.02-230926a-397145C-Retail_End_User.zip
                   )
                   @echo ** AMD_GPU_WINDOWS_2K22_DRIVER*.ZIP?
                   reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 202">nul && (
@@ -678,7 +684,7 @@ Resources:
                     cd *19*\Packages\Drivers\Display\*INF
                   ) || (
                     echo Not Windows 201*
-                  )                  
+                  )
                   pnputil /add-driver *.inf /install /subdirs
                   cd \windows\temp\driver\Packages\Drivers\Audio\HDMI\W*\
                   pnputil /add-driver *.inf /install /subdirs
