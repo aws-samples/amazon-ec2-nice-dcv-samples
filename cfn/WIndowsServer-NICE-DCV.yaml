@@ -65,7 +65,7 @@ Parameters:
   ec2Name:
     Type: String
     Description: EC2 instance name
-    Default: Windows Server-NICE-DCV
+    Default: Windows Server
   instanceType:
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Type: String

@@ -79,7 +79,7 @@ Parameters:
   ec2Name:
     Type: String
     Description: EC2 instance name
-    Default: AlmaLinux OS-NICE-DCV
+    Default: AlmaLinux OS
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )
@@ -111,7 +111,7 @@ Parameters:
     Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 535.161.08
+    Default: 535.183.01
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
@@ -205,11 +205,11 @@ Parameters:
     Default: /aws/service/marketplace/prod-fai27pconxer6/latest
 
 Conditions:
-  useElasticIP: !Equals [!Ref assignStaticIP, Yes]
+  useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   useAlmaLinux8x86: !Equals [!Ref osVersion, "AlmaLinux OS 8 (x86_64)"]
   useAlmaLinux8arm64: !Equals [!Ref osVersion, "AlmaLinux OS 8 (arm64)"]
   useAlmaLinux9x86: !Equals [!Ref osVersion, "AlmaLinux OS 9 (x86_64)"]
-  displayPublicIP: !Equals [!Ref displayPublicIP, Yes]
+  displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   hasEIC:
     !Not [
       !Equals [
@@ -1101,6 +1101,9 @@ Resources:
                 if [ $? -eq 1 ]; then
                   aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
                 fi
+                if [ $? -eq 1 ]; then
+                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/latest/NVIDIA-Linux-x86_64-550.90.07-grid-aws.run
+                fi
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -1136,6 +1139,10 @@ Resources:
                 if [ $? -eq 1 ]; then
                   aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
                 fi
+                if [ $? -eq 1 ]; then
+                  curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/550.73-Apr2024-Cloud_Gaming-Linux-Guest-Drivers.zip
+                fi
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -1187,6 +1194,8 @@ Resources:
                 #dnf install -q -y cuda-toolkit
                 # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
                 #dnf install -q -y cudnn
+                # Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installation
+                #dnf install -q -y nvidia-container-toolkit
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -1304,7 +1313,7 @@ Resources:
                     Driver         "mouse"
                     Option         "Protocol" "auto"
                     Option         "Device" "/dev/psaux"
-                    Option         "Emulate3Buttons" No
+                    Option         "Emulate3Buttons" "no"
                     Option         "ZAxisMapping" "4 5"
                 EndSection
                 Section "InputDevice"
@@ -1430,6 +1439,7 @@ Resources:
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           dnf groupinstall -q -y 'Server with GUI'
           dnf groupinstall -q -y GNOME
+          dnf install -q -y gnome-terminal nautilus
           # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           if (cat /etc/os-release | grep -q 8.); then
             dnf install -q -y pulseaudio pulseaudio-utils
@@ -1532,6 +1542,7 @@ Resources:
           # dnf-automatic
           dnf install -q -y dnf-automatic
           sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
+          sed -i 's/emit_via = stdio/emit_via = motd/g' /etc/dnf/automatic.conf
           systemctl enable dnf-automatic.timer
 
           # USB and GPU driver DKMS

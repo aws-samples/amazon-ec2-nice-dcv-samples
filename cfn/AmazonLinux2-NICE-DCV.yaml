@@ -70,7 +70,7 @@ Parameters:
   ec2Name:
     Type: String
     Description: EC2 instance name
-    Default: Amazon Linux 2-NICE-DCV
+    Default: Amazon Linux 2
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
@@ -101,7 +101,7 @@ Parameters:
     Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 535.161.08
+    Default: 535.183.01
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
@@ -150,7 +150,7 @@ Parameters:
     Type: String
     Description: Allow SSH inbound
     AllowedValues:
-      - "Yes"      
+      - "Yes"
       - "No"
     Default: "Yes"
   allowWebServerPorts:
@@ -1060,6 +1060,9 @@ Resources:
                 if [ $? -eq 1 ]; then
                   aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
                 fi
+                if [ $? -eq 1 ]; then
+                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/latest/NVIDIA-Linux-x86_64-550.90.07-grid-aws.run
+                fi
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -1098,6 +1101,10 @@ Resources:
                 if [ $? -eq 1 ]; then
                   aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
                 fi
+                if [ $? -eq 1 ]; then
+                  curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/550.73-Apr2024-Cloud_Gaming-Linux-Guest-Drivers.zip
+                fi
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -1154,6 +1161,8 @@ Resources:
                 #yum install -q -y cuda-toolkit
                 # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
                 #yum install -q -y cudnn
+                # Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installation
+                #yum install -q -y nvidia-container-toolkit
 
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
                 cd /usr/src/nvidia-*
