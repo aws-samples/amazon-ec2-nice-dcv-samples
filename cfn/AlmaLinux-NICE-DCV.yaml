@@ -1147,8 +1147,8 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
-                chmod +x nvidia-drivers/*/NVIDIA-Linux-x86_64*.run
-                cd nvidia-drivers/*/
+                chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
+                cd nvidia-drivers/
                 ./NVIDIA-Linux-x86_64*.run -s
 
                 cat << EOF | tee -a /etc/nvidia/gridd.conf

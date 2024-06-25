@@ -149,7 +149,7 @@ Parameters:
     Type: String
     Description: Allow SSH inbound
     AllowedValues:
-      - "Yes"      
+      - "Yes"
       - "No"
     Default: "Yes"
   allowWebServerPorts:
