@@ -1032,7 +1032,7 @@ Resources:
                   aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
                 fi
                 if [ $? -eq 1 ]; then
-                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/latest/NVIDIA-Linux-x86_64-550.90.07-grid-aws.run
+                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-17.2/NVIDIA-Linux-x86_64-550.90.07-grid-aws.run
                 fi
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
