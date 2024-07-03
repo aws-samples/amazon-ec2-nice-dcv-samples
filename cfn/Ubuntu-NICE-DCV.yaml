@@ -272,6 +272,8 @@ Mappings:
       IpPrefix: 16.50.248.80/29
     ca-central-1:
       IpPrefix: 35.183.92.176/29
+    ca-west-1:
+      IpPrefix: 40.176.213.168/29
     cn-north-1:
       IpPrefix: 43.196.20.40/29
     cn-northwest-1:
