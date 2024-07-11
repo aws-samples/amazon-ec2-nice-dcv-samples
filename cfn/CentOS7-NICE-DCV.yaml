@@ -1010,6 +1010,10 @@ Resources:
           sysctl -w net.ipv6.conf.all.disable_ipv6=1
           sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
+          # Switch to CentOS Vault
+          sed -i "s/^mirrorlist=/#mirrorlist=/g" /etc/yum.repos.d/CentOS*.repo
+          sed -i "s/^#baseurl=http:\/\/mirror.centos.org\/centos\/\$releasever/baseurl=https:\/\/vault.centos.org\/7.9.2009/g" /etc/yum.repos.d/CentOS*.repo
+
           yum clean all
           yum install -q -y deltarpm wget tmux unzip tar curl sed
 
