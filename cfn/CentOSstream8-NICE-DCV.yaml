@@ -56,7 +56,7 @@ Metadata:
         Parameters:
           - volumeSize
           - volumeType
-
+##  /aws/service/marketplace/prod-ojl4u755hei5k/cs8-20230101
 Parameters:
   imageId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
@@ -1012,6 +1012,10 @@ Resources:
           # disable IPv6 during setup
           sysctl -w net.ipv6.conf.all.disable_ipv6=1
           sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+          # Switch to CentOS Vault
+          sed -i "s/^mirrorlist=/#mirrorlist=/g" /etc/yum.repos.d/CentOS-Stream*.repo
+          sed -i "s/^#baseurl=http:\/\/mirror.centos.org\/\$contentdir\/\$stream/baseurl=https:\/\/vault.centos.org\/8-stream/g" /etc/yum.repos.d/CentOS*.repo
 
           dnf clean all
           dnf install -q -y wget tmux unzip tar curl sed
