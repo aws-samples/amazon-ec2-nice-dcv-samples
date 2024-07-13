@@ -23,9 +23,9 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: AMI ID. Subscribe before launching ( https://aws.amazon.com/marketplace/pp/prodview-urkpdamxhet6q )
+          default: CentOS Stream 8 version. Subscribe before launching
         Parameters:
-          - imageId
+          - osVersion
       - Label:
           default: EC2
         Parameters:
@@ -56,13 +56,20 @@ Metadata:
         Parameters:
           - volumeSize
           - volumeType
-##  /aws/service/marketplace/prod-ojl4u755hei5k/cs8-20230101
-Parameters:
-  imageId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: CentOS Stream 8 (x86_64) AMI ID
-    Default: /aws/service/marketplace/prod-ri6pvkyyeeydg/latest
+      - Label:
+          default: AMI ID
+        Parameters:
+          - centosStream8arm64
+          - centosStream8x86
 
+Parameters:
+  osVersion:
+    Type: String
+    Description: Version and processor architecture
+    AllowedValues:
+      - CentOS Stream 8 (arm64)
+      - CentOS Stream 8 (x86_64)
+    Default: CentOS Stream 8 (arm64)
   ec2Name:
     Type: String
     Description: EC2 instance name
@@ -77,7 +84,7 @@ Parameters:
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     AllowedPattern: "^[a-z\\-\\d\\.]+$"
     ConstraintDescription: Specify valid EC2 instance type
-    Default: t3.medium
+    Default: t4g.medium
 
   sessionType:
     Type: String
@@ -161,8 +168,18 @@ Parameters:
       - gp2
     Default: gp3
 
+  centosStream8arm64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: CentOS Stream 8 (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-woh2uawnbd6y6
+    Default: /aws/service/marketplace/prod-ojl4u755hei5k/latest
+  centosStream8x86:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: CentOS Stream 8 (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-36nhetkhe3fmk
+    Default: /aws/service/marketplace/prod-5eikvoqzz5ed6/latest
+
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
+  useCentosStream8x86: !Equals [!Ref osVersion, "CentOS Stream 8 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   hasEIC:
     !Not [
@@ -629,11 +646,11 @@ Resources:
             - 01_console
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
-            "/home/centos/update-dcv":
+            "/home/cloud-user/update-dcv":
               content: |
                 #!/bin/bash
                 cd /tmp
-                sudo dcv close-session centos
+                sudo dcv close-session cloud-user
                 sudo dcv close-session console
                 rm -f nice-dcv-el8-x86_64.tgz
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
@@ -645,9 +662,9 @@ Resources:
                 sudo dnf install -y ./nice-dcv-gltest-*.rpm
                 sudo systemctl restart dcvserver
               mode: "000755"
-              owner: "centos"
-              group: "centos"
-            "/home/centos/update-awscli":
+              owner: "cloud-user"
+              group: "cloud-user"
+            "/home/cloud-user/update-awscli":
               content: |
                 #!/bin/bash
                 cd /tmp
@@ -658,9 +675,9 @@ Resources:
                 sudo ./aws/install --update -b /usr/bin
                 /usr/bin/aws --version
               mode: "000755"
-              owner: "centos"
-              group: "centos"
-            "/home/centos/update-mountpoint-s3":
+              owner: "cloud-user"
+              group: "cloud-user"
+            "/home/cloud-user/update-mountpoint-s3":
               content: |
                 #!/bin/bash
                 cd /tmp
@@ -668,8 +685,8 @@ Resources:
                 wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
                 sudo dnf install -y ./mount-s3.rpm
               mode: "000755"
-              owner: "centos"
-              group: "centos"
+              owner: "cloud-user"
+              group: "cloud-user"
             "/etc/systemd/system/mount-s3-helper.service":
               content: |
                 # https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md#automatically-mounting-an-s3-bucket-at-boot
@@ -694,8 +711,8 @@ Resources:
                 #!/bin/bash
                 S3_BUCKET_NAME=DOC-EXAMPLE-BUCKET
                 MOUNT_FOLDER=/mnt/s3-bucket-mount
-                USER=centos
-                GROUP=centos
+                USER=cloud-user
+                GROUP=cloud-user
 
                 USERID=$(cat /etc/passwd | grep ^$USER: | cut -d":" -f 3)
                 GROUPID=$(cat /etc/group | grep ^$GROUP: | cut -d":" -f 3)
@@ -770,7 +787,7 @@ Resources:
             "/opt/dcv-virtual-session.sh":
               content: |
                 #!/bin/bash
-                dcvUsers=( "centos" )
+                dcvUsers=( "cloud-user" )
                 while true;
                 do
                   for dcvUser in "${dcvUsers[@]}"
@@ -840,7 +857,7 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
-            "/home/centos/download-NVIDIA-GRID-driver":
+            "/home/cloud-user/download-NVIDIA-GRID-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -867,9 +884,9 @@ Resources:
                 ls
                 pwd
               mode: "000755"
-              owner: "centos"
-              group: "centos"
-            "/home/centos/download-NVIDIA-Gaming-driver":
+              owner: "cloud-user"
+              group: "cloud-user"
+            "/home/cloud-user/download-NVIDIA-Gaming-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -897,9 +914,9 @@ Resources:
                 ls
                 pwd
               mode: "000755"
-              owner: "centos"
-              group: "centos"
-            "/home/centos/download-AMD-driver":
+              owner: "cloud-user"
+              group: "cloud-user"
+            "/home/cloud-user/download-AMD-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -930,8 +947,8 @@ Resources:
                 sudo ./amdgpu-pro-install --opencl=pal,legacy
                 pwd
               mode: "000755"
-              owner: "centos"
-              group: "centos"
+              owner: "cloud-user"
+              group: "cloud-user"
         01_console:
           files:
             "/etc/X11/xorg.conf": # Modeline generator at http://xtiming.sourceforge.net/
@@ -979,7 +996,12 @@ Resources:
               owner: "root"
               group: "root"
     Properties:
-      ImageId: !Ref imageId
+      ImageId:
+        !If [
+          useCentosStream8x86,
+          !Ref centosStream8x86,
+          !Ref centosStream8arm64,
+        ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair
@@ -1021,12 +1043,22 @@ Resources:
           dnf install -q -y wget tmux unzip tar curl sed
 
           # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
-          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
-          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
-          dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
+          if (arch | grep -q x86); then
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect.rhel8.rpm
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
+            dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
+          else
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_arm64/ec2-instance-connect.rhel8.rpm
+            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
+            dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
+          fi
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
-          dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
+          if (arch | grep -q x86); then
+            dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
+          else
+            dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_arm64/amazon-ssm-agent.rpm
+          fi
           systemctl enable --now amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
@@ -1043,7 +1075,7 @@ Resources:
 
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           dnf groupinstall -q -y 'Server with GUI'
-          dng groupinstall -q -y GNOME
+          dnf groupinstall -q -y GNOME
           # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           dnf install -q -y pulseaudio pulseaudio-utils
           dnf install -q -y gnome-tweaks
@@ -1054,12 +1086,19 @@ Resources:
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
-          tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+          if (arch | grep -q x86); then
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+            tar -xzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+          else
+            curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
+            tar -xzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
+          fi          
           dnf install -q -y ./nice-dcv-server-*.rpm
           dnf install -q -y ./nice-dcv-web-viewer-*.rpm
           dnf install -q -y ./nice-xdcv-*.rpm
-          dnf install -q -y ./nice-dcv-gltest-*.rpm
+          if (arch | grep -q x86); then
+            dnf install -q -y ./nice-dcv-gltest-*.rpm
+          fi
 
           # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
           dnf install -q -y cups
@@ -1093,7 +1132,7 @@ Resources:
           curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
           unzip -q -o awscliv2.zip
           ./aws/install -b /usr/bin
-          echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/centos/.bashrc
+          echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/cloud-user/.bashrc
 
           # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
           # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
@@ -1109,7 +1148,7 @@ Resources:
           # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
           sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
           # Console session support
-          sed -i "/^\[session-management\/automatic-console-session/a owner=\"centos\"\nstorage-root=\"\/home\/centos\"" /etc/dcv/dcv.conf
+          sed -i "/^\[session-management\/automatic-console-session/a owner=\"cloud-user\"\nstorage-root=\"\/home\/cloud-user\"" /etc/dcv/dcv.conf
 
           # Update OS
           dnf update -q -y
@@ -1125,7 +1164,6 @@ Resources:
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
-
 
           # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
           if (arch | grep -q x86); then
@@ -1183,14 +1221,14 @@ Outputs:
   EC2instanceConnect:
     Condition: createSgEIC
     Description: EC2 Instance Connect
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=centos&sshPort=22#/"
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=cloud-user&sshPort=22#/"
 
   SSMsessionManager:
-    Description: SSM Session Manager ("sudo passwd centos" to change password)
+    Description: SSM Session Manager ("sudo passwd cloud-user" to change password)
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
-    Description: NICE DCV web browser client (login as centos)
+    Description: NICE DCV web browser client (login as cloud-user)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:

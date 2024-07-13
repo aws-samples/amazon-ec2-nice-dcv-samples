@@ -629,24 +629,6 @@ Resources:
             - 01_console
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
-            "/home/centos/update-dcv":
-              content: |
-                #!/bin/bash
-                cd /tmp
-                sudo dcv close-session centos
-                sudo dcv close-session console
-                rm -f nice-dcv-el7-x86_64.tgz
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
-                tar -xvzf nice-dcv-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
-                sudo systemctl stop dcvserver
-                sudo yum install -y ./nice-dcv-server-*.rpm
-                sudo yum install -y ./nice-dcv-web-viewer-*.rpm
-                sudo yum install -y ./nice-xdcv-*.rpm
-                sudo yum install -y ./nice-dcv-gltest-*.rpm
-                sudo systemctl restart dcvserver
-              mode: "000755"
-              owner: "centos"
-              group: "centos"
             "/home/centos/update-awscli":
               content: |
                 #!/bin/bash
@@ -1075,10 +1057,11 @@ Resources:
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
-          tar -xvzf nice-dcv-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
+          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2023.1/Servers/nice-dcv-2023.1-16388-el7-x86_64.tgz
+          tar -xvzf nice-dcv-2023.1-16388-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
           yum install -q -y ./nice-dcv-server-*.rpm
           yum install -q -y ./nice-dcv-web-viewer-*.rpm
+          usermod -aG video dcv
           yum install -q -y ./nice-xdcv-*.rpm
           yum install -q -y ./nice-dcv-gltest-*.rpm
 
@@ -1146,21 +1129,12 @@ Resources:
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
 
-
           # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
-          if (arch | grep -q x86); then
-            curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/centos/amd64/latest/amazon-cloudwatch-agent.rpm
-          else
-            curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/centos/arm64/latest/amazon-cloudwatch-agent.rpm
-          fi
+          curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/centos/amd64/latest/amazon-cloudwatch-agent.rpm
           yum install -q -y ./amazon-cloudwatch-agent.rpm
 
           # MountPoint-S3: https://github.com/awslabs/mountpoint-s3
-          if (uname -a | grep -q x86); then
-            curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
-          else
-            curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.rpm
-          fi
+          curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
           yum install -q -y ./mount-s3.rpm
 
           # enable back IPv6

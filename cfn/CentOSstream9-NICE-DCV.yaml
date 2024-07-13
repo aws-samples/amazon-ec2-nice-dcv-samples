@@ -1038,7 +1038,7 @@ Resources:
 
           # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
           dnf groupinstall -q -y 'Server with GUI'
-          dng groupinstall -q -y GNOME
+          dnf groupinstall -q -y GNOME
           # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           dnf install -q -y pulseaudio pulseaudio-utils
           dnf install -q -y gnome-tweaks
