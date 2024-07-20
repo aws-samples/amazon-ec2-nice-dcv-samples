@@ -629,6 +629,24 @@ Resources:
             - 01_console
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
+            "/home/centos/update-dcv":
+              content: |
+                #!/bin/bash
+                cd /tmp
+                sudo dcv close-session ec2-user
+                sudo dcv close-session console
+                rm -f nice-dcv-el7-x86_64.tgz
+                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
+                tar -xvzf nice-dcv-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
+                sudo systemctl stop dcvserver
+                sudo dnf install -y ./nice-dcv-server-*.rpm
+                sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
+                sudo dnf install -y ./nice-xdcv-*.rpm
+                sudo dnf install -y ./nice-dcv-gltest-*.rpm
+                sudo systemctl restart dcvserver
+              mode: "000755"
+              owner: "centos"
+              group: "centos"
             "/home/centos/update-awscli":
               content: |
                 #!/bin/bash
@@ -1057,8 +1075,8 @@ Resources:
 
           # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
           rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2023.1/Servers/nice-dcv-2023.1-16388-el7-x86_64.tgz
-          tar -xvzf nice-dcv-2023.1-16388-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
+          curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
+          tar -xvzf nice-dcv-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
           yum install -q -y ./nice-dcv-server-*.rpm
           yum install -q -y ./nice-dcv-web-viewer-*.rpm
           usermod -aG video dcv

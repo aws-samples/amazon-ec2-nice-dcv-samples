@@ -90,7 +90,7 @@ Parameters:
     Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 538.67
+    Default: 538.78
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port

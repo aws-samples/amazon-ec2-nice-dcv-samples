@@ -89,7 +89,7 @@ Parameters:
     Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 535.183.01
+    Default: 535.183.06
   listenPort:
     Type: Number
     Description: NICE DCV server TCP/UDP port
@@ -647,6 +647,24 @@ Resources:
             - 06_gpu_nvidia_runfile_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
+            "/home/ec2-user/update-dcv":
+              content: |
+                #!/bin/bash
+                cd /tmp
+                sudo dcv close-session ec2-user
+                sudo dcv close-session console
+                rm -f nice-dcv-el7-x86_64.tgz
+                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-x86_64.tgz
+                tar -xvzf nice-dcv-el7-x86_64.tgz && cd nice-dcv-*-el7-x86_64
+                sudo systemctl stop dcvserver
+                sudo dnf install -y ./nice-dcv-server-*.rpm
+                sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
+                sudo dnf install -y ./nice-xdcv-*.rpm
+                sudo dnf install -y ./nice-dcv-gltest-*.rpm
+                sudo systemctl restart dcvserver
+              mode: "000755"
+              owner: "ec2-user"
+              group: "ec2-user"
             "/home/ec2-user/update-awscli":
               content: |
                 #!/bin/bash

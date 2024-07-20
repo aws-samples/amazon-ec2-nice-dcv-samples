@@ -652,9 +652,15 @@ Resources:
                 cd /tmp
                 sudo dcv close-session cloud-user
                 sudo dcv close-session console
-                rm -f nice-dcv-el8-x86_64.tgz
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
-                tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+                if (arch | grep -q x86); then
+                  rm -f nice-dcv-el8-x86_64.tgz
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-x86_64.tgz
+                  tar -xvzf nice-dcv-el8-x86_64.tgz && cd nice-dcv-*-el8-x86_64
+                else
+                  rm -f nice-dcv-el8-aarch64.tgz
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el8-aarch64.tgz
+                  tar -xvzf nice-dcv-el8-aarch64.tgz && cd nice-dcv-*-el8-aarch64
+                fi
                 sudo systemctl stop dcvserver
                 sudo dnf install -y ./nice-dcv-server-*.rpm
                 sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
