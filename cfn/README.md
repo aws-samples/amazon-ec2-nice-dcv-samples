@@ -9,7 +9,7 @@ When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/market
 
 Verify [availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html) of the instance type that you specify. (Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error)) Marketplace AMIs may only support specific instance types, visit the corresponding Marketplace page to view available options.
 
-Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html#on-demand-instance-quotas) value of your desired intance type and request quota increase where necessary.  
+Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html#on-demand-instance-quotas) value of your desired instance type and request quota increase where necessary.  
 
 For templates that offers x86_64 and arm64 options, ensure that the instance type you specify matches your selected processor architecture.
 
