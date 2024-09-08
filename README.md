@@ -36,7 +36,13 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 - Allow inbound port 80 (HTTP) and 443 (HTTPS) traffic for web hosting (optional)
 
 ## Deployment
-Refer to [cfn](cfn) section for instructions.
+Refer to [cfn](cfn) section for CloudFormation deployment instructions.
+
+
+If you are looking for installation scripts, refer to the following articles
+- [How do I install GUI (graphical desktop) on Amazon EC2 instances running RHEL/Rocky Linux 8/9?](https://repost.aws/articles/AR4Nbl3SxTSIW3WpFSUJhzXg/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9)
+- [How do I install GUI (graphical desktop) on Amazon EC2 instances running Ubuntu Linux?](https://repost.aws/articles/ARJtZxRiOURwWI2qSWjl4AaQ/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-ubuntu-linux)
+
 
 ## Security
 
