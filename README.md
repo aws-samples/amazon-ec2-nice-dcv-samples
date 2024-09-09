@@ -39,10 +39,11 @@ The CloudFormation templates provision EC2 instances running NICE DCV server wit
 Refer to [cfn](cfn) section for CloudFormation deployment instructions.
 
 
-If you are looking for installation scripts, refer to the following articles
+If you are looking for NICE DCV installation scripts, refer to:
 - [How do I install GUI (graphical desktop) on Amazon EC2 instances running Amazon Linux 2 (AL2)?](https://repost.aws/articles/ARuqicSphdQ8-GiwZC2-QOXg/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-amazon-linux-2-al2)
 - [How do I install GUI (graphical desktop) on Amazon EC2 instances running RHEL/Rocky Linux 8/9?](https://repost.aws/articles/AR4Nbl3SxTSIW3WpFSUJhzXg/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9)
 - [How do I install GUI (graphical desktop) on Amazon EC2 instances running Ubuntu Linux?](https://repost.aws/articles/ARJtZxRiOURwWI2qSWjl4AaQ/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-ubuntu-linux)
+- [How do I install GUI (graphical desktop) on Amazon EC2 instances running SUSE Linux Enterprise Server 15 (SLES 15)?](https://repost.aws/articles/ARGF6bVA19QC6IVcaUy-69Ag/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-suse-linux-enterprise-server-15-sles-15)
 
 
 ## Security
