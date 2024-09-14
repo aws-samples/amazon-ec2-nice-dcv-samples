@@ -1,9 +1,10 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Windows Server with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
+Description: Windows Server with NICE DCV (
+  https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 
 Metadata:
   License:
-    Description: >
+    Description: |
       Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
       SPDX-License-Identifier: MIT-0
 
@@ -22,13 +23,10 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: AMI ID
-        Parameters:
-          - imageId
-      - Label:
           default: EC2
         Parameters:
           - ec2Name
+          - imageId
           - instanceType
       - Label:
           default: NICE DCV
@@ -55,10 +53,18 @@ Metadata:
         Parameters:
           - volumeSize
           - volumeType
+      - Label:
+          default: Backup
+        Parameters:
+          - enableBackup
+          - scheduleExpression
+          - scheduleExpressionTimezone
+          - deleteAfterDays
 
 Parameters:
   imageId:
-    Description: AMI ID ( aws ssm get-parameters-by-path --path /aws/service/ami-windows-latest --query "Parameters[].Name" )
+    Description: AMI ID ( aws ssm get-parameters-by-path --path
+      /aws/service/ami-windows-latest --query "Parameters[].Name" )
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
 
@@ -69,7 +75,7 @@ Parameters:
   instanceType:
     Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Type: String
-    AllowedPattern: "^[a-z\\-\\d\\.]+$"
+    AllowedPattern: ^[a-z\-\d\.]+$
     ConstraintDescription: Specify valid EC2 instance type
     Default: t3.medium
 
@@ -87,8 +93,10 @@ Parameters:
     Default: NICE-DCV-IDD
   teslaDriverVersion:
     Type: String
-    Description: "[NVIDIA-Tesla] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
-    AllowedPattern: "^[\\d\\.]+$"
+    Description: "[NVIDIA-Tesla] Driver version (
+      https://www.nvidia.com/Download/Find.aspx : Product Type = Data
+      Center/Tesla )"
+    AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
     Default: 538.78
   listenPort:
@@ -100,24 +108,30 @@ Parameters:
 
   vpcID:
     Type: AWS::EC2::VPC::Id
-    Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
-    AllowedPattern: ".+"
+    Description: "VPC with internet connectivity (
+      https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
+    AllowedPattern: .+
     ConstraintDescription: Select a VPC
   subnetID:
     Type: AWS::EC2::Subnet::Id
-    Description: "Subnet with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#subnets: )"
-    AllowedPattern: ".+"
+    Description: "Subnet with internet connectivity (
+      https://console.aws.amazon.com/vpcconsole/home#subnets: )"
+    AllowedPattern: .+
     ConstraintDescription: Select a Subnet
   displayPublicIP:
     Type: String
-    Description: Display EC2 public IP in CloudFormation Outputs (select No if EC2 has no public IP)
+    Description:
+      Display EC2 public IP in CloudFormation Outputs (select No if EC2
+      has no public IP)
     AllowedValues:
       - "Yes"
       - "No"
     Default: "Yes"
   assignStaticIP:
     Type: String
-    Description: Associate static public IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
+    Description: Associate static public IPv4 address (
+      https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
+      )
     AllowedValues:
       - "Yes"
       - "No"
@@ -125,16 +139,20 @@ Parameters:
 
   ingressIPv4:
     Type: String
-    Description: Allowed source prefix (IPv4) ( e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com )
-    AllowedPattern: "^\\d+\\.\\d+\\.\\d+\\.\\d+\\/\\d+$"
+    Description:
+      Allowed source prefix (IPv4) ( e.g. 1.2.3.4/32, get your source IP
+      from https://checkip.amazonaws.com )
+    AllowedPattern: ^\d+\.\d+\.\d+\.\d+\/\d+$
     ConstraintDescription: Specify valid IPv4 prefix
     Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
-    Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
-    AllowedPattern: ".+"
+    Description: Allowed source prefix (IPv6) (
+      https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing
+      )
+    AllowedPattern: .+
     ConstraintDescription: Specify valid IPv6 prefix
-    Default: ::/0
+    Default: "::/0"
   allowRDPport:
     Type: String
     Description: Allow remote desktop inbound
@@ -166,6 +184,379 @@ Parameters:
       - gp2
     Default: gp3
 
+  enableBackup:
+    Type: String
+    Description: Backup EC2 instance
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  scheduleExpression:
+    Type: String
+    Description: CRON expression specifying when AWS Backup initiates a backup job
+    AllowedPattern: .+
+    Default: "cron(0 1 ? * * *)"
+  scheduleExpressionTimezone: # https://nodatime.org/TimeZones?version=2024a&format=json
+    Type: String
+    Description: Timezone to set backup schedule
+    AllowedValues:
+      - Africa/Abidjan
+      - Africa/Algiers
+      - Africa/Bissau
+      - Africa/Cairo
+      - Africa/Casablanca
+      - Africa/Ceuta
+      - Africa/El_Aaiun
+      - Africa/Johannesburg
+      - Africa/Juba
+      - Africa/Khartoum
+      - Africa/Lagos
+      - Africa/Maputo
+      - Africa/Monrovia
+      - Africa/Nairobi
+      - Africa/Ndjamena
+      - Africa/Sao_Tome
+      - Africa/Tripoli
+      - Africa/Tunis
+      - Africa/Windhoek
+      - America/Adak
+      - America/Anchorage
+      - America/Araguaina
+      - America/Argentina/Buenos_Aires
+      - America/Argentina/Catamarca
+      - America/Argentina/Cordoba
+      - America/Argentina/Jujuy
+      - America/Argentina/La_Rioja
+      - America/Argentina/Mendoza
+      - America/Argentina/Rio_Gallegos
+      - America/Argentina/Salta
+      - America/Argentina/San_Juan
+      - America/Argentina/San_Luis
+      - America/Argentina/Tucuman
+      - America/Argentina/Ushuaia
+      - America/Asuncion
+      - America/Bahia
+      - America/Bahia_Banderas
+      - America/Barbados
+      - America/Belem
+      - America/Belize
+      - America/Boa_Vista
+      - America/Bogota
+      - America/Boise
+      - America/Cambridge_Bay
+      - America/Campo_Grande
+      - America/Cancun
+      - America/Caracas
+      - America/Cayenne
+      - America/Chicago
+      - America/Chihuahua
+      - America/Ciudad_Juarez
+      - America/Costa_Rica
+      - America/Cuiaba
+      - America/Danmarkshavn
+      - America/Dawson
+      - America/Dawson_Creek
+      - America/Denver
+      - America/Detroit
+      - America/Edmonton
+      - America/Eirunepe
+      - America/El_Salvador
+      - America/Fort_Nelson
+      - America/Fortaleza
+      - America/Glace_Bay
+      - America/Goose_Bay
+      - America/Grand_Turk
+      - America/Guatemala
+      - America/Guayaquil
+      - America/Guyana
+      - America/Halifax
+      - America/Havana
+      - America/Hermosillo
+      - America/Indiana/Indianapolis
+      - America/Indiana/Knox
+      - America/Indiana/Marengo
+      - America/Indiana/Petersburg
+      - America/Indiana/Tell_City
+      - America/Indiana/Vevay
+      - America/Indiana/Vincennes
+      - America/Indiana/Winamac
+      - America/Inuvik
+      - America/Iqaluit
+      - America/Jamaica
+      - America/Juneau
+      - America/Kentucky/Louisville
+      - America/Kentucky/Monticello
+      - America/La_Paz
+      - America/Lima
+      - America/Los_Angeles
+      - America/Maceio
+      - America/Managua
+      - America/Manaus
+      - America/Martinique
+      - America/Matamoros
+      - America/Mazatlan
+      - America/Menominee
+      - America/Merida
+      - America/Metlakatla
+      - America/Mexico_City
+      - America/Miquelon
+      - America/Moncton
+      - America/Monterrey
+      - America/Montevideo
+      - America/New_York
+      - America/Nome
+      - America/Noronha
+      - America/North_Dakota/Beulah
+      - America/North_Dakota/Center
+      - America/North_Dakota/New_Salem
+      - America/Nuuk
+      - America/Ojinaga
+      - America/Panama
+      - America/Paramaribo
+      - America/Phoenix
+      - America/Port-au-Prince
+      - America/Porto_Velho
+      - America/Puerto_Rico
+      - America/Punta_Arenas
+      - America/Rankin_Inlet
+      - America/Recife
+      - America/Regina
+      - America/Resolute
+      - America/Rio_Branco
+      - America/Santarem
+      - America/Santiago
+      - America/Santo_Domingo
+      - America/Sao_Paulo
+      - America/Scoresbysund
+      - America/Sitka
+      - America/St_Johns
+      - America/Swift_Current
+      - America/Tegucigalpa
+      - America/Thule
+      - America/Tijuana
+      - America/Toronto
+      - America/Vancouver
+      - America/Whitehorse
+      - America/Winnipeg
+      - America/Yakutat
+      - Antarctica/Casey
+      - Antarctica/Davis
+      - Antarctica/Macquarie
+      - Antarctica/Mawson
+      - Antarctica/Palmer
+      - Antarctica/Rothera
+      - Antarctica/Troll
+      - Antarctica/Vostok
+      - Asia/Almaty
+      - Asia/Amman
+      - Asia/Anadyr
+      - Asia/Aqtau
+      - Asia/Aqtobe
+      - Asia/Ashgabat
+      - Asia/Atyrau
+      - Asia/Baghdad
+      - Asia/Baku
+      - Asia/Bangkok
+      - Asia/Barnaul
+      - Asia/Beirut
+      - Asia/Bishkek
+      - Asia/Chita
+      - Asia/Choibalsan
+      - Asia/Colombo
+      - Asia/Damascus
+      - Asia/Dhaka
+      - Asia/Dili
+      - Asia/Dubai
+      - Asia/Dushanbe
+      - Asia/Famagusta
+      - Asia/Gaza
+      - Asia/Hebron
+      - Asia/Ho_Chi_Minh
+      - Asia/Hong_Kong
+      - Asia/Hovd
+      - Asia/Irkutsk
+      - Asia/Jakarta
+      - Asia/Jayapura
+      - Asia/Jerusalem
+      - Asia/Kabul
+      - Asia/Kamchatka
+      - Asia/Karachi
+      - Asia/Kathmandu
+      - Asia/Khandyga
+      - Asia/Kolkata
+      - Asia/Krasnoyarsk
+      - Asia/Kuching
+      - Asia/Macau
+      - Asia/Magadan
+      - Asia/Makassar
+      - Asia/Manila
+      - Asia/Nicosia
+      - Asia/Novokuznetsk
+      - Asia/Novosibirsk
+      - Asia/Omsk
+      - Asia/Oral
+      - Asia/Pontianak
+      - Asia/Pyongyang
+      - Asia/Qatar
+      - Asia/Qostanay
+      - Asia/Qyzylorda
+      - Asia/Riyadh
+      - Asia/Sakhalin
+      - Asia/Samarkand
+      - Asia/Seoul
+      - Asia/Shanghai
+      - Asia/Singapore
+      - Asia/Srednekolymsk
+      - Asia/Taipei
+      - Asia/Tashkent
+      - Asia/Tbilisi
+      - Asia/Tehran
+      - Asia/Thimphu
+      - Asia/Tokyo
+      - Asia/Tomsk
+      - Asia/Ulaanbaatar
+      - Asia/Urumqi
+      - Asia/Ust-Nera
+      - Asia/Vladivostok
+      - Asia/Yakutsk
+      - Asia/Yangon
+      - Asia/Yekaterinburg
+      - Asia/Yerevan
+      - Atlantic/Azores
+      - Atlantic/Bermuda
+      - Atlantic/Canary
+      - Atlantic/Cape_Verde
+      - Atlantic/Faroe
+      - Atlantic/Madeira
+      - Atlantic/South_Georgia
+      - Atlantic/Stanley
+      - Australia/Adelaide
+      - Australia/Brisbane
+      - Australia/Broken_Hill
+      - Australia/Darwin
+      - Australia/Eucla
+      - Australia/Hobart
+      - Australia/Lindeman
+      - Australia/Lord_Howe
+      - Australia/Melbourne
+      - Australia/Perth
+      - Australia/Sydney
+      - CET
+      - CST6CDT
+      - EET
+      - EST
+      - EST5EDT
+      - Etc/GMT
+      - Etc/GMT+1
+      - Etc/GMT+10
+      - Etc/GMT+11
+      - Etc/GMT+12
+      - Etc/GMT+2
+      - Etc/GMT+3
+      - Etc/GMT+4
+      - Etc/GMT+5
+      - Etc/GMT+6
+      - Etc/GMT+7
+      - Etc/GMT+8
+      - Etc/GMT+9
+      - Etc/GMT-1
+      - Etc/GMT-10
+      - Etc/GMT-11
+      - Etc/GMT-12
+      - Etc/GMT-13
+      - Etc/GMT-14
+      - Etc/GMT-2
+      - Etc/GMT-3
+      - Etc/GMT-4
+      - Etc/GMT-5
+      - Etc/GMT-6
+      - Etc/GMT-7
+      - Etc/GMT-8
+      - Etc/GMT-9
+      - Etc/UTC
+      - Europe/Andorra
+      - Europe/Astrakhan
+      - Europe/Athens
+      - Europe/Belgrade
+      - Europe/Berlin
+      - Europe/Brussels
+      - Europe/Bucharest
+      - Europe/Budapest
+      - Europe/Chisinau
+      - Europe/Dublin
+      - Europe/Gibraltar
+      - Europe/Helsinki
+      - Europe/Istanbul
+      - Europe/Kaliningrad
+      - Europe/Kirov
+      - Europe/Kyiv
+      - Europe/Lisbon
+      - Europe/London
+      - Europe/Madrid
+      - Europe/Malta
+      - Europe/Minsk
+      - Europe/Moscow
+      - Europe/Paris
+      - Europe/Prague
+      - Europe/Riga
+      - Europe/Rome
+      - Europe/Samara
+      - Europe/Saratov
+      - Europe/Simferopol
+      - Europe/Sofia
+      - Europe/Tallinn
+      - Europe/Tirane
+      - Europe/Ulyanovsk
+      - Europe/Vienna
+      - Europe/Vilnius
+      - Europe/Volgograd
+      - Europe/Warsaw
+      - Europe/Zurich
+      - HST
+      - Indian/Chagos
+      - Indian/Maldives
+      - Indian/Mauritius
+      - MET
+      - MST
+      - MST7MDT
+      - PST8PDT
+      - Pacific/Apia
+      - Pacific/Auckland
+      - Pacific/Bougainville
+      - Pacific/Chatham
+      - Pacific/Easter
+      - Pacific/Efate
+      - Pacific/Fakaofo
+      - Pacific/Fiji
+      - Pacific/Galapagos
+      - Pacific/Gambier
+      - Pacific/Guadalcanal
+      - Pacific/Guam
+      - Pacific/Honolulu
+      - Pacific/Kanton
+      - Pacific/Kiritimati
+      - Pacific/Kosrae
+      - Pacific/Kwajalein
+      - Pacific/Marquesas
+      - Pacific/Nauru
+      - Pacific/Niue
+      - Pacific/Norfolk
+      - Pacific/Noumea
+      - Pacific/Pago_Pago
+      - Pacific/Palau
+      - Pacific/Pitcairn
+      - Pacific/Port_Moresby
+      - Pacific/Rarotonga
+      - Pacific/Tahiti
+      - Pacific/Tarawa
+      - Pacific/Tongatapu
+      - WET
+    Default: Etc/UTC
+  deleteAfterDays:
+    Type: Number
+    Description: Number of days after creation that a recovery point (backup) is deleted
+    Default: 7
+
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
@@ -179,18 +570,15 @@ Conditions:
       !Equals [!Ref allowWebServerPorts, HTTPS],
       !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
     ]
-  hasCFprefix:
-    !Not [
-      !Equals [
-        !FindInMap [
+  hasCFprefix: !Not
+    - !Equals
+      - !FindInMap [
           CFprefixMap,
           !Ref AWS::Region,
           PrefixList,
           DefaultValue: pl-none,
-        ],
-        pl-none,
-      ],
-    ]
+        ]
+      - pl-none
   createCFsgHTTP:
     !And [
       !And [!Condition hasCFprefix, !Condition displayPublicIP],
@@ -202,9 +590,11 @@ Conditions:
       !Condition createSgHTTPS,
     ]
   createSgRDP: !Equals [!Ref allowRDPport, "Yes"]
+  createBackup: !Equals [!Ref enableBackup, "Yes"]
 
 Mappings:
-  CFprefixMap: # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
+  CFprefixMap:
+    # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
     af-south-1:
       PrefixList: pl-c0aa4fa9
     ap-east-1:
@@ -272,20 +662,24 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: [ec2.amazonaws.com]
-            Action: ["sts:AssumeRole"]
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
       Path: /
       Policies:
         - PolicyName: dcvLicensing
-          PolicyDocument: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
+          PolicyDocument:
+            # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub "arn:*:s3:::dcv-license.${AWS::Region}/*"
+                Resource: !Sub arn:*:s3:::dcv-license.${AWS::Region}/*
         - PolicyName: gpuDrivers
-          PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html
+          PolicyDocument:
+            # https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
@@ -293,16 +687,18 @@ Resources:
                   - s3:Get*
                   - s3:List*
                 Resource:
-                  - !Sub "arn:*:s3:::nvidia-gaming"
-                  - !Sub "arn:*:s3:::nvidia-gaming/*"
-                  - !Sub "arn:*:s3:::ec2-windows-nvidia-drivers"
-                  - !Sub "arn:*:s3:::ec2-windows-nvidia-drivers/*"
-                  - !Sub "arn:*:s3:::ec2-amd-windows-drivers"
-                  - !Sub "arn:*:s3:::ec2-amd-windows-drivers/*"
+                  - !Sub arn:*:s3:::nvidia-gaming
+                  - !Sub arn:*:s3:::nvidia-gaming/*
+                  - !Sub arn:*:s3:::ec2-windows-nvidia-drivers
+                  - !Sub arn:*:s3:::ec2-windows-nvidia-drivers/*
+                  - !Sub arn:*:s3:::ec2-amd-windows-drivers
+                  - !Sub arn:*:s3:::ec2-amd-windows-drivers/*
         - PolicyName: Route53CertbotAccess
-          PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
+          PolicyDocument:
+            # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
             Version: "2012-10-17"
-            Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
+            Statement:
+              # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
               - Effect: Allow
                 Action:
                   - route53:ListHostedZones
@@ -311,17 +707,19 @@ Resources:
               - Effect: Allow
                 Action:
                   - route53:ChangeResourceRecordSets
-                Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
+                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
                 Condition:
                   ForAllValues:StringEquals:
-                    "route53:ChangeResourceRecordSetsRecordTypes": ["TXT"]
+                    route53:ChangeResourceRecordSetsRecordTypes:
+                      - TXT
                   ForAllValues:StringLike:
-                    "route53:ChangeResourceRecordSetsNormalizedRecordNames":
-                      ["_acme-challenge.*"]
+                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
+                      - _acme-challenge.*
         - PolicyName: Route53UpdaterAccess
           PolicyDocument:
             Version: "2012-10-17"
-            Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
+            Statement:
+              # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
               - Effect: Allow
                 Action:
                   - route53:ListHostedZones
@@ -330,22 +728,23 @@ Resources:
               - Effect: Allow
                 Action:
                   - route53:ChangeResourceRecordSets
-                Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
+                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
                 Condition:
                   ForAllValues:StringEquals:
-                    "route53:ChangeResourceRecordSetsRecordTypes": ["A"]
+                    route53:ChangeResourceRecordSetsRecordTypes:
+                      - A
                   ForAllValues:StringLike:
-                    "route53:ChangeResourceRecordSetsNormalizedRecordNames":
-                      ["site.example.com"]
+                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
+                      - site.example.com
       ManagedPolicyArns:
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AWSXRayDaemonWriteAccess"
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AWSXRayDaemonWriteAccess
       Tags:
         - Key: StackName
-          Value: !Sub ${AWS::StackName}
+          Value: !Ref AWS::StackName
         - Key: StackId
-          Value: !Sub ${AWS::StackId}
+          Value: !Ref AWS::StackId
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -396,7 +795,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 80
             ToPort: 80
-            CidrIpv6: ::/0
+            CidrIpv6: "::/0"
           - !Ref AWS::NoValue
         - !If
           - createSgHTTPS
@@ -412,7 +811,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIpv6: ::/0
+            CidrIpv6: "::/0"
           - !Ref AWS::NoValue
         - !If
           - createSgRDP
@@ -439,11 +838,17 @@ Resources:
           CidrIpv6: ::/0
       Tags:
         - Key: StackName
-          Value: !Sub ${AWS::StackName}
+          Value: !Ref AWS::StackName
         - Key: StackId
-          Value: !Sub ${AWS::StackId}
+          Value: !Ref AWS::StackId
         - Key: Name
-          Value: !Sub "[${AWS::StackName}] - ${ec2Name}"
+          Value: !Sub
+            - "${AWS::StackName}-securityGroup-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -469,11 +874,17 @@ Resources:
             !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       Tags:
         - Key: StackName
-          Value: !Sub ${AWS::StackName}
+          Value: !Ref AWS::StackName
         - Key: StackId
-          Value: !Sub ${AWS::StackId}
+          Value: !Ref AWS::StackId
         - Key: Name
-          Value: !Sub "[${AWS::StackName}] - ${ec2Name} CloudFront HTTP"
+          Value: !Sub
+            - "${AWS::StackName}-CloudFrontHTTP-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -499,11 +910,17 @@ Resources:
             !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       Tags:
         - Key: StackName
-          Value: !Sub ${AWS::StackName}
+          Value: !Ref AWS::StackName
         - Key: StackId
-          Value: !Sub ${AWS::StackId}
+          Value: !Ref AWS::StackId
         - Key: Name
-          Value: !Sub "[${AWS::StackName}] - ${ec2Name} CloudFront HTTPS"
+          Value: !Sub
+            - "${AWS::StackName}-CloudFrontHTTPS-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -613,7 +1030,6 @@ Resources:
                 @echo off
                 start /wait c:\windows\temp\install-PSReadLine.cmd
                 start /wait c:\windows\temp\install-DisplaySettings.cmd
-
                 SET DRIVER_TYPE=${driverType}
                 SET "PATH=%PATH%;C:\Program Files\7-zip"
                 cd \windows\temp
@@ -622,7 +1038,7 @@ Resources:
                   @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general
                   powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
                   msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
-                )            
+                )
                 IF %DRIVER_TYPE% EQU NVIDIA-GRID (
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver
                   "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . || (
@@ -705,7 +1121,7 @@ Resources:
             c:\\windows\\temp\\install-DisplaySettings.cmd:
               content: |
                 @echo off
-                reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr "2019 202">nul && ( 
+                reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr "2019 202">nul && (
                   @echo ** https://www.powershellgallery.com/packages/DisplaySettings
                   powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
                   powershell -command "Install-Module -Name DisplaySettings  -Force"
@@ -726,9 +1142,11 @@ Resources:
                 ) || (
                   echo.
                 )
-          commands: # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
+          commands:
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             restart-computer:
-              command: "c:\\windows\\temp\\install-gpu-driver.cmd >> c:\\windows\\temp\\gpu-install.log"
+              command: c:\windows\temp\install-gpu-driver.cmd >>
+                c:\windows\temp\gpu-install.log
               ignoreErrors: true
               waitAfterCompletion: forever
     Properties:
@@ -739,24 +1157,22 @@ Resources:
       Monitoring: true
       SecurityGroupIds:
         - !Ref securityGroup
-        - !If [
-            createCFsgHTTP,
-            !Ref securityGroupForCloudFrontHTTP,
-            !Ref AWS::NoValue,
-          ]
-        - !If [
-            createCFsgHTTPS,
-            !Ref securityGroupForCloudFrontHTTPS,
-            !Ref AWS::NoValue,
-          ]
+        - !If
+          - createCFsgHTTP
+          - !Ref securityGroupForCloudFrontHTTP
+          - !Ref AWS::NoValue
+        - !If
+          - createCFsgHTTPS
+          - !Ref securityGroupForCloudFrontHTTPS
+          - !Ref AWS::NoValue
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
             DeleteOnTermination: true
-      UserData:
-        Fn::Base64: !Sub |
+      UserData: !Base64
+        Fn::Sub: |
           <script>
           @echo off
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets setup
@@ -787,7 +1203,7 @@ Resources:
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
           powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
-          SET DRIVER_TYPE=${driverType}          
+          SET DRIVER_TYPE=${driverType}
           IF %DRIVER_TYPE% EQU NICE-DCV-IDD (
             msiexec.exe /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
           ) ELSE IF %DRIVER_TYPE% EQU NVIDIA-Tesla (
@@ -797,11 +1213,11 @@ Resources:
           )
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-auto
-          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f 
+          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-storage.html
-          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f 
+          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
@@ -819,9 +1235,9 @@ Resources:
         - Key: Name
           Value: !Ref ec2Name
         - Key: StackName
-          Value: !Sub ${AWS::StackName}
+          Value: !Ref AWS::StackName
         - Key: StackId
-          Value: !Sub ${AWS::StackId}
+          Value: !Ref AWS::StackId
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -834,26 +1250,125 @@ Resources:
       InstanceId: !Ref ec2Instance
       Tags:
         - Key: StackName
-          Value: !Sub ${AWS::StackName}
+          Value: !Ref AWS::StackName
         - Key: StackId
-          Value: !Sub ${AWS::StackId}
+          Value: !Ref AWS::StackId
         - Key: Name
-          Value: !Sub "[${AWS::StackName}] - ${ec2Name}"
+          Value: !Sub
+            - "${AWS::StackName}-elasticIP-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  backupPlan:
+    Type: AWS::Backup::BackupPlan
+    Condition: createBackup
+    Properties:
+      BackupPlan:
+        BackupPlanName: !Sub
+          - "${AWS::StackName}-backupPlan-${UID}"
+          - UID:
+              !Select [
+                3,
+                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+              ]
+        BackupPlanRule:
+          - RuleName: !Sub
+              - "${AWS::StackName}-backupRule-${UID}"
+              - UID:
+                  !Select [
+                    3,
+                    !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                  ]
+            TargetBackupVault: !Ref backupVault
+            ScheduleExpression: !Ref scheduleExpression
+            ScheduleExpressionTimezone: !Ref scheduleExpressionTimezone
+            Lifecycle:
+              DeleteAfterDays: !Ref deleteAfterDays
+      BackupPlanTags:
+        {
+          "StackName": !Ref AWS::StackName,
+          "StackId": !Ref AWS::StackId,
+          "GitHub": "https://github.com/aws-samples/amazon-ec2-nice-dcv-samples",
+        }
+
+  backupVault:
+    Type: AWS::Backup::BackupVault
+    Condition: createBackup
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: !Ref AWS::NoValue
+    Properties:
+      BackupVaultName: !Sub
+        - "${AWS::StackName}-backupVault-${UID}"
+        - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+      BackupVaultTags:
+        {
+          "StackName": !Ref AWS::StackName,
+          "StackId": !Ref AWS::StackId,
+          "GitHub": "https://github.com/aws-samples/amazon-ec2-nice-dcv-samples",
+        }
+
+  backupSelection:
+    Type: AWS::Backup::BackupSelection
+    Condition: createBackup
+    Properties:
+      BackupPlanId: !Ref backupPlan
+      BackupSelection:
+        IamRoleArn: !GetAtt backupRestoreRole.Arn
+        Resources:
+          - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
+        SelectionName: !Sub
+          - "${AWS::StackName}-backupSelection-${UID}"
+          - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+
+  backupRestoreRole:
+    Type: AWS::IAM::Role
+    Condition: createBackup
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: backup.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: restore-EC2-instance-profile
+          PolicyDocument:
+            # https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-ec2.html
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: !GetAtt instanceIamRole.Arn
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
 Outputs:
   RDPconnect:
-    Description: RDP (Remote Desktop Protocol) access via Fleet Manager
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/managed-instances/rdp-connect?region=${AWS::Region}&instances=${ec2Instance}"
+    Description: Fleet Manager Remote Desktop
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/systems-manager/managed-instances/rdp-connect?region=${AWS::Region}&instances=${ec2Instance}
 
   EC2console:
     Description: EC2 console
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}
 
   SSMsessionManager:
     Description: SSM Session Manager ("net user administrator MyStr@ngAdminPassw0rd" to change administrator password)
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}
 
   DCVwebConsole:
     Description: NICE DCV web browser client (login as administrator)
