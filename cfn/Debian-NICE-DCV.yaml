@@ -1454,7 +1454,7 @@ Resources:
                 # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
-                sed -i "/^\[session-management\/automatic-console-session/a owner=\"ubuntu\"\nstorage-root=\"\%home%\"" /etc/dcv/dcv.conf
+                sed -i "/^\[session-management\/automatic-console-session/a owner=\"admin\"\nstorage-root=\"\%home%\"" /etc/dcv/dcv.conf
 
                 # USB and GPU driver DKMS
                 apt-get install -q -y dkms
