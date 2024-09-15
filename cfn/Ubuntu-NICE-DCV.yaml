@@ -2003,6 +2003,7 @@ Resources:
           # Disable reporting : https://wiki.ubuntu.com/Apport
           sed -i "s/enabled=1/enable=0/g" /etc/default/apport
           apt-get remove -q -y ubuntu-report whoopsie apport
+          apt-get autoremove -q -y
 
           # 
           systemctl set-default multi-user.target
