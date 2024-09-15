@@ -1079,6 +1079,19 @@ Resources:
               mode: "000755"
               owner: "admin"
               group: "admin"
+            "/home/ubuntu/update-awscli":
+              content: |
+                #!/bin/bash
+                cd /tmp
+                sudo rm -f awscliv2.zip
+                curl https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
+                unzip -q -o awscliv2.zip
+                /usr/bin/aws --version
+                sudo ./aws/install --update -b /usr/bin
+                /usr/bin/aws --version
+              mode: "000755"
+              owner: "admin"
+              group: "admin"
             "/home/admin/update-mountpoint-s3":
               content: |
                 #!/bin/bash
@@ -1332,7 +1345,7 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
-            "/home/ubuntu/download-NVIDIA-GRID-driver":
+            "/home/admin/download-NVIDIA-GRID-driver":
               content: |
                 #!/bin/bash
                 clear
@@ -1360,7 +1373,7 @@ Resources:
               mode: "000755"
               owner: "admin"
               group: "admin"
-            "/home/ubuntu/download-NVIDIA-Gaming-driver":
+            "/home/admin/download-NVIDIA-Gaming-driver":
               content: |
                 #!/bin/bash
                 clear
