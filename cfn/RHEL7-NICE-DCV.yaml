@@ -1406,7 +1406,7 @@ Resources:
 
                 # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 yum install -q -y pulseaudio pulseaudio-utils
-                amazon-linux-extras install -y firefox
+                yum install -q -y firefox
 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
@@ -1456,6 +1456,16 @@ Resources:
 
                 # USB and GPU driver DKMS
                 yum install -q -y dkms
+
+                # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
+                # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
+                if (systemctl list-units | grep -q firewalld)
+                  systemctl stop firewalld
+                  firewall-offline-cmd --add-port ${listenPort}/tcp
+                  firewall-offline-cmd --add-port ${listenPort}/udp
+                  firewall-offline-cmd --add-service http
+                  firewall-offline-cmd --add-service https
+                fi
               mode: "000740"
               owner: "root"
               group: "root"

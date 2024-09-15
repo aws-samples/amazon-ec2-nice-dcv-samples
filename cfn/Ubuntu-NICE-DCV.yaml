@@ -2160,6 +2160,7 @@ Resources:
     Type: AWS::Backup::BackupVault
     Condition: createBackup
     UpdateReplacePolicy: Delete
+    DeletionPolicy: !Ref AWS::NoValue
     Properties:
       BackupVaultName: !Sub
         - "${AWS::StackName}-backupVault-${UID}"

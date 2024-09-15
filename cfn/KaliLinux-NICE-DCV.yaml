@@ -27,7 +27,7 @@ Metadata:
         Parameters:
           - ec2Name
           - ec2KeyPair
-          - osVersion
+          - imageId
           - instanceType
       - Label:
           default: NICE DCV
@@ -1321,7 +1321,6 @@ Resources:
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
 
-
                 export SESSION="${sessionType}"
                 # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
                 case $SESSION in
@@ -1384,8 +1383,6 @@ Resources:
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"kali\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
-
-
 
                 # USB and GPU driver DKMS
                 apt-get install -q -y dkms
@@ -1518,7 +1515,7 @@ Resources:
           curl -s -L -O http://archive.ubuntu.com/ubuntu/pool/main/e/ec2-instance-connect/ec2-instance-connect_1.1.17-0ubuntu1_all.deb
           apt-get install -q -y ./ec2-instance-connect_1.1.17-0ubuntu1_all.deb
 
-          # SM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
+          # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-ubuntu.html
           apt-get install -q -y snapd
           systemctl enable snapd
           systemctl start snapd

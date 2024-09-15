@@ -27,7 +27,7 @@ Metadata:
         Parameters:
           - ec2Name
           - ec2KeyPair
-          - osVersion
+          - imageId
           - instanceType
       - Label:
           default: NICE DCV
@@ -1441,7 +1441,6 @@ Resources:
                   firewall-offline-cmd --add-port ${listenPort}/udp
                   firewall-offline-cmd --add-service http
                   firewall-offline-cmd --add-service https
-                  systemctl disable firewalld
                 fi
               mode: "000740"
               owner: "root"
