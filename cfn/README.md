@@ -13,6 +13,9 @@ Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/inst
 
 For templates that offers x86_64 and arm64 options, ensure that the instance type you specify matches your selected processor architecture.
 
+NVIDIA [GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver), NVIDIA [Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) drivers are for AWS customers only. You are bound by their respective End User License Agreements upon installation of software.
+
+
 ## Deployment via CloudFormation console
 Download `<OS>-NICE-DCV.yaml` CloudFormation file where `<OS>` is the desired operating system, and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Start the [Create Stack wizard](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html#cfn-using-console-initiating-stack-creation) by choosing **Create Stack**. [Select stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html) by selecting **Upload a template file**, **Choose File**, select your `.yaml` file and click **Next**. Enter a **Stack name** and specify parameters values. 
 
@@ -33,16 +36,16 @@ NICE DCV
     - [NICE-DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)
     - [NVIDIA-GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance): for professional visualization applications
     - [NVIDIA-Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance): contain optimizations for gaming
-    - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance): for compute workloads. Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install. As driver operates in [TCC](https://docs.nvidia.com/nsight-visual-studio-edition/reference/index.html#setting-tcc-mode-for-tesla-products) mode, IDD will be installed in addition to Tesla driver.
+    - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance): for compute workloads. Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install. As driver operates in headless [TCC](https://docs.nvidia.com/nsight-visual-studio-edition/reference/index.html#setting-tcc-mode-for-tesla-products) mode, IDD will be installed in addition to Tesla driver.
     - [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
     - `none`: do not install any driver
 
 - `sessionType` (Linux): `virtual` (default) or `console` [session type](#console-and-virtual-sessions). [GPU driver installation](#gpu-driver-installation) option may be available for some Linux OSs
 ([AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml), [Debian](Debian-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [Rocky Linux](RockyLinux-NICE-DCV.yaml), [SLES](SLES-NICE-DCV.yaml), [Ubuntu](Ubuntu-NICE-DCV.yaml)) as follows
  
-    - `console-with-NVIDIA_GRID_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance)#: install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) drivers ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode) 
+    - `console-with-NVIDIA_GRID_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance): install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) drivers ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode) 
 
-    - `console-with-NVIDIA_Gaming_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance)#: install [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers
+    - `console-with-NVIDIA_Gaming_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance): install [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers
 
     - `console-with-Ubuntu_repo_Driver` (Ubuntu only): install NVIDIA [Enterprise Ready Drivers (ERD)](https://ubuntu.com/server/docs/nvidia-drivers-installation) from Ubuntu repository
 
@@ -69,8 +72,8 @@ Networking
 - `assignStaticIP`: associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) to prevent assigned IPv4 address from changing every time EC2 instance is stopped and started. There is a hourly charge when instance is stopped as listed at [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addressesv). Default is `Yes`
 
 Allowed IP prefix and ports
-- `ingressIPv4`: allowed IPv4 source prefix to NICE DCV and SSH(Linux)/RDP(Windows) ports, e.g. `1.2.3.4/32`. Get source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
-- `ingressIPv6`: allowed IPv6 source prefix to NICE DCV and SSH(Linux)/RDP(Windows) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
+- `ingressIPv4`: allowed IPv4 source prefix to NICE DCV, SSH(Linux) and RDP(Windows) ports, e.g. `1.2.3.4/32`. Get your source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
+- `ingressIPv6`: allowed IPv6 source prefix to NICE DCV, SSH(Linux) and RDP(Windows) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
 - `allowRDPport` (Windows): allow inbound RDP. Option is not related to [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) access. Default is `No`
 - `allowSSHport` (Linux): allow inbound SSH. Option is not related to [EC2 Instance Connect](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) access. Default is `Yes`
 - `allowWebServerPorts`: allow inbound HTTP and/or HTTPS. Use this option if you intend to setup web server. Default is `No`
@@ -88,7 +91,7 @@ AWS Backup (optional)
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html), and click **Submit** to launch your stack. 
 
-It may take more than 30 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
+It may take more than 15 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
 
 ### CloudFormation Outputs and Exports
 The following URLs are available in **Outputs** section 
@@ -98,7 +101,7 @@ The following URLs are available in **Outputs** section
 - `EC2instanceConnect`* (if available, Linux): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality is only available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html).
 - `RDPconnect` (Windows): in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update NICE DCV server.
 
-\* *SSM session manager and EC2 Instance Connect are primarily for remote administration purposes. For best user experience, connect to NICE DCV server using [native clients](#nice-dcv-clients).*
+\* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to NICE DCV server using [native clients](#nice-dcv-clients).*
 
 The following values are available as [CloudFormation Exports](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html)
 - `<Stack Name>-IAMRole`: IAM role name
@@ -126,8 +129,6 @@ To update NICE DCV Server, connect via Fleet Manager Remote Desktop console usin
 ### GPU Windows instances
 The blog [Building a high-performance Windows workstation on AWS for graphics intensive applications](https://aws.amazon.com/blogs/compute/building-a-high-performance-windows-workstation-on-aws-for-graphics-intensive-applications/) walks through use of [Windows Server template](WIndowsServer-NICE-DCV.yaml) to provision and manage a GPU Windows instance.  
 
-Note that the NVIDIA GRID, NVIDIA Gaming and AMD drivers are for AWS customers only and you are bound by conditions and terms as per [Install NVIDIA drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html) and [Install AMD drivers on Windows instances](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html). 
-
 For NVIDIA GPU instances, [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) and [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) can be downloaded and installed from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads?target_os=Windows&target_arch=x86_64&target_version=Server2022) and [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads?target_os=Windows&target_arch=x86_64) respectively.
 
 ## About Linux templates
@@ -140,7 +141,7 @@ The login user name depends on Linux distributions as follows:
 - [Rocky Linux](RockyLinux-NICE-DCV.yaml) : rocky
 - [Ubuntu, Ubuntu Pro](Ubuntu-NICE-DCV.yaml) : ubuntu
 
-You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder via SSM Session Manager or EC2 Instance Connect to update NICE DCV and AWS CLI. 
+You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder from SSM Session Manager or EC2 Instance Connect to update NICE DCV and AWS CLI. 
 
 ### Console and virtual sessions
 NICE DCV offers two types of sessions: console sessions and virtual sessions. 
@@ -155,8 +156,6 @@ The CloudFormation template configure *multi-user.target* and *graphical.target*
 On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, NICE DCV console sessions have direct access to the GPU, providing features such as GPU accelerated OpenGL and hardware accelerated video streaming encoding (screen shot below). For best results, connect to your EC2 instance using [native client](#nice-dcv-clients).
 
 <img alternate="NICE DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
-
-#NVIDIA GRID and NVIDIA gaming drivers are for AWS customers only. You are bound by conditions and terms as per [Install NVIDIA drivers on Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html). 
 
 #### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
 [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit), [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) may subsequently be installed in supported** EC2 instances based on selected `sessionType` option: 
@@ -207,9 +206,10 @@ To futher secure your EC2 instance, you may want to
 - [Remove web browser client](#remove-web-browser-client) and use [native client](https://download.nice-dcv.com/)
 - Restrict NICE DCV and SSH/RDP access to your IP address only (`ingressIPv4` and `ingressIPv6`).
 - Linux: Disallow SSH (`allowSSHport`) access from public internet. Use [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html#ec2-instance-connect-connecting-console) or [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#start-ec2-console) for in-browser terminal access. 
-  If you have [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) and [Session Manager plugin for the AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed, you can start a session using [AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-cli) or [SSH](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-ssh).
+  If you have [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) and [Session Manager plugin for the AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed, you can start a terminal session using [AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-cli) or [SSH](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-ssh).
 - Windows: Disallow RDP (`allowRDPport`) access from public internet. Use [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) for in-browser RDP access.
-- Backup data in your EC2 instances with [EBS snapshots](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html). You can setup automatic snapshots using [Amazon Data Lifecycle Manager](https://aws.amazon.com/blogs/storage/automating-amazon-ebs-snapshot-and-ami-management-using-amazon-dlm/) or [AWS Backup](https://aws.amazon.com/blogs/aws/aws-backup-ec2-instances-efs-single-file-restore-and-cross-region-backup/) (with [AWS Backup Vault Lock](https://aws.amazon.com/blogs/storage/enhance-the-security-posture-of-your-backups-with-aws-backup-vault-lock/) for enhanced security posture).
+- Use [AWS Backup](https://aws.amazon.com/blogs/aws/aws-backup-ec2-instances-efs-single-file-restore-and-cross-region-backup/) and enable [AWS Backup Vault Lock](https://aws.amazon.com/blogs/storage/enhance-the-security-posture-of-your-backups-with-aws-backup-vault-lock/) for enhanced data protection. If your [Region](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) does not support AWS Backup, you can setup automatic [EBS snapshots](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html) using [Amazon Data Lifecycle Manager](https://aws.amazon.com/blogs/storage/automating-amazon-ebs-snapshot-and-ami-management-using-amazon-dlm/).
+- Enable [Amazon Inspector](https://aws.amazon.com/inspector/) to scan EC2 instance for software vulnerabilities and unintended network exposure.
 - Enable [Amazon GuardDuty](https://aws.amazon.com/guardduty/) security monitoring service with [Malware Protection](https://docs.aws.amazon.com/guardduty/latest/ug/malware-protection.html) to detect the potential presence of malware in EBS volumes.
 - If you are hosting a website, use [Amazon CloudFront](https://aws.amazon.com/cloudfront/) with [AWS WAF](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html) to protect your instance from DDoS and common web attacks. The [Accelerate and protect your websites using Amazon CloudFront and AWS WAF](https://aws.amazon.com/blogs/networking-and-content-delivery/accelerate-and-protect-your-websites-using-amazon-cloudfront-and-aws-waf/) blog post and [CloudFront dynamic websites](https://github.com/aws-samples/amazon-cloudfront-dynamic-websites) CloudFormation template may help with CloudFront distribution setup. When using CloudFront, you can restrict your EC2 instance HTTP and HTTPS port access to CloudFront IPs only. The CloudFormation template creates additional inbound HTTP and HTTPS security groups with [AWS-managed prefix list for Amazon CloudFront](https://aws.amazon.com/blogs/networking-and-content-delivery/limit-access-to-your-origins-using-the-aws-managed-prefix-list-for-amazon-cloudfront/) as source where possible. 
 
