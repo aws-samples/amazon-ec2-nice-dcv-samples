@@ -1238,7 +1238,7 @@ Resources:
                           /usr/bin/dcv create-session $dcvUser --owner root --storage-root /root
                           ;;
                         *)
-                          /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root /home/$dcvUser
+                          /usr/bin/dcv create-session $dcvUser --owner $dcvUser --user $dcvUser --storage-root /home/$dcvUser
                           ;;
                       esac
                     fi
@@ -1448,6 +1448,7 @@ Resources:
                   apt-get install -q -y ubuntu-desktop-minimal
                 fi                
                 apt-get install -q -y gdm3
+                apt-get install -q -y amazon-ec2-utils
 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/custom.conf
