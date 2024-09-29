@@ -962,6 +962,26 @@ Resources:
                 aws --version
                 C:\ProgramData\chocolatey\bin\choco upgrade -y awscli
                 aws --version
+            c:\\Windows\\Temp\\config.json:
+              content: |
+                {
+                    "agent": {
+                        "metrics_collection_interval": 60
+                    },
+                    "metrics": {
+                        "namespace": "CWAgent",
+                        "append_dimensions": {
+                            "InstanceId": "${aws:InstanceId}"
+                        },
+                        "metrics_collected": {
+                            "Memory": {
+                                "measurement": [
+                                    "% Committed Bytes In Use"
+                                ]
+                            }
+                        }
+                    }
+                }
             c:\\Users\\Administrator\\download-NVIDIA-GRID-driver.cmd:
               content: |
                 @echo off
@@ -1155,6 +1175,8 @@ Resources:
       IamInstanceProfile: !Ref instanceProfile
       SubnetId: !Ref subnetID
       Monitoring: true
+      DisableApiTermination: true
+      EbsOptimized: true
       SecurityGroupIds:
         - !Ref securityGroup
         - !If
@@ -1171,6 +1193,7 @@ Resources:
             VolumeType: !Ref volumeType
             VolumeSize: !Ref volumeSize
             DeleteOnTermination: true
+            Encrypted: true
       UserData: !Base64
         Fn::Sub: |
           <script>
@@ -1185,8 +1208,12 @@ Resources:
 
           @echo ** https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
           powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/windows/amd64/latest/amazon-cloudwatch-agent.msi', 'amazon-cloudwatch-agent.msi')
-          msiexec.exe /i amazon-cloudwatch-agent.msi /quiet /norestart /l*v amazon-cloudwatch-agent.log
-          sc config AmazonCloudWatchAgent start=demand
+          msiexec.exe /i amazon-cloudwatch-agent.msi /quiet /norestart /l*v amazon-cloudwatch-agent.log          
+          copy \windows\temp\config.json "\Program Files\Amazon\AmazonCloudWatchAgent\"
+          cd "\Program Files\Amazon\AmazonCloudWatchAgent"
+          powershell -command ".\amazon-cloudwatch-agent-ctl.ps1 -a fetch-config -m ec2 -c file:config.json"
+          cd \windows\temp\
+          sc config AmazonCloudWatchAgent start=automatic
 
           @echo ** https://docs.chocolatey.org/en-us/choco/setup
           @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
@@ -1300,7 +1327,6 @@ Resources:
     Type: AWS::Backup::BackupVault
     Condition: createBackup
     UpdateReplacePolicy: Delete
-    DeletionPolicy: !Ref AWS::NoValue
     Properties:
       BackupVaultName: !Sub
         - "${AWS::StackName}-backupVault-${UID}"
