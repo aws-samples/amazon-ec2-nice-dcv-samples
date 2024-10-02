@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CentOS Stream 8 with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
+Description: CentOS Stream 8 with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -30,7 +30,7 @@ Metadata:
           - osVersion
           - instanceType
       - Label:
-          default: NICE DCV
+          default: DCV
         Parameters:
           - sessionType
           - listenPort
@@ -99,7 +99,7 @@ Parameters:
     Default: "virtual"
   listenPort:
     Type: Number
-    Description: NICE DCV server TCP/UDP port
+    Description: DCV server TCP/UDP port
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
@@ -907,22 +907,22 @@ Resources:
             ToPort: 22
             CidrIpv6: !Ref ingressIPv6
           - !Ref AWS::NoValue
-        - Description: NICE DCV (IPv4)
+        - Description: DCV (IPv4)
           IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
-        - Description: NICE DCV (IPv6)
+        - Description: DCV (IPv6)
           IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
-        - Description: NICE DCV QUIC (IPv4)
+        - Description: DCV QUIC (IPv4)
           IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
-        - Description: NICE DCV QUIC (IPv6)
+        - Description: DCV QUIC (IPv6)
           IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
@@ -1416,7 +1416,10 @@ Resources:
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
 
-                # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
+                # Support discontinued: https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2024-0-17979
+                rm -f /home/cloud-user/update-dcv
+
+                # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
                 dnf groupinstall -q -y 'Server with GUI'
                 dnf groupinstall -q -y GNOME
 
@@ -1428,11 +1431,11 @@ Resources:
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
 
-                # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+                # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
-                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el$OS_VERSION-$(arch).tgz
-                tar -xzf nice-dcv-el$OS_VERSION-$(arch).tgz && cd nice-dcv-*-el$OS_VERSION-$(arch)
+                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2023.1/Servers/nice-dcv-2023.1-17701-el$OS_VERSION-$(arch).tgz
+                tar -xzf nice-dcv-2023.1-17701-el$OS_VERSION-$(arch).tgz && cd nice-dcv-*-el$OS_VERSION-$(arch)
                 dnf install -q -y ./nice-dcv-server-*.rpm
                 dnf install -q -y ./nice-dcv-web-viewer-*.rpm
                 dnf install -q -y ./nice-xdcv-*.rpm
@@ -1475,9 +1478,9 @@ Resources:
                 # USB and GPU driver DKMS
                 dnf install -q -y dkms
 
-                # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
+                # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
-                if (systemctl list-units | grep -q firewalld)
+                if (systemctl list-units | grep -q firewalld); then
                   systemctl stop firewalld
                   firewall-offline-cmd --add-port ${listenPort}/tcp
                   firewall-offline-cmd --add-port ${listenPort}/udp
@@ -1791,7 +1794,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
-    Description: NICE DCV web browser client (login as cloud-user)
+    Description: DCV web browser client (login as cloud-user)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:

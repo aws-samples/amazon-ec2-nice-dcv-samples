@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Windows Server with NICE DCV (
+Description: Windows Server with DCV (
   https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 
 Metadata:
@@ -29,7 +29,7 @@ Metadata:
           - imageId
           - instanceType
       - Label:
-          default: NICE DCV
+          default: DCV
         Parameters:
           - driverType
           - teslaDriverVersion
@@ -84,13 +84,13 @@ Parameters:
     Type: String
     AllowedValues:
       - AMD
-      - NICE-DCV
-      - NICE-DCV-IDD
+      - DCV
+      - DCV-IDD
       - NVIDIA-Gaming
       - NVIDIA-GRID
       - NVIDIA-Tesla
       - none
-    Default: NICE-DCV-IDD
+    Default: DCV-IDD
   teslaDriverVersion:
     Type: String
     Description: "[NVIDIA-Tesla] Driver version (
@@ -101,7 +101,7 @@ Parameters:
     Default: 538.78
   listenPort:
     Type: Number
-    Description: NICE DCV server TCP/UDP port
+    Description: DCV server TCP/UDP port
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
@@ -761,22 +761,22 @@ Resources:
       GroupDescription: Allow inbound DCV
       VpcId: !Ref vpcID
       SecurityGroupIngress:
-        - Description: NICE DCV (IPv4)
+        - Description: DCV (IPv4)
           IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
-        - Description: NICE DCV (IPv6)
+        - Description: DCV (IPv6)
           IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
-        - Description: NICE DCV QUIC (IPv4)
+        - Description: DCV QUIC (IPv4)
           IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
-        - Description: NICE DCV QUIC (IPv6)
+        - Description: DCV QUIC (IPv6)
           IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
@@ -1054,7 +1054,7 @@ Resources:
                 SET "PATH=%PATH%;C:\Program Files\7-zip"
                 cd \windows\temp
                 md driver && cd driver
-                IF %DRIVER_TYPE% EQU NICE-DCV (
+                IF %DRIVER_TYPE% EQU DCV (
                   @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general
                   powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
                   msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
@@ -1231,7 +1231,7 @@ Resources:
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
           powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
           SET DRIVER_TYPE=${driverType}
-          IF %DRIVER_TYPE% EQU NICE-DCV-IDD (
+          IF %DRIVER_TYPE% EQU DCV-IDD (
             msiexec.exe /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
           ) ELSE IF %DRIVER_TYPE% EQU NVIDIA-Tesla (
             msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
@@ -1397,7 +1397,7 @@ Outputs:
     Value: !Sub https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}
 
   DCVwebConsole:
-    Description: NICE DCV web browser client (login as administrator)
+    Description: DCV web browser client (login as administrator)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:

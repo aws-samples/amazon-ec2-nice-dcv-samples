@@ -1,5 +1,5 @@
 ## Notice
-Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life are not supported by NICE DCV and *may not work*. Usage indicates acceptance of [NICE DCV EULA](https://www.nice-dcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. Refer to [NICE DCV documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
+Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life are not supported by DCV and *may not work*. Usage indicates acceptance of [DCV EULA](https://www.nice-dcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. Refer to [DCV documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
 
 
 ## About CloudFormation templates
@@ -30,10 +30,10 @@ EC2
 - `imageId` (where applicable): [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID
 -  `instanceType`: appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).  Default is `t4g.medium` and `t3.medium` for arm64 and x86_64 architecture respectively
 
-NICE DCV
+DCV
 - `driverType` (Windows): graphics driver to install
-    - [NICE-DCV-IDD](https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2023-1-16220): Indirect Display Driver (IDD) that optimizes the graphics pipeline for higher frame rates and significantly reduces overall CPU usage (default)
-    - [NICE-DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)
+    - [DCV-IDD](https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2023-1-16220): Indirect Display Driver (IDD) that optimizes the graphics pipeline for higher frame rates and significantly reduces overall CPU usage (default)
+    - [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)
     - [NVIDIA-GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance): for professional visualization applications
     - [NVIDIA-Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance): contain optimizations for gaming
     - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance): for compute workloads. Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install. As driver operates in headless [TCC](https://docs.nvidia.com/nsight-visual-studio-edition/reference/index.html#setting-tcc-mode-for-tesla-products) mode, IDD will be installed in addition to Tesla driver.
@@ -55,14 +55,14 @@ NICE DCV
 
     - `*-with-AMD_ROCm_repo_Driver`([G4ad instance](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances)) : uses the operating system [package manager](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/index.html) to install AMD GPU drivers from AMD repository, and provides access to [ROCm packages](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/package-manager-integration.html#packages-in-rocm-programming-models)
 
-    Note that due to different combinations of drivers, OSs and instance types, GPU driver installation via CloudFormation template may not work. You can select `console` option and install driver manually. Refer to [Prerequisites for Linux NICE DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) for GPU driver installation and configuration details.
+    Note that due to different combinations of drivers, OSs and instance types, GPU driver installation via CloudFormation template may not work. You can select `console` option and install driver manually. Refer to [Prerequisites for Linux DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) for GPU driver installation and configuration details.
 
 
 
 - `teslaDriverVersion` (where applicable): [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `*-NVIDIA_runfile_Driver` option is selected for `driverType` or `sessionType` respectively.
     - To obtain a suitable version, go to [NVIDIA Driver Downloads](https://www.nvidia.com/Download/Find.aspx). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value
 
-- `listenPort`: NICE DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
+- `listenPort`: DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
 
 
 Networking
@@ -72,8 +72,8 @@ Networking
 - `assignStaticIP`: associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) to prevent assigned IPv4 address from changing every time EC2 instance is stopped and started. There is a hourly charge when instance is stopped as listed at [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addressesv). Default is `Yes`
 
 Allowed IP prefix and ports
-- `ingressIPv4`: allowed IPv4 source prefix to NICE DCV, SSH(Linux) and RDP(Windows) ports, e.g. `1.2.3.4/32`. Get your source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
-- `ingressIPv6`: allowed IPv6 source prefix to NICE DCV, SSH(Linux) and RDP(Windows) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
+- `ingressIPv4`: allowed IPv4 source prefix to DCV, SSH(Linux) and RDP(Windows) ports, e.g. `1.2.3.4/32`. Get your source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
+- `ingressIPv6`: allowed IPv6 source prefix to DCV, SSH(Linux) and RDP(Windows) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
 - `allowRDPport` (Windows): allow inbound RDP. Option is not related to [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) access. Default is `No`
 - `allowSSHport` (Linux): allow inbound SSH. Option is not related to [EC2 Instance Connect](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) access. Default is `Yes`
 - `allowWebServerPorts`: allow inbound HTTP and/or HTTPS. Use this option if you intend to setup web server. Default is `No`
@@ -96,12 +96,12 @@ It may take more than 15 minutes to provision the EC2 instance. After your stack
 ### CloudFormation Outputs and Exports
 The following URLs are available in **Outputs** section 
 - `SSMsessionManager`* : [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to change login user password. Password change command is in *Description* field.
-- `DCVwebConsole`: NICE DCV web browser console URL link. Login as user specified in *Description* field. 
+- `DCVwebConsole`: DCV web browser console URL link. Login as user specified in *Description* field. 
 - `EC2console`: EC2 console URL link to manage EC2 instance or to get the latest IPv4 (or IPv6 if enabled) address.
 - `EC2instanceConnect`* (if available, Linux): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality is only available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html).
-- `RDPconnect` (Windows): in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update NICE DCV server.
+- `RDPconnect` (Windows): in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update DCV server.
 
-\* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to NICE DCV server using [native clients](#nice-dcv-clients).*
+\* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to DCV server using [native clients](#nice-dcv-clients).*
 
 The following values are available as [CloudFormation Exports](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html)
 - `<Stack Name>-IAMRole`: IAM role name
@@ -109,22 +109,22 @@ The following values are available as [CloudFormation Exports](https://docs.aws.
 - `<Stack Name>-SecurityGroup`: Security group ID
 
 
-## Using NICE DCV
-Refer to [NICE DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getting-started.html)
+## Using DCV
+Refer to [DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getting-started.html)
 
-### NICE DCV clients
-Besides web browser client, NICE DCV offers Windows, Linux, and macOS native clients with additional features such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html), [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html) and [printer redirection support](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html). Native clients can be download from [https://download.nice-dcv.com/](https://download.nice-dcv.com/). 
+### DCV clients
+Besides web browser client, DCV offers Windows, Linux, and macOS native clients with additional features such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html), [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html) and [printer redirection support](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html). Native clients can be download from [https://download.nice-dcv.com/](https://download.nice-dcv.com/). 
 
 ### Remove web browser client
 On Linux instances, the web browser client can be disabled by removing `nice-dcv-web-viewer` package. On Windows instances, download [nice-dcv-server-x64-Release.msi](https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi) and run the command *msiexec /i nice-dcv-server-x64-Release.msi REMOVE=webClient* from administrator command prompt.
 
 ### USB remotization
-NICE DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html), allowing use of specialized USB devices, such as 3D pointing devices and two-factor authentication USB dongles, on Windows and Linux OSs. To use feature on a supported Linux OS, run the command `sudo dcvusbdriverinstaller` and restart EC2 instance. Note that USB remotization is [supported](https://docs.aws.amazon.com/dcv/latest/userguide/client.html#client-features) on installable Windows clients only. 
+DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html), allowing use of specialized USB devices, such as 3D pointing devices and two-factor authentication USB dongles, on Windows and Linux OSs. To use feature on a supported Linux OS, run the command `sudo dcvusbdriverinstaller` and restart EC2 instance. Note that USB remotization is [supported](https://docs.aws.amazon.com/dcv/latest/userguide/client.html#client-features) on installable Windows clients only. 
 
 ## About Windows template
 Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console), [AWS CloudShell](https://aws.amazon.com/cloudshell/) or [AWS CLI](https://aws.amazon.com/cli/). Refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog for more information.
 
-To update NICE DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
+To update DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
 ### GPU Windows instances
 The blog [Building a high-performance Windows workstation on AWS for graphics intensive applications](https://aws.amazon.com/blogs/compute/building-a-high-performance-windows-workstation-on-aws-for-graphics-intensive-applications/) walks through use of [Windows Server template](WIndowsServer-NICE-DCV.yaml) to provision and manage a GPU Windows instance.  
@@ -141,21 +141,21 @@ The login user name depends on Linux distributions as follows:
 - [Rocky Linux](RockyLinux-NICE-DCV.yaml) : rocky
 - [Ubuntu, Ubuntu Pro](Ubuntu-NICE-DCV.yaml) : ubuntu
 
-You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder from SSM Session Manager or EC2 Instance Connect to update NICE DCV and AWS CLI. 
+You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder from SSM Session Manager or EC2 Instance Connect to update DCV and AWS CLI. 
 
 ### Console and virtual sessions
-NICE DCV offers two types of sessions: console sessions and virtual sessions. 
-With console sessions, NICE DCV directly captures the content of the desktop screen.
-With virtual sessions, NICE DCV starts an X server instance, Xdcv, and runs a desktop environment inside the X server. Multiple user sessions on a single server are allowed for virtual sessions. Refer to [Introduction to NICE DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) for more details.
+DCV offers two types of sessions: console sessions and virtual sessions. 
+With console sessions, DCV directly captures the content of the desktop screen.
+With virtual sessions, DCV starts an X server instance, Xdcv, and runs a desktop environment inside the X server. Multiple user sessions on a single server are allowed for virtual sessions. Refer to [Introduction to DCV sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) for more details.
 
 The CloudFormation template configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual` and `console` session type options respectively.
 
 
 
 ### GPU driver installation
-On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, NICE DCV console sessions have direct access to the GPU, providing features such as GPU accelerated OpenGL and hardware accelerated video streaming encoding (screen shot below). For best results, connect to your EC2 instance using [native client](#nice-dcv-clients).
+On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, DCV console sessions have direct access to the GPU, providing features such as GPU accelerated OpenGL and hardware accelerated video streaming encoding (screen shot below). For best results, connect to your EC2 instance using [native client](#nice-dcv-clients).
 
-<img alternate="NICE DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
+<img alternate="DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
 
 #### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
 [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit), [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) may subsequently be installed in supported** EC2 instances based on selected `sessionType` option: 
@@ -204,7 +204,7 @@ To use templates in [AWS Local Zones](https://aws.amazon.com/about-aws/global-in
 ### Securing
 To futher secure your EC2 instance, you may want to
 - [Remove web browser client](#remove-web-browser-client) and use [native client](https://download.nice-dcv.com/)
-- Restrict NICE DCV and SSH/RDP access to your IP address only (`ingressIPv4` and `ingressIPv6`).
+- Restrict DCV and SSH/RDP access to your IP address only (`ingressIPv4` and `ingressIPv6`).
 - Linux: Disallow SSH (`allowSSHport`) access from public internet. Use [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html#ec2-instance-connect-connecting-console) or [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#start-ec2-console) for in-browser terminal access. 
   If you have [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) and [Session Manager plugin for the AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed, you can start a terminal session using [AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-cli) or [SSH](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-ssh).
 - Windows: Disallow RDP (`allowRDPport`) access from public internet. Use [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) for in-browser RDP access.

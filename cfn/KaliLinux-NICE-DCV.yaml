@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Kali Linux with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
+Description: Kali Linux with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -30,7 +30,7 @@ Metadata:
           - imageId
           - instanceType
       - Label:
-          default: NICE DCV
+          default: DCV
         Parameters:
           - sessionType
           - listenPort
@@ -94,7 +94,7 @@ Parameters:
     Default: "virtual_(xfce)"
   listenPort:
     Type: Number
-    Description: NICE DCV server TCP/UDP port
+    Description: DCV server TCP/UDP port
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
@@ -892,22 +892,22 @@ Resources:
             ToPort: 22
             CidrIpv6: !Ref ingressIPv6
           - !Ref AWS::NoValue
-        - Description: NICE DCV (IPv4)
+        - Description: DCV (IPv4)
           IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
-        - Description: NICE DCV (IPv6)
+        - Description: DCV (IPv6)
           IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
-        - Description: NICE DCV QUIC (IPv4)
+        - Description: DCV QUIC (IPv4)
           IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
-        - Description: NICE DCV QUIC (IPv6)
+        - Description: DCV QUIC (IPv6)
           IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
@@ -1082,9 +1082,9 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp
-                sudo rm -f /tmp/nice-dcv-ubuntu2204-$(arch).tgz
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-$(arch).tgz
-                tar -xvzf nice-dcv-ubuntu2204-$(arch).tgz && cd nice-dcv-*-$(arch)
+                sudo rm -f /tmp/nice-dcv-ubuntu2404-$(arch).tgz
+                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2404-$(arch).tgz
+                tar -xvzf nice-dcv-ubuntu2404-$(arch).tgz && cd nice-dcv-*-$(arch)
                 sudo apt-get install -y ./nice-dcv-server_*.deb
                 sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
                 sudo apt-get install -y ./nice-xdcv_*.deb
@@ -1348,7 +1348,7 @@ Resources:
                 cd /tmp/cfn
 
                 export SESSION="${sessionType}"
-                # NICE DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
+                # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
                 case $SESSION in
                   *xfce*)
                     apt-get install -q -y kali-desktop-xfce
@@ -1367,11 +1367,11 @@ Resources:
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/daemon.conf
 
-                # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+                # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
                 gpg --import NICE-GPG-KEY
-                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-$(arch).tgz
-                tar -xvzf nice-dcv-ubuntu2204-$(arch).tgz && cd nice-dcv-*-ubuntu2204-$(arch)
+                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2404-$(arch).tgz
+                tar -xvzf nice-dcv-ubuntu2404-$(arch).tgz && cd nice-dcv-*-ubuntu2404-$(arch)
 
                 # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html#linux-server-install
                 apt-get install -q -y ./nice-dcv-server_*.deb
@@ -1752,7 +1752,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
-    Description: NICE DCV web browser client (login as kali)
+    Description: DCV web browser client (login as kali)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:

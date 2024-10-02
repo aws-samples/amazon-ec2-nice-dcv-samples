@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CentOS 7 on G4ad instance with NICE DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
+Description: CentOS 7 on G4ad instance with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -30,7 +30,7 @@ Metadata:
           - imageId
           - instanceType
       - Label:
-          default: NICE DCV
+          default: DCV
         Parameters:
           - sessionType
           - listenPort
@@ -96,7 +96,7 @@ Parameters:
     Default: "console"
   listenPort:
     Type: Number
-    Description: NICE DCV server TCP/UDP port
+    Description: DCV server TCP/UDP port
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
@@ -894,22 +894,22 @@ Resources:
             ToPort: 22
             CidrIpv6: !Ref ingressIPv6
           - !Ref AWS::NoValue
-        - Description: NICE DCV (IPv4)
+        - Description: DCV (IPv4)
           IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
-        - Description: NICE DCV (IPv6)
+        - Description: DCV (IPv6)
           IpProtocol: tcp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIpv6: !Ref ingressIPv6
-        - Description: NICE DCV QUIC (IPv4)
+        - Description: DCV QUIC (IPv4)
           IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
           CidrIp: !Ref ingressIPv4
-        - Description: NICE DCV QUIC (IPv6)
+        - Description: DCV QUIC (IPv6)
           IpProtocol: udp
           FromPort: !Ref listenPort
           ToPort: !Ref listenPort
@@ -1426,7 +1426,11 @@ Resources:
             "/root/install-dcv.sh":
               content: !Sub |
                 #!/bin/bash
-                cd /tmp
+                mkdir -p /tmp/cfn
+                cd /tmp/cfn
+
+                # Support discontinued: https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2024-0-17979
+                rm -f /home/centos/update-dcv
 
                 # EPEL: https://docs.fedoraproject.org/en-US/epel/
                 yum install -q -y epel-release
@@ -1434,12 +1438,11 @@ Resources:
                 # Install AMD drivers: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver
                 yum groupinstall -y "MATE Desktop"
                 yum install -q -y firefox
-                systemctl disable firewalld
 
-                # NICE DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+                # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-$(arch).tgz
-                tar -xvzf nice-dcv-el7-$(arch).tgz && cd nice-dcv-*-el7-$(arch)
+                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2023.1/Servers/nice-dcv-2023.1-17701-el7-$(arch).tgz
+                tar -xvzf nice-dcv-2023.1-17701-el7-$(arch).tgz && cd nice-dcv-*-el7-$(arch)
                 yum install -q -y ./nice-dcv-server-*.rpm
                 yum install -q -y ./nice-dcv-web-viewer-*.rpm
                 usermod -aG video dcv
@@ -1477,9 +1480,9 @@ Resources:
                 # USB and GPU driver DKMS
                 yum install -q -y dkms
 
-                # Add NICE DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
+                # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
-                if (systemctl list-units | grep -q firewalld)
+                if (systemctl list-units | grep -q firewalld); then
                   systemctl stop firewalld
                   firewall-offline-cmd --add-port ${listenPort}/tcp
                   firewall-offline-cmd --add-port ${listenPort}/udp
@@ -1770,7 +1773,7 @@ Outputs:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
 
   DCVwebConsole:
-    Description: NICE DCV web browser client (login as centos)
+    Description: DCV web browser client (login as centos)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}"
       - IpAddress:
