@@ -1,5 +1,5 @@
 ## Notice
-Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life are not supported by DCV and *may not work*. Usage indicates acceptance of [DCV EULA](https://www.nice-dcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. Refer to [DCV documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
+Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life are not supported by DCV and *may not work*. Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. Refer to [DCV documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
 
 
 ## About CloudFormation templates
@@ -113,7 +113,7 @@ The following values are available as [CloudFormation Exports](https://docs.aws.
 Refer to [DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getting-started.html)
 
 ### DCV clients
-Besides web browser client, DCV offers Windows, Linux, and macOS native clients with additional features such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html), [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html) and [printer redirection support](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html). Native clients can be download from [https://download.nice-dcv.com/](https://download.nice-dcv.com/). 
+Besides web browser client, DCV offers Windows, Linux, and macOS native clients with additional features such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html), [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html) and [printer redirection support](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html). Native clients can be download from [https://download.amazondcv.com/](https://download.amazondcv.com/). 
 
 ### Remove web browser client
 On Linux instances, the web browser client can be disabled by removing `nice-dcv-web-viewer` package. On Windows instances, download [nice-dcv-server-x64-Release.msi](https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi) and run the command *msiexec /i nice-dcv-server-x64-Release.msi REMOVE=webClient* from administrator command prompt.
@@ -203,7 +203,7 @@ To use templates in [AWS Local Zones](https://aws.amazon.com/about-aws/global-in
 
 ### Securing
 To futher secure your EC2 instance, you may want to
-- [Remove web browser client](#remove-web-browser-client) and use [native client](https://download.nice-dcv.com/)
+- [Remove web browser client](#remove-web-browser-client) and use [native client](https://download.amazondcv.com/)
 - Restrict DCV and SSH/RDP access to your IP address only (`ingressIPv4` and `ingressIPv6`).
 - Linux: Disallow SSH (`allowSSHport`) access from public internet. Use [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html#ec2-instance-connect-connecting-console) or [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#start-ec2-console) for in-browser terminal access. 
   If you have [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) and [Session Manager plugin for the AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed, you can start a terminal session using [AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-cli) or [SSH](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-ssh).
