@@ -1270,7 +1270,7 @@ Resources:
                 apt-get install -q -y usbutils
                 #dcvusbdriverinstaller --quiet
 
-                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -1522,7 +1522,7 @@ Resources:
             Encrypted: true
       UserData:
         Fn::Base64: !Sub |
-          #!/bin/zsh
+          #!/bin/bash
           mkdir -p /tmp/cfn
           cd /tmp/cfn
 
@@ -1536,6 +1536,7 @@ Resources:
           apt-get clean all
           apt-get update -q
           apt-get install -q -y wget tmux unzip tar curl sed
+          apt-get install -q -y zstd
 
           # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
           curl -s -L -O http://archive.ubuntu.com/ubuntu/pool/main/e/ec2-instance-connect/ec2-instance-connect_1.1.17-0ubuntu1_all.deb
@@ -1551,20 +1552,21 @@ Resources:
           snap start amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-          apt-get install -q -y python3 python3-pip python3-setuptools python3-docutils python3-daemon
-          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
-          tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
-          cd aws-cfn-bootstrap-2.0
-          python3 setup.py build
-          python3 setup.py install
+          apt-get install -q -y python2-minimal
+          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
+          tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
+          cd aws-cfn-bootstrap-1.4
+          python2 setup.py build
+          python2 setup.py install
+          curl -s -L -O https://bootstrap.pypa.io/pip/2.7/get-pip.py
+          python2 get-pip.py
           cd /tmp/cfn
-          export CFN_INIT="/usr/local/bin/cfn-init"
 
-          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+          python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
-          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_install
+          python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_install
 
-          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+          python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
           # remove AWSCLI version 1
           apt-get remove -q -y awscli
@@ -1591,8 +1593,8 @@ Resources:
             *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
 
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload
               systemctl enable dcv-gpu-install
               ;;

@@ -67,6 +67,8 @@ Parameters:
     Type: String
     Description: Version and processor architecture
     AllowedValues:
+      - Ubuntu 24.04 (arm64)
+      - Ubuntu 24.04 (x86_64)
       - Ubuntu 22.04 (arm64)
       - Ubuntu 22.04 (x86_64)
       - Ubuntu 20.04 (x86_64)
@@ -566,6 +568,8 @@ Parameters:
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
+  useUbuntu2404x86: !Equals [!Ref osVersion, "Ubuntu 24.04 (x86_64)"]
+  useUbuntu2404arm64: !Equals [!Ref osVersion, "Ubuntu 24.04 (arm64)"]
   useUbuntu2204x86: !Equals [!Ref osVersion, "Ubuntu 22.04 (x86_64)"]
   useUbuntu2204arm64: !Equals [!Ref osVersion, "Ubuntu 22.04 (arm64)"]
   useUbuntu2004x86: !Equals [!Ref osVersion, "Ubuntu 20.04 (x86_64)"]
@@ -1317,7 +1321,11 @@ Resources:
                 apt-get install -q -y usbutils
                 # dcvusbdriverinstaller --quiet
 
-                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                python /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                # Ubuntu 24.04: Default back to /usr/bin/python3
+                if (cat /etc/os-release | grep -q 24.04); then
+                  sudo update-alternatives --install /usr/local/bin/python python /usr/bin/python3 1
+                fi
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -1485,7 +1493,9 @@ Resources:
                 # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 apt-get install -q -y pulseaudio-utils
                 apt-get install -q -y gnome-tweaks gnome-shell-extension-ubuntu-dock
-                if (cat /etc/os-release | grep -q 22.04); then
+                if (cat /etc/os-release | grep -q 24.04); then
+                  apt-get install -q -y gnome-shell-extension-manager
+                elif (cat /etc/os-release | grep -q 22.04); then
                   apt-get install -q -y gnome-shell-extension-manager
                 fi
 
@@ -1913,33 +1923,41 @@ Resources:
     Properties:
       ImageId: # https://ubuntu.com/server/docs/cloud-images/amazon-ec2 https://ubuntu.com/blog/ubuntu-pro-is-now-part-of-the-aws-ec2-console
         !If [
-          useUbuntu2204x86,
-          "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+          useUbuntu2404x86,
+          "{{resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
           !If [
-            useUbuntu2204arm64,
-            "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+            useUbuntu2404arm64,
+            "{{resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
             !If [
-              useUbuntu2004x86,
-              "{{resolve:ssm:/aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+              useUbuntu2204x86,
+              "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
               !If [
-                useUbuntu1804x86,
-                "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                useUbuntu2204arm64,
+                "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
                 !If [
-                  useUbuntu1804arm64,
-                  "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                  useUbuntu2004x86,
+                  "{{resolve:ssm:/aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
                   !If [
-                    useUbuntuPro2204x86,
-                    "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                    useUbuntu1804x86,
+                    "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
                     !If [
-                      useUbuntuPro2204arm64,
-                      "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                      useUbuntu1804arm64,
+                      "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
                       !If [
-                        useUbuntuPro2004x86,
-                        "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                        useUbuntuPro2204x86,
+                        "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
                         !If [
-                          useUbuntuPro1804x86,
-                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
-                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                          useUbuntuPro2204arm64,
+                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                          !If [
+                            useUbuntuPro2004x86,
+                            "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                            !If [
+                              useUbuntuPro1804x86,
+                              "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                              "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                            ],
+                          ],
                         ],
                       ],
                     ],
@@ -1998,14 +2016,32 @@ Resources:
           fi
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-          apt-get install -q -y python3 python3-pip python3-setuptools python3-docutils python3-daemon
-          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
-          tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
-          cd aws-cfn-bootstrap-2.0
-          python3 setup.py build
-          python3 setup.py install
-          cd /tmp/cfn
-          export CFN_INIT="python3 /usr/local/bin/cfn-init"
+          if (cat /etc/os-release | grep -q 24.04); then
+            apt-get install -y build-essential libncurses-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev
+            curl -s -L -O https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
+            tar -xf Python-2.7.18.tgz && cd Python-2.7.18
+            ./configure
+            make
+            make install
+            curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
+            tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
+            cd aws-cfn-bootstrap-1.4
+            python setup.py build
+            python setup.py install
+            curl -s -L -O https://bootstrap.pypa.io/pip/2.7/get-pip.py
+            python2 get-pip.py
+            cd /tmp/cfn
+            export CFN_INIT="python2 /usr/local/bin/cfn-init"
+          else
+            apt-get install -q -y python3 python3-pip python3-setuptools python3-docutils python3-daemon
+            curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+            tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
+            cd aws-cfn-bootstrap-2.0
+            python3 setup.py build
+            python3 setup.py install
+            cd /tmp/cfn
+            export CFN_INIT="python3 /usr/local/bin/cfn-init"
+          fi
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
@@ -2083,7 +2119,9 @@ Resources:
               wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | gpg --dearmor | tee /etc/apt/keyrings/rocm.gpg > /dev/null
 
               # update repo file with correct values
-              if (cat /etc/os-release | grep -q 22.04); then
+              if (cat /etc/os-release | grep -q 24.04); then
+                DISTRO=noble
+              elif (cat /etc/os-release | grep -q 22.04); then
                 DISTRO=jammy
               else
                 DISTRO=focal
