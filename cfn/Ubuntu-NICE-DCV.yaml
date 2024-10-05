@@ -74,6 +74,8 @@ Parameters:
       - Ubuntu 20.04 (x86_64)
       - Ubuntu 18.04 (arm64)
       - Ubuntu 18.04 (x86_64)
+      - Ubuntu Pro 24.04 (arm64)
+      - Ubuntu Pro 24.04 (x86_64)
       - Ubuntu Pro 22.04 (arm64)
       - Ubuntu Pro 22.04 (x86_64)
       - Ubuntu Pro 20.04 (x86_64)
@@ -575,6 +577,8 @@ Conditions:
   useUbuntu2004x86: !Equals [!Ref osVersion, "Ubuntu 20.04 (x86_64)"]
   useUbuntu1804x86: !Equals [!Ref osVersion, "Ubuntu 18.04 (x86_64)"]
   useUbuntu1804arm64: !Equals [!Ref osVersion, "Ubuntu 18.04 (arm64)"]
+  useUbuntuPro2404x86: !Equals [!Ref osVersion, "Ubuntu Pro 24.04 (x86_64)"]
+  useUbuntuPro2404arm64: !Equals [!Ref osVersion, "Ubuntu Pro 24.04 (arm64)"]
   useUbuntuPro2204x86: !Equals [!Ref osVersion, "Ubuntu Pro 22.04 (x86_64)"]
   useUbuntuPro2204arm64: !Equals [!Ref osVersion, "Ubuntu Pro 22.04 (arm64)"]
   useUbuntuPro2004x86: !Equals [!Ref osVersion, "Ubuntu Pro 20.04 (x86_64)"]
@@ -1324,7 +1328,7 @@ Resources:
                 python /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                 # Ubuntu 24.04: Default back to /usr/bin/python3
                 if (cat /etc/os-release | grep -q 24.04); then
-                  sudo update-alternatives --install /usr/local/bin/python python /usr/bin/python3 1
+                  update-alternatives --install /usr/local/bin/python python /usr/bin/python3 1
                 fi
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -1552,6 +1556,11 @@ Resources:
 
                 # USB and GPU driver DKMS
                 apt-get install -q -y dkms
+
+                # Disable reporting : https://wiki.ubuntu.com/Apport
+                sed -i "s/enabled=1/enable=0/g" /etc/default/apport
+                apt-get remove -q -y ubuntu-report whoopsie apport
+                apt-get autoremove -q -y
               mode: "000740"
               owner: "root"
               group: "root"
@@ -1944,18 +1953,26 @@ Resources:
                       useUbuntu1804arm64,
                       "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
                       !If [
-                        useUbuntuPro2204x86,
-                        "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                        useUbuntuPro2404x86,
+                        "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
                         !If [
-                          useUbuntuPro2204arm64,
-                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                          useUbuntuPro2404arm64,
+                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
                           !If [
-                            useUbuntuPro2004x86,
-                            "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                            useUbuntuPro2204x86,
+                            "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
                             !If [
-                              useUbuntuPro1804x86,
-                              "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
-                              "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                              useUbuntuPro2204arm64,
+                              "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                              !If [
+                                useUbuntuPro2004x86,
+                                "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                                !If [
+                                  useUbuntuPro1804x86,
+                                  "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                                  "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                                ],
+                              ],
                             ],
                           ],
                         ],
@@ -2061,11 +2078,6 @@ Resources:
           # Update OS
           apt-get update -q
           apt-get upgrade -q -y
-          apt-get autoremove -q -y
-
-          # Disable reporting : https://wiki.ubuntu.com/Apport
-          sed -i "s/enabled=1/enable=0/g" /etc/default/apport
-          apt-get remove -q -y ubuntu-report whoopsie apport
           apt-get autoremove -q -y
 
           # 
