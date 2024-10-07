@@ -2047,6 +2047,7 @@ Resources:
             python setup.py install
             curl -s -L -O https://bootstrap.pypa.io/pip/2.7/get-pip.py
             python2 get-pip.py
+            sed -i "1,1s/python$/python2/g" /usr/local/bin/cfn-*
             cd /tmp/cfn
             export CFN_INIT="python2 /usr/local/bin/cfn-init"
           else
