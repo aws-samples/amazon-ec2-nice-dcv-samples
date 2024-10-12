@@ -81,7 +81,7 @@ Parameters:
       - Ubuntu Pro 20.04 (x86_64)
       - Ubuntu Pro 18.04 (arm64)
       - Ubuntu Pro 18.04 (x86_64)
-    Default: Ubuntu 22.04 (arm64)
+    Default: Ubuntu 24.04 (arm64)
 
   ec2Name:
     Type: String
@@ -1136,7 +1136,7 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\.//g')
-                sudo rm -f /tmp/nice-dcv-$OS_VERSION-$(arch).tgz
+                sudo rm -f nice-dcv-$OS_VERSION-$(arch).tgz
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
                 tar -xvzf nice-dcv-ubuntu$OS_VERSION-$(arch).tgz && cd nice-dcv-*-ubuntu$OS_VERSION-$(arch)
                 sudo apt-get install -y ./nice-dcv-server_*.deb
@@ -1166,7 +1166,7 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp
-                rm -f mount-s3.rpm
+                sudo rm -f mount-s3.rpm
                 if (uname -a | grep -q x86); then
                   wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb
                 else
@@ -1325,11 +1325,11 @@ Resources:
                 apt-get install -q -y usbutils
                 # dcvusbdriverinstaller --quiet
 
-                python /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
-                # Ubuntu 24.04: Default back to /usr/bin/python3
-                if (cat /etc/os-release | grep -q 24.04); then
-                  update-alternatives --install /usr/local/bin/python python /usr/bin/python3 1
-                fi
+                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+
+                apt-get update -q
+                apt-get upgrade -q -y
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -1552,7 +1552,7 @@ Resources:
                 # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
-                sed -i "/^\[session-management\/automatic-console-session/a owner=\"ubuntu\"\nstorage-root=\"\%home%\"" /etc/dcv/dcv.conf
+                sed -i "/^\[session-management\/automatic-console-session/a owner=\"ubuntu\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
                 # USB and GPU driver DKMS
                 apt-get install -q -y dkms
@@ -2033,33 +2033,14 @@ Resources:
           fi
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-          if (cat /etc/os-release | grep -q 24.04); then
-            apt-get install -y build-essential libncurses-dev libssl-dev libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev
-            curl -s -L -O https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tgz
-            tar -xf Python-2.7.18.tgz && cd Python-2.7.18
-            ./configure
-            make
-            make install
-            curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
-            tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
-            cd aws-cfn-bootstrap-1.4
-            python setup.py build
-            python setup.py install
-            curl -s -L -O https://bootstrap.pypa.io/pip/2.7/get-pip.py
-            python2 get-pip.py
-            sed -i "1,1s/python$/python2/g" /usr/local/bin/cfn-*
-            cd /tmp/cfn
-            export CFN_INIT="python2 /usr/local/bin/cfn-init"
-          else
-            apt-get install -q -y python3 python3-pip python3-setuptools python3-docutils python3-daemon
-            curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
-            tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
-            cd aws-cfn-bootstrap-2.0
-            python3 setup.py build
-            python3 setup.py install
-            cd /tmp/cfn
-            export CFN_INIT="python3 /usr/local/bin/cfn-init"
-          fi
+          apt-get install -q -y python3 python3-pip python3-setuptools python3-docutils python3-daemon
+          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+          tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
+          cd aws-cfn-bootstrap-2.0
+          python3 setup.py build
+          python3 setup.py install
+          cd /tmp/cfn
+          export CFN_INIT="python3 /usr/local/bin/cfn-init"
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
@@ -2303,6 +2284,10 @@ Outputs:
     Condition: createSgEIC
     Description: EC2 Instance Connect
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=ubuntu&sshPort=22#/"
+
+  EC2serialConsole:
+    Description: EC2 Serial Console
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?region=${AWS::Region}&connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
 
   SSMsessionManager:
     Description: SSM Session Manager ("sudo passwd ubuntu" to change password)

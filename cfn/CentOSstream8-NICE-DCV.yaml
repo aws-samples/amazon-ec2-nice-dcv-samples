@@ -1789,6 +1789,10 @@ Outputs:
     Description: EC2 Instance Connect
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=cloud-user&sshPort=22#/"
 
+  EC2serialConsole:
+    Description: EC2 Serial Console
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?region=${AWS::Region}&connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
+
   SSMsessionManager:
     Description: SSM Session Manager ("sudo passwd cloud-user" to change password)
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
