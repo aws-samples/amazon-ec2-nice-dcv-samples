@@ -1210,7 +1210,7 @@ Resources:
           cd "\Program Files\Amazon\AmazonCloudWatchAgent"
           powershell -command ".\amazon-cloudwatch-agent-ctl.ps1 -a fetch-config -m ec2 -c file:config.json"
           cd \windows\temp\
-          sc config AmazonCloudWatchAgent start=automatic
+          sc config AmazonCloudWatchAgent start=auto
 
           @echo ** https://docs.chocolatey.org/en-us/choco/setup
           @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
@@ -1227,6 +1227,8 @@ Resources:
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
           powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
+          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-all
+          choco install --no-progress -y vcredist140
           SET DRIVER_TYPE=${driverType}
           IF %DRIVER_TYPE% EQU DCV-IDD (
             msiexec.exe /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
