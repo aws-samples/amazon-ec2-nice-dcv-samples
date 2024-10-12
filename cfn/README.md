@@ -98,8 +98,8 @@ The following URLs are available in **Outputs** section
 - `SSMsessionManager`* : [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to change login user password. Password change command is in *Description* field.
 - `DCVwebConsole`: DCV web browser console URL link. Login as user specified in *Description* field. 
 - `EC2console`: EC2 console URL link to manage EC2 instance.
-- `EC2instanceConnect`* (if available, Linux): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality is only available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html).
-- `EC2serialConsole` (if available, Linux): [EC2 Serial Console](https://aws.amazon.com/blogs/aws/troubleshoot-boot-and-networking-issues-with-new-ec2-serial-console/) URL link. Functionality is only available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-serial-console-prerequisites.html).
+- `EC2instanceConnect`* (if available, Linux): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html).
+- `EC2serialConsole` (if available, Linux): [EC2 Serial Console](https://aws.amazon.com/blogs/aws/troubleshoot-boot-and-networking-issues-with-new-ec2-serial-console/) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-serial-console-prerequisites.html).
 - `RDPconnect` (Windows): in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update DCV server.
 
 \* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to DCV server using [native clients](#nice-dcv-clients).*
