@@ -38,15 +38,17 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 
 
 ## Deployment
-See [cfn](cfn) section for CloudFormation deployment instructions.
+See [cfn](cfn) section for deployment instructions.
 
 
 ## Other deployment options
-The official [DCV site](https://www.amazondcv.com/) provides [CloudFormation template](https://www.amazondcv.com/cloudformation.html) that allow the deployment of EC2 instances with DCV pre-installed and fully configured. Refer to [Announcing updates to NICE DCV AWS CloudFormation Templates](https://aws.amazon.com/blogs/desktop-and-application-streaming/announcing-updates-to-nice-dcv-aws-cloudformation-templates/) for information
+Refer to [Amazon DCV Administrator Guide](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html) for installation instructions.
 
-To include Amazon DCV in your [EC2 Image Builder pipeline](https://docs.aws.amazon.com/imagebuilder/latest/userguide/manage-pipelines.html), refer to [Announcing the NICE DCV Amazon-managed component for EC2 Image Builder](https://aws.amazon.com/blogs/desktop-and-application-streaming/announcing-the-nice-dcv-amazon-managed-component-for-ec2-image-builder/)
+The official [DCV site](https://www.amazondcv.com/) provides [CloudFormation template](https://www.amazondcv.com/cloudformation.html) that allow the deployment of EC2 instances with DCV pre-installed and fully configured for internal testing. Refer to [Announcing updates to NICE DCV AWS CloudFormation Templates](https://aws.amazon.com/blogs/desktop-and-application-streaming/announcing-updates-to-nice-dcv-aws-cloudformation-templates/) for information.
 
-For DCV installation scripts, refer to the following community articles:
+Refer to [Announcing the NICE DCV Amazon-managed component for EC2 Image Builder](https://aws.amazon.com/blogs/desktop-and-application-streaming/announcing-the-nice-dcv-amazon-managed-component-for-ec2-image-builder/) about including DCV in your [EC2 Image Builder pipeline](https://docs.aws.amazon.com/imagebuilder/latest/userguide/manage-pipelines.html).
+
+DCV installation scripts are available from the following [re:Post](https://aws.amazon.com/blogs/aws/aws-repost-a-reimagined-qa-experience-for-the-aws-community/) community articles:
 - [How do I install GUI (graphical desktop) on Amazon EC2 instances running Amazon Linux 2 (AL2)?](https://repost.aws/articles/ARuqicSphdQ8-GiwZC2-QOXg/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-amazon-linux-2-al2)
 - [How do I install GUI (graphical desktop) on Amazon EC2 instances running RHEL/Rocky Linux 8/9?](https://repost.aws/articles/AR4Nbl3SxTSIW3WpFSUJhzXg/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9)
 - [How do I install GUI (graphical desktop) on Amazon EC2 instances running SUSE Linux Enterprise Server 15 (SLES 15)?](https://repost.aws/articles/ARGF6bVA19QC6IVcaUy-69Ag/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-suse-linux-enterprise-server-15-sles-15)
@@ -61,5 +63,5 @@ See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more inform
 This library is licensed under the MIT-0 License. See the LICENSE file.
 
 ## Notice
-Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. Some operating systems *are not supported* by DCV.  Refer to [documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for information.
+Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed on the EC2 instance. Some operating systems *are not supported* by DCV.  Refer to [documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for information.
 
