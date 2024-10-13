@@ -72,17 +72,19 @@ Networking
 - `assignStaticIP`: associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) to prevent assigned IPv4 address from changing every time EC2 instance is stopped and started. There is a hourly charge when instance is stopped as listed at [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addressesv). Default is `Yes`
 
 Allowed IP prefix and ports
-- `ingressIPv4`: allowed IPv4 source prefix to DCV, SSH(Linux) and RDP(Windows) ports, e.g. `1.2.3.4/32`. Get your source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
-- `ingressIPv6`: allowed IPv6 source prefix to DCV, SSH(Linux) and RDP(Windows) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
+- `ingressIPv4`: allowed IPv4 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports, e.g. `1.2.3.4/32`. Get your source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
+- `ingressIPv6`: allowed IPv6 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
 - `allowRDPport` (Windows): allow inbound RDP. Option is not related to [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) access. Default is `No`
 - `allowSSHport` (Linux): allow inbound SSH. Option is not related to [EC2 Instance Connect](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) access. Default is `Yes`
 - `allowWebServerPorts`: allow inbound HTTP and/or HTTPS. Use this option if you intend to setup web server. Default is `No`
+- `installWebmin`(some Linux OS): install [Webmin](https://webmin.com/) web-based system administration tool which is released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) license. Default is `No`
 
-EBS Volume
+
+EBS
 - `volumeSize`: EBS root volume size in GiB
 - `volumeType`: `gp2` or `gp3` [general purpose](https://aws.amazon.com/ebs/general-purpose/) EBS type. Default is `gp3`
 
-AWS Backup (optional)
+Backup
 - `enableBackup` : EC2 data protection with [AWS Backup](https://aws.amazon.com/backup/). Default is `No`
 - `scheduleExpression`: start time of backup using [CRON expression](https://en.wikipedia.org/wiki/Cron#CRON_expression). Default is 1 am daily
 - `scheduleExpressionTimezone`: timezone in which the schedule expression is set. Default is `Etc/UTC`
@@ -95,12 +97,14 @@ It may take more than 15 minutes to provision the EC2 instance. After your stack
 
 ### CloudFormation Outputs and Exports
 The following URLs are available in **Outputs** section 
-- `SSMsessionManager`* : [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to change login user password. Password change command is in *Description* field.
+- `SSMsessionManager`* : [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to change DCV login user password. Password change command is in *Description* field.
 - `DCVwebConsole`: DCV web browser console URL link. Login as user specified in *Description* field. 
 - `EC2console`: EC2 console URL link to manage EC2 instance.
 - `EC2instanceConnect`* (if available, Linux): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html).
 - `EC2serialConsole` (if available, Linux): [EC2 Serial Console](https://aws.amazon.com/blogs/aws/troubleshoot-boot-and-networking-issues-with-new-ec2-serial-console/) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-serial-console-prerequisites.html).
 - `RDPconnect` (Windows): in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update DCV server.
+- `WebminUrl` (if available, Linux): [Webmin](https://webmin.com/) URL link. Set the root password by running `sudo passwd root` from `EC2instanceConnect`, `SSMsessionManager` or SSH session first
+
 
 \* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to DCV server using [native clients](#nice-dcv-clients).*
 

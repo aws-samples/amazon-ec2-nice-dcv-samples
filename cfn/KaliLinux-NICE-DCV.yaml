@@ -48,6 +48,7 @@ Metadata:
           - ingressIPv6
           - allowSSHport
           - allowWebServerPorts
+          - installWebmin
       - Label:
           default: EBS volume
         Parameters:
@@ -151,6 +152,13 @@ Parameters:
       - HTTP-and-HTTPS
       - HTTP
       - HTTPS
+    Default: "No"
+  installWebmin:
+    Type: String
+    Description: https://webmin.com/
+    AllowedValues:
+      - "Yes"
+      - "No"
     Default: "No"
 
   volumeSize:
@@ -591,6 +599,8 @@ Conditions:
   createSgSSH: !Equals [!Ref allowSSHport, "Yes"]
   createBackup: !Equals [!Ref enableBackup, "Yes"]
 
+  installWebmin: !Equals [!Ref installWebmin, "Yes"]
+
 Mappings:
   EICprefixMap: # EC2 instance connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html#ec2-instance-connect-setup-security-group
     af-south-1:
@@ -876,6 +886,22 @@ Resources:
       GroupDescription: Allow inbound DCV and SSH
       VpcId: !Ref vpcID
       SecurityGroupIngress:
+        - !If
+          - installWebmin
+          - Description: Webmin (IPv4)
+            IpProtocol: tcp
+            FromPort: 10000
+            ToPort: 10000
+            CidrIp: !Ref ingressIPv4
+          - !Ref AWS::NoValue
+        - !If
+          - installWebmin
+          - Description: Webmin (IPv6)
+            IpProtocol: tcp
+            FromPort: 10000
+            ToPort: 10000
+            CidrIpv6: !Ref ingressIPv6
+          - !Ref AWS::NoValue
         - !If
           - createSgSSH
           - Description: SSH (IPv4)
@@ -1607,6 +1633,17 @@ Resources:
           /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
           systemctl enable --now amazon-cloudwatch-agent
 
+          # Webmin: https://webmin.com/download/
+          export webmin="${installWebmin}"
+          case $webmin in
+            Yes)
+              cd /tmp/cfn
+              curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
+              echo 'Y' | sh ./setup-repos.sh
+              apt-get install -q -y webmin
+              ;;
+          esac
+
           # MountPoint-S3: https://github.com/awslabs/mountpoint-s3
           curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb
           apt-get install -q -y ./mount-s3.deb
@@ -1786,3 +1823,13 @@ Outputs:
     Value: !Ref instanceIamRole
     Export:
       Name: !Sub ${AWS::StackName}-IAMRole
+
+  WebminUrl:
+    Condition: installWebmin
+    Description: Webmin (set root password and login as root)
+    Value:
+      !If [
+        displayPublicIP,
+        !Sub "https://${ec2Instance.PublicIp}:10000",
+        !Sub "https://${ec2Instance.PrivateIp}:10000",
+      ]
