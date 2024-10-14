@@ -1,5 +1,5 @@
 ## amazon-ec2-nice-dcv-samples 
-Sample [AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates to provision Windows or Linux [Amazon EC2](https://aws.amazon.com/ec2/) instances with GUI (graphical user interface) running [Amazon DCV](https://aws.amazon.com/hpc/dcv/) server. Includes option to install NVIDIA or AMD GPU drivers. 
+Sample [AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates to provision Windows or Linux [Amazon EC2](https://aws.amazon.com/ec2/) instances with GUI (graphical user interface) running [Amazon DCV](https://aws.amazon.com/hpc/dcv/) server. Includes option to install GPU drivers. 
 
 ## Description
 [Amazon DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops in the cloud from any device. To use, install a [desktop environment and desktop manager](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gui) (Linux), [install DCV server software](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html), and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) (screenshot below) or [native client](https://www.amazondcv.com/latest.html). 
@@ -42,13 +42,13 @@ See [cfn](cfn) section for deployment instructions.
 
 
 ## Other deployment options
-Refer to [Amazon DCV Administrator Guide](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html) for installation instructions.
+The official [DCV site](https://www.amazondcv.com/) provides a [CloudFormation template](https://www.amazondcv.com/cloudformation.html) that allows the deployment of EC2 instances with DCV pre-installed and fully configured for internal testing. Refer to [Announcing updates to NICE DCV AWS CloudFormation Templates](https://aws.amazon.com/blogs/desktop-and-application-streaming/announcing-updates-to-nice-dcv-aws-cloudformation-templates/) for information.
 
-The official [DCV site](https://www.amazondcv.com/) provides [CloudFormation template](https://www.amazondcv.com/cloudformation.html) that allow the deployment of EC2 instances with DCV pre-installed and fully configured for internal testing. Refer to [Announcing updates to NICE DCV AWS CloudFormation Templates](https://aws.amazon.com/blogs/desktop-and-application-streaming/announcing-updates-to-nice-dcv-aws-cloudformation-templates/) for information.
+To include DCV in your [EC2 Image Builder pipeline](https://docs.aws.amazon.com/imagebuilder/latest/userguide/manage-pipelines.html), refer to [Announcing the NICE DCV Amazon-managed component for EC2 Image Builder](https://aws.amazon.com/blogs/desktop-and-application-streaming/announcing-the-nice-dcv-amazon-managed-component-for-ec2-image-builder/).
 
-Refer to [Announcing the NICE DCV Amazon-managed component for EC2 Image Builder](https://aws.amazon.com/blogs/desktop-and-application-streaming/announcing-the-nice-dcv-amazon-managed-component-for-ec2-image-builder/) about including DCV in your [EC2 Image Builder pipeline](https://docs.aws.amazon.com/imagebuilder/latest/userguide/manage-pipelines.html).
+For manual installation instructions, refer to [Amazon DCV Administrator Guide](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html).
 
-DCV installation scripts are available from the following [re:Post](https://aws.amazon.com/blogs/aws/aws-repost-a-reimagined-qa-experience-for-the-aws-community/) community articles:
+DCV installation scripts are available from the following [re:Post](https://repost.aws/) community articles:
 - [How do I install GUI (graphical desktop) on Amazon EC2 instances running Amazon Linux 2 (AL2)?](https://repost.aws/articles/ARuqicSphdQ8-GiwZC2-QOXg/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-amazon-linux-2-al2)
 - [How do I install GUI (graphical desktop) on Amazon EC2 instances running RHEL/Rocky Linux 8/9?](https://repost.aws/articles/AR4Nbl3SxTSIW3WpFSUJhzXg/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9)
 - [How do I install GUI (graphical desktop) on Amazon EC2 instances running SUSE Linux Enterprise Server 15 (SLES 15)?](https://repost.aws/articles/ARGF6bVA19QC6IVcaUy-69Ag/how-do-i-install-gui-graphical-desktop-on-amazon-ec2-instances-running-suse-linux-enterprise-server-15-sles-15)
