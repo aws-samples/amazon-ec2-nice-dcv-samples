@@ -110,7 +110,7 @@ The following URLs are available in **Outputs** section
 - `WebminUrl` (if available, Linux): [Webmin](https://webmin.com/) URL link. Set the root password by running `sudo passwd root` from `EC2instanceConnect`, `SSMsessionManager` or SSH session, and login as `root`.
 
 
-\* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to DCV server using [native clients](#nice-dcv-clients).*
+\* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to DCV server using [native clients](#dcv-clients).*
 
 The following values are available as [CloudFormation Exports](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html)
 - `<Stack Name>-IAMRole`: IAM role name
@@ -162,7 +162,7 @@ The CloudFormation template configure *multi-user.target* and *graphical.target*
 
 
 ### GPU driver installation
-On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, DCV console sessions have direct access to the GPU, providing features such as GPU accelerated OpenGL and hardware accelerated video streaming encoding (screen shot below). For best results, connect to your EC2 instance using [native client](#nice-dcv-clients).
+On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, DCV console sessions have direct access to the GPU, providing features such as GPU accelerated OpenGL and hardware accelerated video streaming encoding (screen shot below). For best results, connect to your EC2 instance using [native client](#dcv-clients).
 
 <img alternate="DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
 
