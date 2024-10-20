@@ -55,7 +55,7 @@ Metadata:
           - volumeSize
           - volumeType
       - Label:
-          default: AWS Backup
+          default: Backup
         Parameters:
           - enableBackup
           - scheduleExpression
@@ -1954,7 +1954,7 @@ Outputs:
 
   EC2serialConsole:
     Description: EC2 Serial Console
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?region=${AWS::Region}&connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
 
   SSMsessionManager:
     Description: SSM Session Manager ("sudo passwd ec2-user" to change password)

@@ -56,7 +56,7 @@ Metadata:
           - volumeSize
           - volumeType
       - Label:
-          default: AWS Backup
+          default: Backup
         Parameters:
           - enableBackup
           - scheduleExpression
@@ -1631,7 +1631,7 @@ Resources:
                   aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
                 fi
                 if [ $? -eq 1 ]; then
-                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-17.2/NVIDIA-Linux-x86_64-550.90.07-grid-aws.run
+                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-17.4/NVIDIA-Linux-x86_64-550.90.10-grid-aws.run
                 fi
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -2060,7 +2060,7 @@ Resources:
             Yes)
               cd /tmp/cfn
               curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
-              echo 'Y' | sh ./setup-repos.sh
+              echo 'Y' | sh ./setup-repos.sh -f
               dnf install -q -y webmin
               ;;
           esac
@@ -2214,7 +2214,7 @@ Outputs:
 
   EC2serialConsole:
     Description: EC2 Serial Console
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?region=${AWS::Region}&connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
 
   SSMsessionManager:
     Description: SSM Session Manager ("sudo passwd ec2-user" to change password)
