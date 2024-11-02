@@ -67,9 +67,9 @@ Parameters:
     Type: String
     Description: Version
     AllowedValues:
-      - SUSE Linux Enterprise Server 15 SP5
+      - SUSE Linux Enterprise Server 15 SP6
       - SUSE Linux Enterprise Server 12 SP5
-    Default: SUSE Linux Enterprise Server 15 SP5
+    Default: SUSE Linux Enterprise Server 15 SP6
 
   ec2Name:
     Type: String
@@ -555,7 +555,7 @@ Parameters:
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
-  useSles15: !Equals [!Ref osVersion, "SUSE Linux Enterprise Server 15 SP5"]
+  useSles15: !Equals [!Ref osVersion, "SUSE Linux Enterprise Server 15 SP6"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   hasEIC:
     !Not [
@@ -1662,7 +1662,7 @@ Resources:
       ImageId:
         !If [
           useSles15,
-          "{{resolve:ssm:/aws/service/suse/sles/15-sp5/x86_64/latest}}",
+          "{{resolve:ssm:/aws/service/suse/sles/15-sp6/x86_64/latest}}",
           "{{resolve:ssm:/aws/service/suse/sles/12-sp5/x86_64/latest}}",
         ]
       InstanceType: !Ref instanceType
