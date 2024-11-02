@@ -1175,19 +1175,6 @@ Resources:
               mode: "000755"
               owner: "ubuntu"
               group: "ubuntu"
-            "/home/ubuntu/update-awscli":
-              content: |
-                #!/bin/bash
-                cd /tmp
-                sudo rm -f awscliv2.zip
-                curl https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-                unzip -q -o awscliv2.zip
-                /usr/bin/aws --version
-                sudo ./aws/install --update -b /usr/bin
-                /usr/bin/aws --version
-              mode: "000755"
-              owner: "ubuntu"
-              group: "ubuntu"
             "/home/ubuntu/update-mountpoint-s3":
               content: |
                 #!/bin/bash
@@ -1582,8 +1569,7 @@ Resources:
 
                 # USB and GPU driver DKMS
                 apt-get update
-                apt-get install -q -y dkms
-                apt-get install -q -y linux-headers-aws linux-modules-extra-aws 
+                apt-get install -q -y dkms linux-headers-aws linux-modules-extra-aws
                 apt-get upgrade -q -y
                 apt-get autoremove -q -y
 
