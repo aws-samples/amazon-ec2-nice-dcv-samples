@@ -1581,7 +1581,11 @@ Resources:
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"ubuntu\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
                 # USB and GPU driver DKMS
+                apt-get update
                 apt-get install -q -y dkms
+                apt-get install -q -y linux-headers-aws linux-modules-extra-aws 
+                apt-get upgrade -q -y
+                apt-get autoremove -q -y
 
                 # Disable reporting : https://wiki.ubuntu.com/Apport
                 sed -i "s/enabled=1/enable=0/g" /etc/default/apport
@@ -2078,9 +2082,7 @@ Resources:
           apt-get remove -q -y awscli
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-          unzip -q -o awscliv2.zip
-          ./aws/install -b /usr/bin
+          snap install aws-cli --classic
           echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ubuntu/.bashrc
 
           # Update OS
