@@ -1521,6 +1521,7 @@ Resources:
 
                 # USB and GPU driver DKMS
                 yum install -q -y dkms
+                systemctl enable dkms
               mode: "000740"
               owner: "root"
               group: "root"

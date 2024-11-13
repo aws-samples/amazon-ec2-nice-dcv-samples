@@ -1503,6 +1503,7 @@ Resources:
 
                 # USB and GPU driver DKMS
                 dnf install -q -y dkms
+                systemctl enable dkms
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
