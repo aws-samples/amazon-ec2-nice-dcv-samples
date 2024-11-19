@@ -4,7 +4,7 @@ Transform: "AWS::LanguageExtensions"
 
 Metadata:
   License:
-    Description: >
+    Description: |
       Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
       SPDX-License-Identifier: MIT-0
 
@@ -29,6 +29,7 @@ Metadata:
           - ec2KeyPair
           - osVersion
           - instanceType
+          - ec2TerminationProtection
       - Label:
           default: DCV
         Parameters:
@@ -99,6 +100,13 @@ Parameters:
     AllowedPattern: "^[a-z\\-\\d\\.]+$"
     ConstraintDescription: Specify valid EC2 instance type
     Default: t4g.medium
+  ec2TerminationProtection:
+    Type: String
+    Description: Enable EC2 termination protection to prevent accidental deletion
+    Default: "Yes"
+    AllowedValues:
+      - "Yes"
+      - "No"
 
   sessionType:
     Type: String
@@ -110,10 +118,10 @@ Parameters:
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
-      - "console-with-AMD_ROCm_repo_Driver"
       - "console"
       - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
+      - "virtual-with-AMD_ROCm_repo_Driver"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
@@ -570,11 +578,11 @@ Parameters:
       - Pacific/Tarawa
       - Pacific/Tongatapu
       - WET
-    Default: "Etc/UTC"
+    Default: Etc/UTC
   deleteAfterDays:
     Type: Number
     Description: Number of days after creation that a recovery point (backup) is deleted
-    Default: 7
+    Default: 35
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -592,6 +600,8 @@ Conditions:
   useUbuntuPro2004x86: !Equals [!Ref osVersion, "Ubuntu Pro 20.04 (x86_64)"]
   useUbuntuPro1804x86: !Equals [!Ref osVersion, "Ubuntu Pro 18.04 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
+  enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
+
   hasEIC:
     !Not [
       !Equals [
@@ -815,7 +825,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service: [ec2.amazonaws.com]
-            Action: ["sts:AssumeRole"]
+            Action: [sts:AssumeRole]
       Path: /
       Policies:
         - PolicyName: dcvLicensing
@@ -825,7 +835,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub "arn:*:s3:::dcv-license.${AWS::Region}/*"
+                Resource: !Sub arn:*:s3:::dcv-license.${AWS::Region}/*
         - PolicyName: gpuDrivers
           PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
             Version: "2012-10-17"
@@ -876,12 +886,12 @@ Resources:
               - Effect: Allow
                 Action:
                   - route53:ChangeResourceRecordSets
-                Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
+                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
                 Condition:
                   ForAllValues:StringEquals:
-                    "route53:ChangeResourceRecordSetsRecordTypes": ["TXT"]
+                    route53:ChangeResourceRecordSetsRecordTypes: [TXT]
                   ForAllValues:StringLike:
-                    "route53:ChangeResourceRecordSetsNormalizedRecordNames":
+                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
                       ["_acme-challenge.*"]
         - PolicyName: Route53UpdaterAccess
           PolicyDocument:
@@ -895,13 +905,13 @@ Resources:
               - Effect: Allow
                 Action:
                   - route53:ChangeResourceRecordSets
-                Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
+                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
                 Condition:
                   ForAllValues:StringEquals:
-                    "route53:ChangeResourceRecordSetsRecordTypes": ["A"]
+                    route53:ChangeResourceRecordSetsRecordTypes: [A]
                   ForAllValues:StringLike:
-                    "route53:ChangeResourceRecordSetsNormalizedRecordNames":
-                      ["site.example.com"]
+                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
+                      [site.example.com]
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
@@ -1153,7 +1163,7 @@ Resources:
             - 06_gpu_nvidia_runfile_install
           console-with-Ubuntu_repo_Driver:
             - 07_gpu_ubuntu_driver_install
-          console-with-AMD_ROCm_repo_Driver:
+          virtual-with-AMD_ROCm_repo_Driver:
             - 08_gpu_amd_rocm_repo_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -1332,12 +1342,6 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 export DEBIAN_FRONTEND=noninteractive
 
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                apt-get install -q -y linux-headers-aws
-                apt-get install -q -y linux-modules-extra-aws
-                apt-get install -q -y usbutils
-                # dcvusbdriverinstaller --quiet
-
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 apt-get update -q
@@ -1345,6 +1349,12 @@ Resources:
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                # Firewall check
+                if (systemctl list-units | grep -q ufw); then
+                  ufw allow ${listenPort}/tcp
+                  ufw allow ${listenPort}/udp
+                fi
 
                 SESSION="${sessionType}"
                 case $SESSION in
@@ -1572,6 +1582,12 @@ Resources:
                 apt-get install -q -y dkms linux-headers-aws linux-modules-extra-aws
                 apt-get upgrade -q -y
                 apt-get autoremove -q -y
+
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                apt-get install -q -y linux-headers-aws
+                apt-get install -q -y linux-modules-extra-aws
+                apt-get install -q -y usbutils
+                # dcvusbdriverinstaller --quiet
 
                 # Disable reporting : https://wiki.ubuntu.com/Apport
                 sed -i "s/enabled=1/enable=0/g" /etc/default/apport
@@ -1854,8 +1870,6 @@ Resources:
                 apt-get install -q -y amdgpu
                 apt-get install -q -y rocminfo
 
-                sed -i "/^#target-fps/a target-fps=60" /etc/dcv/dcv.conf
-
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -2005,7 +2019,7 @@ Resources:
       KeyName: !Ref ec2KeyPair
       SubnetId: !Ref subnetID
       Monitoring: true
-      DisableApiTermination: true
+      DisableApiTermination: !If [enableProtection, true, false]
       EbsOptimized: true
       SecurityGroupIds:
         - !Ref securityGroup
@@ -2264,7 +2278,7 @@ Resources:
       BackupSelection:
         IamRoleArn: !GetAtt backupRestoreRole.Arn
         Resources:
-          - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}"
+          - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
         SelectionName: !Sub
           - "${AWS::StackName}-backupSelection-${UID}"
           - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
@@ -2279,7 +2293,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service: backup.amazonaws.com
-            Action: "sts:AssumeRole"
+            Action: sts:AssumeRole
       Policies:
         - PolicyName: restore-EC2-instance-profile
           PolicyDocument: # https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-ec2.html
@@ -2290,8 +2304,8 @@ Resources:
                   - iam:PassRole
                 Resource: !GetAtt instanceIamRole.Arn
       ManagedPolicyArns:
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName

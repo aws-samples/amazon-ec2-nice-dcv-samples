@@ -4,7 +4,7 @@ Transform: "AWS::LanguageExtensions"
 
 Metadata:
   License:
-    Description: >
+    Description: |
       Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
       SPDX-License-Identifier: MIT-0
 
@@ -29,6 +29,7 @@ Metadata:
           - ec2KeyPair
           - imageId
           - instanceType
+          - ec2TerminationProtection
       - Label:
           default: DCV
         Parameters:
@@ -83,6 +84,13 @@ Parameters:
     AllowedPattern: "^[a-z\\-\\d\\.]+$"
     ConstraintDescription: Specify valid EC2 instance type
     Default: t3.medium
+  ec2TerminationProtection:
+    Type: String
+    Description: Enable EC2 termination protection to prevent accidental deletion
+    Default: "Yes"
+    AllowedValues:
+      - "Yes"
+      - "No"
 
   sessionType:
     Type: String
@@ -540,15 +548,17 @@ Parameters:
       - Pacific/Tarawa
       - Pacific/Tongatapu
       - WET
-    Default: "Etc/UTC"
+    Default: Etc/UTC
   deleteAfterDays:
     Type: Number
     Description: Number of days after creation that a recovery point (backup) is deleted
-    Default: 7
+    Default: 35
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
+  enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
+
   hasEIC:
     !Not [
       !Equals [
@@ -772,7 +782,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service: [ec2.amazonaws.com]
-            Action: ["sts:AssumeRole"]
+            Action: [sts:AssumeRole]
       Path: /
       Policies:
         - PolicyName: dcvLicensing
@@ -782,7 +792,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub "arn:*:s3:::dcv-license.${AWS::Region}/*"
+                Resource: !Sub arn:*:s3:::dcv-license.${AWS::Region}/*
         - PolicyName: gpuDrivers
           PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
             Version: "2012-10-17"
@@ -833,12 +843,12 @@ Resources:
               - Effect: Allow
                 Action:
                   - route53:ChangeResourceRecordSets
-                Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
+                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
                 Condition:
                   ForAllValues:StringEquals:
-                    "route53:ChangeResourceRecordSetsRecordTypes": ["TXT"]
+                    route53:ChangeResourceRecordSetsRecordTypes: [TXT]
                   ForAllValues:StringLike:
-                    "route53:ChangeResourceRecordSetsNormalizedRecordNames":
+                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
                       ["_acme-challenge.*"]
         - PolicyName: Route53UpdaterAccess
           PolicyDocument:
@@ -852,13 +862,13 @@ Resources:
               - Effect: Allow
                 Action:
                   - route53:ChangeResourceRecordSets
-                Resource: !Sub "arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID"
+                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
                 Condition:
                   ForAllValues:StringEquals:
-                    "route53:ChangeResourceRecordSetsRecordTypes": ["A"]
+                    route53:ChangeResourceRecordSetsRecordTypes: [A]
                   ForAllValues:StringLike:
-                    "route53:ChangeResourceRecordSetsNormalizedRecordNames":
-                      ["site.example.com"]
+                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
+                      [site.example.com]
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
@@ -1101,7 +1111,7 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
-                sudo rm -f nice-dcv-el$OS_VERSION-$(arch).tgz
+                sudo rm -f /tmp/nice-dcv-el$OS_VERSION-$(arch).tgz
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el$OS_VERSION-$(arch).tgz
                 tar -xvzf nice-dcv-el$OS_VERSION-$(arch).tgz && cd nice-dcv-*-el$OS_VERSION-$(arch)
                 sudo dnf install -y ./nice-dcv-server-*.rpm
@@ -1114,24 +1124,11 @@ Resources:
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
-            "/home/ec2-user/update-awscli":
-              content: |
-                #!/bin/bash
-                cd /tmp
-                sudo rm -f awscliv2.zip
-                curl https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-                unzip -q -o awscliv2.zip
-                /usr/bin/aws --version
-                sudo ./aws/install --update -b /usr/bin
-                /usr/bin/aws --version
-              mode: "000755"
-              owner: "ec2-user"
-              group: "ec2-user"
             "/home/ec2-user/update-mountpoint-s3":
               content: |
                 #!/bin/bash
                 cd /tmp
-                rm -f mount-s3.rpm
+                sudo rm -f /tmp/mount-s3.rpm
                 wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
                 sudo dnf install -y ./mount-s3.rpm
               mode: "000755"
@@ -1279,14 +1276,28 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                dnf install -q -y kernel-devel
-                dnf install -q -y usbutils
-                #dcvusbdriverinstaller --quiet
-
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
+                if (systemctl list-units | grep -q firewalld); then
+                  if (systemctl status firewalld | grep -q running); then
+                    firewall-cmd --permanent --add-port ${listenPort}/tcp
+                    firewall-cmd --permanent --add-port ${listenPort}/udp
+                    firewall-cmd --permanent --add-service http
+                    firewall-cmd --permanent --add-service https
+                    firewall-cmd --reload
+                  else
+                    firewall-offline-cmd --add-port ${listenPort}/tcp
+                    firewall-offline-cmd --add-port ${listenPort}/udp
+                    firewall-offline-cmd --add-service http
+                    firewall-offline-cmd --add-service https
+                  fi
+                fi
+
+                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                snap install aws-cli --classic
 
                 SESSION="${sessionType}"
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
@@ -1486,15 +1497,12 @@ Resources:
                 dnf install -q -y dkms
                 systemctl enable dkms
 
-                # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
-                # Get around ":dbus.proxies:Introspect error on :1.170:/org/fedoraproject/FirewallD" error
-                if (systemctl list-units | grep -q firewalld); then
-                  systemctl stop firewalld
-                  firewall-offline-cmd --add-port ${listenPort}/tcp
-                  firewall-offline-cmd --add-port ${listenPort}/udp
-                  firewall-offline-cmd --add-service http
-                  firewall-offline-cmd --add-service https
-                fi
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                dnf install -q -y kernel-devel
+                dnf install -q -y kernel-modules-extra
+                dnf install -q -y usbutils
+                #dcvusbdriverinstaller --quiet
+
               mode: "000740"
               owner: "root"
               group: "root"
@@ -1541,7 +1549,7 @@ Resources:
       KeyName: !Ref ec2KeyPair
       SubnetId: !Ref subnetID
       Monitoring: true
-      DisableApiTermination: true
+      DisableApiTermination: !If [enableProtection, true, false]
       EbsOptimized: true
       SecurityGroupIds:
         - !Ref securityGroup
@@ -1581,7 +1589,9 @@ Resources:
           dnf install -q -y ./ec2-instance-connect.rpm ./ec2-instance-connect-selinux.noarch.rpm
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
-          dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
+          if (! systemctl list-units | grep -q amazon-ssm-agent); then
+            dnf install -q -y https://s3.${AWS::Region}.amazonaws.com/amazon-ssm-${AWS::Region}/latest/linux_amd64/amazon-ssm-agent.rpm
+          fi
           systemctl enable --now amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
@@ -1604,9 +1614,9 @@ Resources:
           dnf remove -q -y awscli
           cd /tmp/cfn
           # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-          unzip -q -o awscliv2.zip
-          ./aws/install -b /usr/bin
+          dnf install -y snapd
+          systemctl enable --now snapd snapd.socket
+          ln -s /var/lib/snapd/snap /snap
           echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
 
           # Update OS
@@ -1744,7 +1754,7 @@ Resources:
       BackupSelection:
         IamRoleArn: !GetAtt backupRestoreRole.Arn
         Resources:
-          - !Sub "arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}"
+          - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
         SelectionName: !Sub
           - "${AWS::StackName}-backupSelection-${UID}"
           - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
@@ -1759,7 +1769,7 @@ Resources:
           - Effect: Allow
             Principal:
               Service: backup.amazonaws.com
-            Action: "sts:AssumeRole"
+            Action: sts:AssumeRole
       Policies:
         - PolicyName: restore-EC2-instance-profile
           PolicyDocument: # https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-ec2.html
@@ -1770,8 +1780,8 @@ Resources:
                   - iam:PassRole
                 Resource: !GetAtt instanceIamRole.Arn
       ManagedPolicyArns:
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup"
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores"
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName

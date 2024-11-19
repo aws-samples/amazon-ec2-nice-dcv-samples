@@ -28,6 +28,7 @@ Metadata:
           - ec2Name
           - imageId
           - instanceType
+          - ec2TerminationProtection
       - Label:
           default: DCV
         Parameters:
@@ -78,6 +79,14 @@ Parameters:
     AllowedPattern: ^[a-z\-\d\.]+$
     ConstraintDescription: Specify valid EC2 instance type
     Default: t3.medium
+
+  ec2TerminationProtection:
+    Type: String
+    Description: Enable EC2 termination protection to prevent accidental deletion
+    Default: "Yes"
+    AllowedValues:
+      - "Yes"
+      - "No"
 
   driverType:
     Description: Graphics driver to install
@@ -555,11 +564,13 @@ Parameters:
   deleteAfterDays:
     Type: Number
     Description: Number of days after creation that a recovery point (backup) is deleted
-    Default: 7
+    Default: 35
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
+  enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
+
   createSgHTTP:
     !Or [
       !Equals [!Ref allowWebServerPorts, HTTP],
@@ -617,6 +628,8 @@ Mappings:
       PrefixList: pl-bca247d5
     ap-southeast-4:
       PrefixList: pl-0fb7e7cfe038ae0e9
+    ap-southeast-5:
+      PrefixList: pl-09076f83e90b139d0
     ca-central-1:
       PrefixList: pl-38a64351
     ca-west-1:
@@ -662,10 +675,8 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service:
-                - ec2.amazonaws.com
-            Action:
-              - sts:AssumeRole
+              Service: [ec2.amazonaws.com]
+            Action: [sts:AssumeRole]
       Path: /
       Policies:
         - PolicyName: dcvLicensing
@@ -795,7 +806,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 80
             ToPort: 80
-            CidrIpv6: "::/0"
+            CidrIpv6: ::/0
           - !Ref AWS::NoValue
         - !If
           - createSgHTTPS
@@ -811,7 +822,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIpv6: "::/0"
+            CidrIpv6: ::/0
           - !Ref AWS::NoValue
         - !If
           - createSgRDP
@@ -1172,7 +1183,7 @@ Resources:
       IamInstanceProfile: !Ref instanceProfile
       SubnetId: !Ref subnetID
       Monitoring: true
-      DisableApiTermination: true
+      DisableApiTermination: !If [enableProtection, true, false]
       EbsOptimized: true
       SecurityGroupIds:
         - !Ref securityGroup
