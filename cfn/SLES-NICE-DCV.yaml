@@ -69,7 +69,7 @@ Parameters:
     Description: Version
     AllowedValues:
       - SUSE Linux Enterprise Server 15 SP6
-      - SUSE Linux Enterprise Server 12 SP5
+#      - SUSE Linux Enterprise Server 12 SP5
     Default: SUSE Linux Enterprise Server 15 SP6
 
   ec2Name:
@@ -100,19 +100,19 @@ Parameters:
     Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
-      - "console-with-NVIDIA_repo_Driver"
-      - "console-with-NVIDIA_runfile_Driver"
+#      - "console-with-NVIDIA_repo_Driver"
+#      - "console-with-NVIDIA_runfile_Driver"
       - "console"
-      - "virtual-with-NVIDIA_repo_Driver"
-      - "virtual-with-NVIDIA_runfile_Driver"
-      - "virtual-with-AMD_ROCm_repo_Driver"
+#      - "virtual-with-NVIDIA_repo_Driver"
+#      - "virtual-with-NVIDIA_runfile_Driver"
+#      - "virtual-with-AMD_ROCm_repo_Driver"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
     Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 535.183.06
+    Default: 535.216.01
   listenPort:
     Type: Number
     Description: DCV server TCP/UDP port
