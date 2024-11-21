@@ -34,7 +34,6 @@ Metadata:
           default: DCV
         Parameters:
           - sessionType
-          - teslaDriverVersion
           - listenPort
       - Label:
           default: Network
@@ -68,9 +67,9 @@ Parameters:
     Type: String
     Description: Version
     AllowedValues:
-      - SUSE Linux Enterprise Server 15 SP6
-#      - SUSE Linux Enterprise Server 12 SP5
-    Default: SUSE Linux Enterprise Server 15 SP6
+      - SUSE Linux Enterprise Server 15 SP5
+    #      - SUSE Linux Enterprise Server 12 SP5
+    Default: SUSE Linux Enterprise Server 15 SP5
 
   ec2Name:
     Type: String
@@ -78,7 +77,7 @@ Parameters:
     Default: SLES
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
+    Description: Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )
     AllowedPattern: ".+"
     ConstraintDescription: Select a key pair
   instanceType:
@@ -100,19 +99,8 @@ Parameters:
     Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
-#      - "console-with-NVIDIA_repo_Driver"
-#      - "console-with-NVIDIA_runfile_Driver"
       - "console"
-#      - "virtual-with-NVIDIA_repo_Driver"
-#      - "virtual-with-NVIDIA_runfile_Driver"
-#      - "virtual-with-AMD_ROCm_repo_Driver"
     Default: "virtual"
-  teslaDriverVersion:
-    Type: String
-    Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
-    AllowedPattern: "^[\\d\\.]+$"
-    ConstraintDescription: Specify valid driver version
-    Default: 535.216.01
   listenPort:
     Type: Number
     Description: DCV server TCP/UDP port
@@ -798,45 +786,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub arn:*:s3:::dcv-license.${AWS::Region}/*
-        - PolicyName: gpuDrivers
-          PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:Get*
-                  - s3:List*
-                Resource:
-                  - !Sub "arn:*:s3:::nvidia-gaming"
-                  - !Sub "arn:*:s3:::nvidia-gaming/*"
-                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers"
-                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers/*"
-                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers"
-                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers/*"
-        - PolicyName: MountPointS3Access
-          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:ListBucket
-                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET"
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:AbortMultipartUpload
-                  - s3:DeleteObject
-                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET/*"
-        - PolicyName: MountPointS3ExpressAccess
-          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3express:CreateSession
-                Resource: !Sub "arn:${AWS::Partition}:s3express:${AWS::Region}:${AWS::AccountId}:bucket/DOC-EXAMPLE-BUCKET--az_id--x-s3"
+                Resource: !Sub arn:aws:s3:::dcv-license.${AWS::Region}/*
         - PolicyName: Route53CertbotAccess
           PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
             Version: "2012-10-17"
@@ -1094,18 +1044,6 @@ Resources:
             - 00_dcv_install
           console:
             - 01_console
-          dcv_gpu_install:
-            - 02_dcv_gpu_install
-          console-with-NVIDIA_repo_Driver:
-            - 05_gpu_nvidia_repo_install
-          console-with-NVIDIA_runfile_Driver:
-            - 06_gpu_nvidia_runfile_install
-          virtual-with-NVIDIA_repo_Driver:
-            - 05_gpu_nvidia_repo_install
-          virtual-with-NVIDIA_runfile_Driver:
-            - 06_gpu_nvidia_runfile_install
-          virtual-with-AMD_ROCm_repo_Driver:
-            - 08_gpu_amd_rocm_repo_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/ec2-user/update-dcv":
@@ -1113,6 +1051,7 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
+                sudo rm -f /tmp/nice-dcv-sles$OS_VERSION-$(arch).tgz
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles$OS_VERSION-$(arch).tgz
                 tar -xvzf nice-dcv-sles$OS_VERSION-$(arch).tgz && cd nice-dcv-*-sles$OS_VERSION-$(arch)
                 sudo zypper install -y ./nice-dcv-server-*.rpm
@@ -1136,55 +1075,6 @@ Resources:
               mode: "000755"
               owner: "ec2-user"
               group: "users"
-            "/home/ec2-user/update-mountpoint-s3":
-              content: |
-                #!/bin/bash
-                cd /tmp
-                sudo rm -f /tmp/mount-s3.rpm
-                if (uname -a | grep -q x86); then
-                  wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
-                else
-                  wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.rpm
-                fi
-                sudo zypper install -y ./mount-s3.rpm
-              mode: "000755"
-              owner: "ec2-user"
-              group: "users"
-            "/etc/systemd/system/mount-s3-helper.service":
-              content: |
-                # https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md#automatically-mounting-an-s3-bucket-at-boot
-                [Unit]
-                Description=Mountpoint for S3 helper
-                Wants=network.target
-
-                [Service]
-                Restart=on-failure
-                RestartSec=5
-                Type=forking
-                ExecStart=/opt/mount-s3-helper.sh
-                ExecStop=/usr/bin/fusermount -u /mnt/s3-bucket-mount
-
-                [Install]
-                WantedBy=remote-fs.target
-              mode: "000644"
-              owner: "root"
-              group: "root"
-            "/opt/mount-s3-helper.sh":
-              content: |
-                #!/bin/bash
-                S3_BUCKET_NAME=DOC-EXAMPLE-BUCKET
-                MOUNT_FOLDER=/mnt/s3-bucket-mount
-                USER=ec2-user
-                GROUP=users
-
-                USERID=$(cat /etc/passwd | grep ^$USER: | cut -d":" -f 3)
-                GROUPID=$(cat /etc/group | grep ^$GROUP: | cut -d":" -f 3)
-                mkdir -p $MOUNT_FOLDER
-
-                /usr/bin/mount-s3 --uid $USERID --gid $GROUPID --allow-overwrite --allow-delete --allow-other $S3_BUCKET_NAME $MOUNT_FOLDER
-              mode: "000744"
-              owner: "root"
-              group: "root"
             "/etc/systemd/system/route53-updater.service":
               content: |
                 [Unit]
@@ -1292,15 +1182,6 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                # https://documentation.suse.com/sles/15/html/SLES-all/cha-adm-support.html#sec-admsupport-kernel-unsupported )
-                # zypper -n install -y kernel-devel
-                zypper -n install -y usbutils
-                #if (cat /etc/os-release | grep -q 15.); then
-                #  echo "allow_unsupported_modules 1" >> /etc/modprobe.d/10-unsupported-modules.conf
-                #  dcvusbdriverinstaller --quiet
-                #fi
-
                 if (cat /etc/os-release | grep -q 15.); then
                   export CFN_SIGNAL="python3 /usr/bin/cfn-signal"                   
                 else
@@ -1327,11 +1208,6 @@ Resources:
                 fi
 
                 SESSION="${sessionType}"
-                case $SESSION in
-                  console-with-NVIDIA*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                esac
 
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
@@ -1375,6 +1251,62 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+            "/root/install-sw.sh":
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/cfn
+                cd /tmp/cfn
+
+                # Update OS
+                zypper -n update -y
+
+                # remove AWSCLI version 1
+                zypper -n remove -y aws-cli
+                cd /tmp/cfn
+                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
+                unzip -q -o awscliv2.zip
+                ./aws/install -b /usr/bin
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
+
+                # Automatic updates : https://documentation.suse.com/sles/15-SP5/html/SLES-all/cha-onlineupdate-you.html#sec-onlineupdate-you-automatically
+                zypper -n install -y yast2-online-update-configuration
+
+                # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
+                if (arch | grep -q x86); then
+                  curl -s -L -O  https://amazoncloudwatch-agent.s3.amazonaws.com/suse/amd64/latest/amazon-cloudwatch-agent.rpm
+                else
+                  curl -s -L -O  https://amazoncloudwatch-agent.s3.amazonaws.com/suse/arm64/latest/amazon-cloudwatch-agent.rpm
+                fi
+                zypper -n --no-gpg-checks install -y ./amazon-cloudwatch-agent.rpm
+                /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+                systemctl enable --now amazon-cloudwatch-agent
+
+                # USB and GPU driver DKMS
+                if (cat /etc/os-release | grep -q 15.); then
+                  zypper -n install -y dkms
+                  systemctl enable dkms
+                fi
+
+                # Kernel headers for GPU and USB remotization
+                zypper -n install -y kernel-devel
+                zypper -n install -y usbutils
+
+                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
+                # https://documentation.suse.com/sles/15/html/SLES-all/cha-adm-support.html#sec-admsupport-kernel-unsupported )
+                #if (cat /etc/os-release | grep -q 15.); then
+                #  echo "allow_unsupported_modules 1" >> /etc/modprobe.d/10-unsupported-modules.conf
+                #  dcvusbdriverinstaller --quiet
+                #fi
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"
+          commands:
+            install:
+              command: "/root/install-sw.sh >> /var/log/install-sw.log 2>&1"
+              ignoreErrors: "true"
         00_dcv_install:
           files:
             "/root/install-dcv.sh":
@@ -1382,6 +1314,9 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
+
+                # Update OS
+                zypper -n update -y
 
                 # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
                 if (cat /etc/os-release | grep -q 15.); then
@@ -1417,7 +1352,7 @@ Resources:
                 systemctl enable cups
                 chgrp -R $GROUP /var/run/cups/certs/ && chmod g+x /var/run/cups/certs
 
-                # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+                # glxinfo : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
                 zypper -n install -y Mesa-demo-x
                 zypper -n install -y libva2 libva-drm2 libva-utils
 
@@ -1439,17 +1374,13 @@ Resources:
                 # Console session support
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
-                # USB and GPU driver DKMS
-                if (cat /etc/os-release | grep -q 15.); then
-                  zypper -n install -y dkms
-                fi
-
+                rm -f ${!0}
               mode: "000740"
               owner: "root"
               group: "root"
           commands:
             install:
-              command: "/root/install-dcv.sh > /var/log/install-dcv.log"
+              command: "/root/install-dcv.sh > /var/log/install-dcv.log 2>&1"
               ignoreErrors: "true"
         01_console:
           files:
@@ -1483,200 +1414,11 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
-        02_dcv_gpu_install:
-          files:
-            "/etc/systemd/system/dcv-gpu-install.service":
-              content: |
-                [Unit]
-                Description=Install GPU driver
-                After=default.target network.target
-
-                [Service]
-                ExecStart=/opt/install-gpu-driver
-
-                [Install]
-                WantedBy=default.target
-              mode: "000644"
-              owner: "root"
-              group: "root"
-        05_gpu_nvidia_repo_install: # https://documentation.suse.com/fr-fr/sles/15-SP4/html/SLES-all/article-modules.html#art-modules-nvidia-compute (for HPC SLES only)
-          files: # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#sles
-            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#suse15
-              content: |
-                #!/bin/bash
-                mkdir -p /tmp/gpu
-                cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-                zypper -n install -y kernel-devel
-                DISTRO=sles15
-                if (arch | grep -q x86); then
-                  ARCH=x86_64
-                else
-                  ARCH=sbsa
-                fi
-                zypper -n -t addrepo -G -f https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
-                zypper -n -t refresh
-                zypper -n install -y cuda-drivers
-                zypper -n install -y nvidia-settings
-
-                # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities
-                #zypper -n install -q -y cuda-toolkit
-                # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
-                #zypper -n install -q -y cudnn
-
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-                systemctl enable dcv-post-reboot
-                rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
-                reboot
-              mode: "000755"
-              owner: "root"
-              group: "root"
-        06_gpu_nvidia_runfile_install:
-          files:
-            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#runfile
-              content: !Sub |
-                #!/bin/bash
-                mkdir -p /tmp/gpu
-                cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-                zypper -n install -y kernel-devel
-                DRIVER_VERSION="${teslaDriverVersion}"
-                ARCH=$( /bin/arch )
-                curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
-
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-                chmod +x ./NVIDIA-Linux-*.run
-                ./NVIDIA-Linux-*.run -s
-
-                systemctl enable dcv-post-reboot
-                rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${!0}
-                reboot
-              mode: "000755"
-              owner: "root"
-              group: "root"
-        08_gpu_amd_rocm_repo_install:
-          files:
-            "/opt/install-gpu-driver": # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/package-manager-integration.html
-              content: |
-                #!/bin/bash
-                mkdir -p /tmp/gpu
-                cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-                zypper -n install -y kernel-devel
-
-                usermod -aG video,render ec2-user
-
-                zypper -n install -y amdgpu
-                zypper -n install -y rocminfo
-
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-                systemctl enable dcv-post-reboot
-                rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
-                reboot
-              mode: "000755"
-              owner: "root"
-              group: "root"
-            "/etc/zypp/repos.d/amdgpu.repo": # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/sle.html
-              content: |
-                [amdgpu]
-                name=amdgpu
-                baseurl=https://repo.radeon.com/amdgpu/latest/sle/VERSION/main/x86_64/
-                enabled=1
-                gpgcheck=1
-                gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
-              mode: "000644"
-              owner: "root"
-              group: "root"
-            "/etc/zypp/repos.d/rocm.repo": # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/sle.html
-              content: |
-                [ROCm-latest]
-                name=ROCm
-                baseurl=https://repo.radeon.com/rocm/zyp/latest/main
-                enabled=1
-                gpgcheck=1
-                gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
-              mode: "000644"
-              owner: "root"
-              group: "root"
-            "/etc/X11/xorg.conf":
-              content: |
-                Section "ServerLayout"
-                    Identifier     "Layout0"
-                    Screen          0 "Screen0"
-                    InputDevice     "Keyboard0" "CoreKeyboard"
-                    InputDevice     "Mouse0" "CorePointer"
-                EndSection
-                Section "Files"
-                    ModulePath "/opt/amdgpu/lib64/xorg/modules/drivers"
-                    ModulePath "/opt/amdgpu/lib/xorg/modules"
-                    ModulePath "/opt/amdgpu-pro/lib/xorg/modules/extensions"
-                    ModulePath "/opt/amdgpu-pro/lib64/xorg/modules/extensions"
-                    ModulePath "/usr/lib64/xorg/modules"
-                    ModulePath "/usr/lib/xorg/modules"
-                EndSection
-                Section "InputDevice"
-                    # generated from default
-                    Identifier     "Mouse0"
-                    Driver         "mouse"
-                    Option         "Protocol" "auto"
-                    Option         "Device" "/dev/psaux"
-                    Option         "Emulate3Buttons" "no"
-                    Option         "ZAxisMapping" "4 5"
-                EndSection
-                Section "InputDevice"
-                    # generated from default
-                    Identifier     "Keyboard0"
-                    Driver         "kbd"
-                EndSection
-                Section "Monitor"
-                    Identifier     "Monitor0"
-                    VendorName     "Unknown"
-                    ModelName      "Unknown"
-                EndSection
-                Section "Device"
-                    Identifier     "Device0"
-                    Driver         "amdgpu"
-                    VendorName     "AMD"
-                    BoardName      "Radeon MxGPU V520"
-                    BusID          "PCI:0:30:0"
-                EndSection
-                Section "Extensions"
-                    Option         "DPMS" "Disable"
-                EndSection
-                Section "Screen"
-                    Identifier     "Screen0"
-                    Device         "Device0"
-                    Monitor        "Monitor0"
-                    DefaultDepth   24
-                    Option         "AllowEmptyInitialConfiguration" "True"
-                    SubSection "Display"
-                        Virtual    3840 2160
-                        Depth      32
-                    EndSubSection
-                EndSection
-              mode: "000644"
-              owner: "root"
-              group: "root"
-    Properties: # https://www.suse.com/c/aws-ssm-parameters/
+    Properties:
       ImageId:
         !If [
           useSles15,
-          "{{resolve:ssm:/aws/service/suse/sles/15-sp6/x86_64/latest}}",
+          "{{resolve:ssm:/aws/service/suse/sles/15-sp5/x86_64/latest}}",
           "{{resolve:ssm:/aws/service/suse/sles/12-sp5/x86_64/latest}}",
         ]
       InstanceType: !Ref instanceType
@@ -1725,7 +1467,9 @@ Resources:
           zypper -n install -y ec2-instance-connect
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-sles.html
-          zypper -n install -y amazon-ssm-agent
+          if (! systemctl list-units | grep -q amazon-ssm-agent); then
+            zypper -n install -y amazon-ssm-agent
+          fi
           systemctl enable --now amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
@@ -1734,14 +1478,14 @@ Resources:
             curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
             tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
             cd aws-cfn-bootstrap-2.0
-            python3 setup.py build
-            python3 setup.py install
+            python3 setup.py build > /var/log/install-cfn-helper.log 2>&1
+            python3 setup.py install >> /var/log/install-cfn-helper.log 2>&1
           else
             curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
             tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
             cd aws-cfn-bootstrap-1.4
-            python2 setup.py build
-            python2 setup.py install
+            python2 setup.py build > /var/log/install-cfn-helper.log 2>&1
+            python2 setup.py install > /var/log/install-cfn-helper.log 2>&1
           fi
           cd /tmp/cfn
 
@@ -1757,75 +1501,10 @@ Resources:
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
-          # remove AWSCLI version 1
-          zypper -n remove -y aws-cli
-
-          cd /tmp/cfn
-          # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
-          unzip -q -o awscliv2.zip
-          ./aws/install -b /usr/bin
-          echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
-
-          # Update OS
-          zypper -n update -y
-          # Automatic updates : https://documentation.suse.com/sles/15-SP5/html/SLES-all/cha-onlineupdate-you.html#sec-onlineupdate-you-automatically
-          zypper -n install -y yast2-online-update-configuration
-
           # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
-
-          export SESSION="${sessionType}"
-          case $SESSION in
-            *NVIDIA*) # install GPU driver after reboot
-              systemctl disable dcv-post-reboot
-
-              zypper -n install -y unzip gcc make
-              zypper -n install -y vulkan-devel libglvnd-devel
-
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
-              systemctl daemon-reload
-              systemctl enable dcv-gpu-install
-              ;;
-            *AMD*) # https://rocm.docs.amd.com/projects/install-on-linux/en/latest/how-to/native-install/sle.html
-              systemctl disable dcv-post-reboot
-              rm -f /etc/X11/xorg.conf
-
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
-              systemctl daemon-reload
-              systemctl enable dcv-gpu-install
-
-              # update repo file with correct values
-              VERSION=$(. /etc/os-release;echo $VERSION_ID)
-
-              sed -i "s/VERSION/$VERSION/g" /etc/zypp/repos.d/amdgpu.repo
-
-              zypper refresh
-              zypper -n --gpg-auto-import-keys install -y amdgpu-dkms
-              ;;
-          esac
-
-          # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
-          if (arch | grep -q x86); then
-            curl -s -L -O  https://amazoncloudwatch-agent.s3.amazonaws.com/suse/amd64/latest/amazon-cloudwatch-agent.rpm
-          else
-            curl -s -L -O  https://amazoncloudwatch-agent.s3.amazonaws.com/suse/arm64/latest/amazon-cloudwatch-agent.rpm
-          fi
-          zypper -n --no-gpg-checks install -y ./amazon-cloudwatch-agent.rpm
-          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
-          systemctl enable --now amazon-cloudwatch-agent
-
-          # MountPoint-S3: https://github.com/awslabs/mountpoint-s3
-          #if (uname -a | grep -q x86); then
-          #  curl -s -L -O  https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
-          #else
-          #  curl -s -L -O  https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.rpm
-          #fi
-          #zypper -n --no-gpg-checks install -y ./mount-s3.rpm
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -1904,7 +1583,11 @@ Resources:
     Properties:
       BackupVaultName: !Sub
         - "${AWS::StackName}-backupVault-${UID}"
-        - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+        - UID:
+            !Select [
+              3,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ]
       BackupVaultTags:
         {
           "StackName": !Ref AWS::StackName,
@@ -1923,7 +1606,11 @@ Resources:
           - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
         SelectionName: !Sub
           - "${AWS::StackName}-backupSelection-${UID}"
-          - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+          - UID:
+              !Select [
+                3,
+                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+              ]
 
   backupRestoreRole:
     Type: AWS::IAM::Role
@@ -1961,10 +1648,10 @@ Outputs:
     Description: EC2 console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
 
-#  EC2instanceConnect:
-#    Condition: createSgEIC
-#    Description: EC2 Instance Connect
-#    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=ec2-user&sshPort=22#/"
+  EC2instanceConnect:
+    Condition: createSgEIC
+    Description: EC2 Instance Connect
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=ec2-user&sshPort=22#/"
 
   EC2serialConsole:
     Description: EC2 Serial Console

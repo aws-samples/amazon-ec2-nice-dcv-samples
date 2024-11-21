@@ -79,7 +79,7 @@ Parameters:
     Default: Amazon Linux 2
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
+    Description: Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )
     AllowedPattern: ".+"
     ConstraintDescription: Select a key pair
   instanceType:
@@ -114,7 +114,7 @@ Parameters:
     Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 535.216.01
+    Default: 535.216.03
   listenPort:
     Type: Number
     Description: DCV server TCP/UDP port
@@ -575,6 +575,13 @@ Conditions:
   useAl2x86: !Equals [!Ref osVersion, "Amazon Linux 2 (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
+  isGPUinstall:
+    !Not [
+      !Or [
+        !Equals [!Ref sessionType, "console"],
+        !Equals [!Ref sessionType, "virtual"],
+      ],
+    ]
 
   hasEIC:
     !Not [
@@ -809,45 +816,25 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub arn:*:s3:::dcv-license.${AWS::Region}/*
-        - PolicyName: gpuDrivers
-          PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:Get*
-                  - s3:List*
-                Resource:
-                  - !Sub "arn:*:s3:::nvidia-gaming"
-                  - !Sub "arn:*:s3:::nvidia-gaming/*"
-                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers"
-                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers/*"
-                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers"
-                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers/*"
-        - PolicyName: MountPointS3Access
-          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:ListBucket
-                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET"
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:AbortMultipartUpload
-                  - s3:DeleteObject
-                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET/*"
-        - PolicyName: MountPointS3ExpressAccess
-          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3express:CreateSession
-                Resource: !Sub "arn:${AWS::Partition}:s3express:${AWS::Region}:${AWS::AccountId}:bucket/DOC-EXAMPLE-BUCKET--az_id--x-s3"
+                Resource: !Sub arn:aws:s3:::dcv-license.${AWS::Region}/*
+        - !If
+          - isGPUinstall
+          - PolicyName: gpuDrivers
+            PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:Get*
+                    - s3:List*
+                  Resource:
+                    - arn:*:s3:::nvidia-gaming
+                    - arn:*:s3:::nvidia-gaming/*
+                    - arn:*:s3:::ec2-linux-nvidia-drivers
+                    - arn:*:s3:::ec2-linux-nvidia-drivers/*
+                    - arn:*:s3:::ec2-amd-linux-drivers
+                    - arn:*:s3:::ec2-amd-linux-drivers/*
+          - !Ref AWS::NoValue
         - PolicyName: Route53CertbotAccess
           PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
             Version: "2012-10-17"
@@ -1158,7 +1145,7 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp
-                sudo rm -f awscliv2.zip
+                sudo rm -f /tmp/awscliv2.zip
                 curl https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
                 unzip -q -o awscliv2.zip
                 /usr/bin/aws --version
@@ -1167,55 +1154,6 @@ Resources:
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
-            "/home/ec2-user/update-mountpoint-s3":
-              content: |
-                #!/bin/bash
-                cd /tmp
-                rm -f mount-s3.rpm
-                if (uname -a | grep -q x86); then
-                  wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
-                else
-                  wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.rpm
-                fi
-                sudo yum install -y ./mount-s3.rpm
-              mode: "000755"
-              owner: "ec2-user"
-              group: "ec2-user"
-            "/etc/systemd/system/mount-s3-helper.service":
-              content: |
-                # https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md#automatically-mounting-an-s3-bucket-at-boot
-                [Unit]
-                Description=Mountpoint for S3 helper
-                Wants=network.target
-
-                [Service]
-                Restart=on-failure
-                RestartSec=5
-                Type=forking
-                ExecStart=/opt/mount-s3-helper.sh
-                ExecStop=/usr/bin/fusermount -u /mnt/s3-bucket-mount
-
-                [Install]
-                WantedBy=remote-fs.target
-              mode: "000644"
-              owner: "root"
-              group: "root"
-            "/opt/mount-s3-helper.sh":
-              content: |
-                #!/bin/bash
-                S3_BUCKET_NAME=DOC-EXAMPLE-BUCKET
-                MOUNT_FOLDER=/mnt/s3-bucket-mount
-                USER=ec2-user
-                GROUP=ec2-user
-
-                USERID=$(cat /etc/passwd | grep ^$USER: | cut -d":" -f 3)
-                GROUPID=$(cat /etc/group | grep ^$GROUP: | cut -d":" -f 3)
-                mkdir -p $MOUNT_FOLDER
-
-                /usr/bin/mount-s3 --uid $USERID --gid $GROUPID --allow-overwrite --allow-delete --allow-other $S3_BUCKET_NAME $MOUNT_FOLDER
-              mode: "000744"
-              owner: "root"
-              group: "root"
             "/etc/systemd/system/route53-updater.service":
               content: |
                 [Unit]
@@ -1324,11 +1262,33 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+
+                yum update -q -y
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
+                # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
+                if (systemctl list-units | grep -q firewalld); then
+                  if (systemctl status firewalld | grep -q running); then
+                    firewall-cmd --permanent --add-port ${listenPort}/tcp
+                    firewall-cmd --permanent --add-port ${listenPort}/udp
+                    firewall-cmd --permanent --add-service http
+                    firewall-cmd --permanent --add-service https
+                    firewall-cmd --reload
+                  else
+                    firewall-offline-cmd --add-port ${listenPort}/tcp
+                    firewall-offline-cmd --add-port ${listenPort}/udp
+                    firewall-offline-cmd --add-service http
+                    firewall-offline-cmd --add-service https
+                  fi
+                fi
+
                 SESSION="${sessionType}"
                 case $SESSION in
+                  console-with-NVIDIA_GRID_Driver)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                    ;;
                   console-with-NVIDIA*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
@@ -1376,92 +1336,70 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
-            "/home/ec2-user/download-NVIDIA-GRID-driver":
-              content: |
+            "/root/install-sw.sh":
+              content: !Sub |
                 #!/bin/bash
-                clear
-                echo  
-                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
-                echo  
-                echo By downloading, you agree to conditions and are bound by license terms as stated on 
-                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
-                echo 
-                mkdir -p /tmp/drivers
-                cd /tmp/drivers
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1                
-                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                mkdir -p /tmp/cfn
+                cd /tmp/cfn
+
+                # EPEL: https://docs.fedoraproject.org/en-US/epel/
+                amazon-linux-extras install -y epel
+
+                # Update OS
+                yum clean all
+                yum update -q -y
+
+                # remove AWSCLI version 1
+                yum remove -q -y awscli
+                cd /tmp/cfn
+                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
+                unzip -q -o awscliv2.zip
+                ./aws/install -b /usr/bin
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
+
+                # yum-cron
+                yum install -q -y yum-cron
+                sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/yum/yum-cron.conf
+                systemctl enable yum-cron
+
+                # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
+                if (arch | grep -q x86); then
+                  curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+                else
+                  curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/amazon_linux/arm64/latest/amazon-cloudwatch-agent.rpm
                 fi
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
-                fi
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
-                ls
-                pwd
-              mode: "000755"
-              owner: "ec2-user"
-              group: "ec2-user"
-            "/home/ec2-user/download-NVIDIA-Gaming-driver":
-              content: |
-                #!/bin/bash
-                clear
-                echo  
-                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
-                echo  
-                echo By downloading, you agree to conditions and are bound by license terms as stated on 
-                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
-                echo 
-                mkdir -p /tmp/drivers
-                cd /tmp/drivers
-                pwd
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
-                fi
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
-                fi
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
-                ls
-                pwd
-              mode: "000755"
-              owner: "ec2-user"
-              group: "ec2-user"
-            "/home/ec2-user/download-AMD-driver":
-              content: |
-                #!/bin/bash
-                clear
-                echo  
-                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
-                echo  
-                echo By downloading, you agree to conditions and are bound by license terms as stated on 
-                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
-                echo 
-                mkdir -p /tmp/drivers                
-                cd /tmp/drivers
-                pwd
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ .
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ . --region us-east-1
-                fi
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-amd-linux-drivers/latest/ . --no-sign-request
-                fi
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
-                ls
-                pwd
-              mode: "000755"
-              owner: "ec2-user"
-              group: "ec2-user"
+                yum install -q -y ./amazon-cloudwatch-agent.rpm
+                /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+                systemctl enable --now amazon-cloudwatch-agent
+
+                # Webmin: https://webmin.com/download/
+                export webmin="${installWebmin}"
+                case $webmin in
+                  Yes)
+                    cd /tmp/cfn
+                    curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
+                    echo 'Y' | sh ./setup-repos.sh -f
+                    yum install -q -y webmin
+                    ;;
+                esac
+
+                # USB and GPU driver DKMS
+                yum install -q -y dkms
+                systemctl enable dkms
+
+                # Kernel headers for GPU and USB remotization
+                yum install -q -y kernel-devel
+                yum install -q -y usbutils
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"
+          commands:
+            install:
+              command: "/root/install-sw.sh >> /var/log/install-sw.log 2>&1"
+              ignoreErrors: "true"
         00_dcv_install:
           files:
             "/root/install-dcv.sh":
@@ -1469,6 +1407,9 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
+
+                # Update OS
+                yum update -q -y
 
                 # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
                 yum install -q -y gdm gnome-session gnome-classic-session gnome-session-xsession
@@ -1499,12 +1440,9 @@ Resources:
                 usermod -a -G $GROUP dcv
                 systemctl enable cups
 
-                # EPEL: https://docs.fedoraproject.org/en-US/epel/
-                amazon-linux-extras install -y epel
-
-                # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+                # glxinfo : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
                 yum install -q -y glx-utils
-                yum install -q -y libva libva-utils
+                yum install -q -y vulkan clinfo
 
                 # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
                 cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -1524,21 +1462,13 @@ Resources:
                 # Console session support
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
-                # USB and GPU driver DKMS
-                yum install -q -y dkms
-                systemcgtl enable dkms
-
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                yum install -q -y kernel-devel
-                yum install -q -y usbutils
-                #dcvusbdriverinstaller --quiet
-
+                rm -f ${!0}
               mode: "000740"
               owner: "root"
               group: "root"
           commands:
             install:
-              command: "/root/install-dcv.sh > /var/log/install-dcv.log"
+              command: "/root/install-dcv.sh > /var/log/install-dcv.log 2>&1"
               ignoreErrors: "true"
         01_console:
           files:
@@ -1598,7 +1528,6 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                yum install -q -y kernel-devel
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
                 if [ $? -eq 1 ]; then
                   aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
@@ -1639,7 +1568,6 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                yum install -q -y kernel-devel
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
                 if [ $? -eq 1 ]; then
                   aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
@@ -1689,7 +1617,6 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                yum install -q -y kernel-devel
                 yum install -q -y tar bzip2 make automake gcc gcc-c++ pciutils elfutils-libelf-devel libglvnd-devel iptables vim bind-utils wget
                 DISTRO=rhel7
                 if (arch | grep -q x86); then
@@ -1733,7 +1660,6 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                yum install -q -y kernel-devel
                 DRIVER_VERSION="${teslaDriverVersion}"
                 ARCH=$( /bin/arch )
                 curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
@@ -1741,7 +1667,7 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
-                chmod +x NVIDIA-Linux-*.run
+                chmod +x ./NVIDIA-Linux-*.run
                 CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-*.run -s
 
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
@@ -1810,22 +1736,6 @@ Resources:
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
-          # remove AWSCLI version 1
-          yum remove -q -y awscli
-          cd /tmp/cfn
-          # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-          unzip -q -o awscliv2.zip
-          ./aws/install -b /usr/bin
-          echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
-
-          # Update OS
-          yum update -q -y
-          # yum-cron
-          yum install -q -y yum-cron
-          sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/yum/yum-cron.conf
-          systemctl enable yum-cron
-
           # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
@@ -1838,6 +1748,7 @@ Resources:
 
               yum install -q -y unzip gcc make
               yum install -q -y vulkan-devel libglvnd-devel
+              yum install -q -y tar bzip2 make automake gcc gcc-c++ pciutils elfutils-libelf-devel libglvnd-devel iptables vim bind-utils wget
 
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
@@ -1845,35 +1756,6 @@ Resources:
               systemctl enable dcv-gpu-install
               ;;
           esac
-
-          # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
-          if (arch | grep -q x86); then
-            curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-          else
-            curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/amazon_linux/arm64/latest/amazon-cloudwatch-agent.rpm
-          fi
-          yum install -q -y ./amazon-cloudwatch-agent.rpm
-          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
-          systemctl enable --now amazon-cloudwatch-agent
-
-          # Webmin: https://webmin.com/download/
-          export webmin="${installWebmin}"
-          case $webmin in
-            Yes)
-              cd /tmp/cfn
-              curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
-              echo 'Y' | sh ./setup-repos.sh -f
-              yum install -q -y webmin
-              ;;
-          esac
-
-          # MountPoint-S3: https://github.com/awslabs/mountpoint-s3
-          if (uname -a | grep -q x86); then
-            curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
-          else
-            curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.rpm
-          fi
-          yum install -q -y ./mount-s3.rpm
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -1952,7 +1834,11 @@ Resources:
     Properties:
       BackupVaultName: !Sub
         - "${AWS::StackName}-backupVault-${UID}"
-        - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+        - UID:
+            !Select [
+              3,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ]
       BackupVaultTags:
         {
           "StackName": !Ref AWS::StackName,
@@ -1971,7 +1857,11 @@ Resources:
           - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
         SelectionName: !Sub
           - "${AWS::StackName}-backupSelection-${UID}"
-          - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+          - UID:
+              !Select [
+                3,
+                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+              ]
 
   backupRestoreRole:
     Type: AWS::IAM::Role

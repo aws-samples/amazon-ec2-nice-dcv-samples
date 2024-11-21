@@ -570,6 +570,13 @@ Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
+  isGPUinstall:
+    !Not [
+      !Or [
+        !Equals [!Ref driverType, "none"],
+        !Equals [!Ref driverType, "DCV-IDD"],
+      ],
+    ]
 
   createSgHTTP:
     !Or [
@@ -687,23 +694,25 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub arn:*:s3:::dcv-license.${AWS::Region}/*
-        - PolicyName: gpuDrivers
-          PolicyDocument:
-            # https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:Get*
-                  - s3:List*
-                Resource:
-                  - !Sub arn:*:s3:::nvidia-gaming
-                  - !Sub arn:*:s3:::nvidia-gaming/*
-                  - !Sub arn:*:s3:::ec2-windows-nvidia-drivers
-                  - !Sub arn:*:s3:::ec2-windows-nvidia-drivers/*
-                  - !Sub arn:*:s3:::ec2-amd-windows-drivers
-                  - !Sub arn:*:s3:::ec2-amd-windows-drivers/*
+                Resource: !Sub arn:aws:s3:::dcv-license.${AWS::Region}/*
+        - !If
+          - isGPUinstall
+          - PolicyName: gpuDrivers
+            PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:Get*
+                    - s3:List*
+                  Resource:
+                    - arn:*:s3:::nvidia-gaming
+                    - arn:*:s3:::nvidia-gaming/*
+                    - arn:*:s3:::ec2-windows-nvidia-drivers
+                    - arn:*:s3:::ec2-windows-nvidia-drivers/*
+                    - arn:*:s3:::ec2-amd-windows-drivers
+                    - arn:*:s3:::ec2-amd-windows-drivers/*
+          - !Ref AWS::NoValue
         - PolicyName: Route53CertbotAccess
           PolicyDocument:
             # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
@@ -1062,12 +1071,24 @@ Resources:
                 SET "PATH=%PATH%;C:\Program Files\7-zip"
                 cd \windows\temp
                 md driver && cd driver
+                IF %DRIVER_TYPE% EQU DCV-IDD (
+                  del c:\Users\Administrator\download-NVIDIA-GRID-driver.cmd
+                  del c:\Users\Administrator\download-NVIDIA-Gaming-driver.cmd
+                  del c:\Users\Administrator\download-AMD-driver.cmd
+                )
                 IF %DRIVER_TYPE% EQU DCV (
+                  del c:\Users\Administrator\download-NVIDIA-GRID-driver.cmd
+                  del c:\Users\Administrator\download-NVIDIA-Gaming-driver.cmd
+                  del c:\Users\Administrator\download-AMD-driver.cmd
+
                   @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general
                   powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
                   msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
                 )
                 IF %DRIVER_TYPE% EQU NVIDIA-GRID (
+                  del c:\Users\Administrator\download-NVIDIA-Gaming-driver.cmd
+                  del c:\Users\Administrator\download-AMD-driver.cmd
+
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver
                   "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
@@ -1081,6 +1102,9 @@ Resources:
                   start /wait setup.exe -s
                 )
                 IF %DRIVER_TYPE% EQU NVIDIA-Gaming (
+                  del c:\Users\Administrator\download-NVIDIA-GRID-driver.cmd
+                  del c:\Users\Administrator\download-AMD-driver.cmd
+
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver
                   "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
@@ -1096,6 +1120,10 @@ Resources:
                   start /wait setup.exe -s
                 )
                 IF %DRIVER_TYPE% EQU NVIDIA-Tesla (
+                  del c:\Users\Administrator\download-NVIDIA-GRID-driver.cmd
+                  del c:\Users\Administrator\download-NVIDIA-Gaming-driver.cmd
+                  del c:\Users\Administrator\download-AMD-driver.cmd
+
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver
                   if not exist c:\windows\system32\curl.exe choco install --no-progress -y curl
                   copy \windows\temp\install-if-available.cmd \windows\temp\driver\
@@ -1115,6 +1143,9 @@ Resources:
                   ) || (
                     curl -s -L -O https://ec2-amd-windows-drivers.s3.amazonaws.com/AMD_GPU_WINDOWS_2K22_DRIVER-23.10.02.02-230926a-397145C-Retail_End_User.zip
                   )
+                  del c:\Users\Administrator\download-NVIDIA-GRID-driver.cmd
+                  del c:\Users\Administrator\download-NVIDIA-Gaming-driver.cmd
+
                   @echo ** AMD_GPU_WINDOWS_2K22_DRIVER*.ZIP?
                   reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 202">nul && (
                     cmd /c 7z x AMD*2K22*.zip
@@ -1340,7 +1371,11 @@ Resources:
     Properties:
       BackupVaultName: !Sub
         - "${AWS::StackName}-backupVault-${UID}"
-        - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+        - UID:
+            !Select [
+              3,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ]
       BackupVaultTags:
         {
           "StackName": !Ref AWS::StackName,
@@ -1359,7 +1394,11 @@ Resources:
           - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
         SelectionName: !Sub
           - "${AWS::StackName}-backupSelection-${UID}"
-          - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+          - UID:
+              !Select [
+                3,
+                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+              ]
 
   backupRestoreRole:
     Type: AWS::IAM::Role
@@ -1374,8 +1413,7 @@ Resources:
             Action: sts:AssumeRole
       Policies:
         - PolicyName: restore-EC2-instance-profile
-          PolicyDocument:
-            # https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-ec2.html
+          PolicyDocument: # https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-ec2.html
             Version: "2012-10-17"
             Statement:
               - Effect: Allow

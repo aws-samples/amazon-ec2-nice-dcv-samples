@@ -796,7 +796,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub arn:*:s3:::dcv-license.${AWS::Region}/*
+                Resource: !Sub arn:aws:s3:::dcv-license.${AWS::Region}/*
         - PolicyName: gpuDrivers
           PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
             Version: "2012-10-17"
@@ -806,35 +806,12 @@ Resources:
                   - s3:Get*
                   - s3:List*
                 Resource:
-                  - !Sub "arn:*:s3:::nvidia-gaming"
-                  - !Sub "arn:*:s3:::nvidia-gaming/*"
-                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers"
-                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers/*"
-                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers"
-                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers/*"
-        - PolicyName: MountPointS3Access
-          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:ListBucket
-                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET"
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:AbortMultipartUpload
-                  - s3:DeleteObject
-                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET/*"
-        - PolicyName: MountPointS3ExpressAccess
-          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3express:CreateSession
-                Resource: !Sub "arn:${AWS::Partition}:s3express:${AWS::Region}:${AWS::AccountId}:bucket/DOC-EXAMPLE-BUCKET--az_id--x-s3"
+                  - arn:*:s3:::nvidia-gaming
+                  - arn:*:s3:::nvidia-gaming/*
+                  - arn:*:s3:::ec2-linux-nvidia-drivers
+                  - arn:*:s3:::ec2-linux-nvidia-drivers/*
+                  - arn:*:s3:::ec2-amd-linux-drivers
+                  - arn:*:s3:::ec2-amd-linux-drivers/*
         - PolicyName: Route53CertbotAccess
           PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
             Version: "2012-10-17"
@@ -1140,51 +1117,6 @@ Resources:
               mode: "000755"
               owner: "centos"
               group: "centos"
-            "/home/centos/update-mountpoint-s3":
-              content: |
-                #!/bin/bash
-                cd /tmp
-                rm -f mount-s3.rpm
-                wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
-                sudo yum install -y ./mount-s3.rpm
-              mode: "000755"
-              owner: "centos"
-              group: "centos"
-            "/etc/systemd/system/mount-s3-helper.service":
-              content: |
-                # https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md#automatically-mounting-an-s3-bucket-at-boot
-                [Unit]
-                Description=Mountpoint for S3 helper
-                Wants=network.target
-
-                [Service]
-                Restart=on-failure
-                RestartSec=5
-                Type=forking
-                ExecStart=/opt/mount-s3-helper.sh
-                ExecStop=/usr/bin/fusermount -u /mnt/s3-bucket-mount
-
-                [Install]
-                WantedBy=remote-fs.target
-              mode: "000644"
-              owner: "root"
-              group: "root"
-            "/opt/mount-s3-helper.sh":
-              content: |
-                #!/bin/bash
-                S3_BUCKET_NAME=DOC-EXAMPLE-BUCKET
-                MOUNT_FOLDER=/mnt/s3-bucket-mount
-                USER=centos
-                GROUP=centos
-
-                USERID=$(cat /etc/passwd | grep ^$USER: | cut -d":" -f 3)
-                GROUPID=$(cat /etc/group | grep ^$GROUP: | cut -d":" -f 3)
-                mkdir -p $MOUNT_FOLDER
-
-                /usr/bin/mount-s3 --uid $USERID --gid $GROUPID --allow-overwrite --allow-delete --allow-other $S3_BUCKET_NAME $MOUNT_FOLDER
-              mode: "000744"
-              owner: "root"
-              group: "root"
             "/etc/systemd/system/route53-updater.service":
               content: |
                 [Unit]
@@ -1293,6 +1225,9 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 python2 /usr/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+
+                yum update -q -y
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
@@ -1311,9 +1246,6 @@ Resources:
                     firewall-offline-cmd --add-service https
                   fi
                 fi
-
-                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                snap install aws-cli --classic
 
                 SESSION="${sessionType}"
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
@@ -1358,6 +1290,66 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+            "/root/install-sw.sh":
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/cfn
+                cd /tmp/cfn
+
+                # EPEL: https://docs.fedoraproject.org/en-US/epel/
+                yum install -q -y epel-release
+
+                # Update OS
+                yum clean all
+                yum update -q -y
+
+                # remove AWSCLI version 1
+                yum remove -q -y awscli
+                cd /tmp/cfn
+                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
+                unzip -q -o awscliv2.zip
+                ./aws/install -b /usr/bin
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/centos/.bashrc
+
+                # yum-cron
+                yum install -q -y yum-cron
+                sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/yum/yum-cron.conf
+                systemctl enable yum-cron
+
+                # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
+                curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/centos/amd64/latest/amazon-cloudwatch-agent.rpm
+                yum install -q -y ./amazon-cloudwatch-agent.rpm
+                /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+                systemctl enable --now amazon-cloudwatch-agent
+
+                # Webmin: https://webmin.com/download/
+                export webmin="${installWebmin}"
+                case $webmin in
+                  Yes)
+                    cd /tmp/cfn
+                    curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
+                    echo 'Y' | sh ./setup-repos.sh -f
+                    yum install -q -y webmin
+                    ;;
+                esac
+
+                # USB and GPU driver DKMS
+                yum install -q -y dkms
+                systemctl enable dkms
+
+                # Kernel headers for GPU and USB remotization
+                yum install -q -y kernel-devel
+                yum install -q -y usbutils
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"
+          commands:
+            install:
+              command: "/root/install-sw.sh >> /var/log/install-sw.log 2>&1"
+              ignoreErrors: "true"
         02_dcv_gpu_install:
           files:
             "/etc/systemd/system/dcv-gpu-install.service":
@@ -1479,11 +1471,11 @@ Resources:
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
 
+                # Update OS
+                yum update -q -y
+
                 # Support discontinued: https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2024-0-17979
                 rm -f /home/centos/update-dcv
-
-                # EPEL: https://docs.fedoraproject.org/en-US/epel/
-                yum install -q -y epel-release
 
                 # Install AMD drivers: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver
                 yum groupinstall -y "MATE Desktop"
@@ -1505,12 +1497,10 @@ Resources:
                 usermod -a -G $GROUP dcv
                 systemctl enable cups
 
-                # EPEL: https://docs.fedoraproject.org/en-US/epel/
-                yum install -q -y epel-release
 
-                # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+                # glxinfo : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
                 yum install -q -y glx-utils
-                yum install -q -y libva libva-utils
+                yum install -q -y vulkan-tools clinfo
 
                 # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
                 cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -1527,21 +1517,13 @@ Resources:
                 # Console session support
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"centos\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
-                # USB and GPU driver DKMS
-                yum install -q -y dkms
-                systemctl enable dkms
-
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                yum install -q -y kernel-devel
-                yum install -q -y usbutils
-                #dcvusbdriverinstaller --quiet
-
+                rm -f ${!0}
               mode: "000740"
               owner: "root"
               group: "root"
           commands:
             install:
-              command: "/root/install-dcv.sh > /var/log/install-dcv.log"
+              command: "/root/install-dcv.sh > /var/log/install-dcv.log 2>&1"
               ignoreErrors: "true"
     Properties:
       ImageId: !Ref imageId
@@ -1586,6 +1568,7 @@ Resources:
           sed -i "s/^#baseurl=http:\/\/mirror.centos.org\/centos\/\$releasever/baseurl=https:\/\/vault.centos.org\/7.9.2009/g" /etc/yum.repos.d/CentOS*.repo
 
           yum clean all
+          yum update -q -y
           yum install -q -y deltarpm wget tmux unzip tar curl sed
 
           # EC2 instance connect: https://github.com/aws/aws-ec2-instance-connect-config/releases
@@ -1630,30 +1613,14 @@ Resources:
           curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
           tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
           cd aws-cfn-bootstrap-1.4
-          python2 setup.py build
-          python2 setup.py install
+          python2 setup.py build > /var/log/install-cfn-helper.log 2>&1
+          python2 setup.py install > /var/log/install-cfn-helper.log 2>&1
           cd /tmp/cfn
           export CFN_INIT="python2 /usr/bin/cfn-init"
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_install
-
-          # remove AWSCLI version 1
-          yum remove -q -y awscli
-          cd /tmp/cfn
-          # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-          unzip -q -o awscliv2.zip
-          ./aws/install -b /usr/bin
-          echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/centos/.bashrc
-
-          # Update OS
-          yum update -q -y
-          # yum-cron
-          yum install -q -y yum-cron
-          sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/yum/yum-cron.conf
-          systemctl enable yum-cron
 
           # 
           systemctl set-default multi-user.target
@@ -1667,27 +1634,6 @@ Resources:
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_amd_install
           systemctl daemon-reload
           systemctl enable dcv-gpu-install
-
-          # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
-          curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/centos/amd64/latest/amazon-cloudwatch-agent.rpm
-          yum install -q -y ./amazon-cloudwatch-agent.rpm
-          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
-          systemctl enable --now amazon-cloudwatch-agent
-
-          # Webmin: https://webmin.com/download/
-          export webmin="${installWebmin}"
-          case $webmin in
-            Yes) # https://webmin.com/download/
-              cd /tmp/cfn
-              curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
-              echo 'Y' | sh ./setup-repos.sh -f
-              yum install -q -y webmin
-              ;;
-          esac
-
-          # MountPoint-S3: https://github.com/awslabs/mountpoint-s3
-          curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.rpm
-          yum install -q -y ./mount-s3.rpm
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -1766,7 +1712,11 @@ Resources:
     Properties:
       BackupVaultName: !Sub
         - "${AWS::StackName}-backupVault-${UID}"
-        - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+        - UID:
+            !Select [
+              3,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ]
       BackupVaultTags:
         {
           "StackName": !Ref AWS::StackName,
@@ -1785,7 +1735,11 @@ Resources:
           - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
         SelectionName: !Sub
           - "${AWS::StackName}-backupSelection-${UID}"
-          - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+          - UID:
+              !Select [
+                3,
+                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+              ]
 
   backupRestoreRole:
     Type: AWS::IAM::Role

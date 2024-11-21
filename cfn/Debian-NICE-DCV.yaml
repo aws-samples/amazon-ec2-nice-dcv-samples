@@ -34,7 +34,6 @@ Metadata:
           default: DCV
         Parameters:
           - sessionType
-          - teslaDriverVersion
           - listenPort
       - Label:
           default: Network
@@ -79,7 +78,7 @@ Parameters:
     Default: Debian
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
+    Description: Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )
     AllowedPattern: ".+"
     ConstraintDescription: Select a key pair
   instanceType:
@@ -101,20 +100,8 @@ Parameters:
     Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
-#      - "console-with-NVIDIA_GRID_Driver"
-#      - "console-with-NVIDIA_Gaming_Driver"
-#      - "console-with-NVIDIA_repo_Driver"
-#      - "console-with-NVIDIA_runfile_Driver"
       - "console"
-#      - "virtual-with-NVIDIA_repo_Driver"
-#      - "virtual-with-NVIDIA_runfile_Driver"
     Default: "virtual"
-  teslaDriverVersion:
-    Type: String
-    Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
-    AllowedPattern: "^[\\d\\.]+$"
-    ConstraintDescription: Specify valid driver version
-    Default: 550.90.12
   listenPort:
     Type: Number
     Description: DCV server TCP/UDP port
@@ -809,45 +796,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub arn:*:s3:::dcv-license.${AWS::Region}/*
-        - PolicyName: gpuDrivers
-          PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:Get*
-                  - s3:List*
-                Resource:
-                  - !Sub "arn:*:s3:::nvidia-gaming"
-                  - !Sub "arn:*:s3:::nvidia-gaming/*"
-                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers"
-                  - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers/*"
-                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers"
-                  - !Sub "arn:*:s3:::ec2-amd-linux-drivers/*"
-        - PolicyName: MountPointS3Access
-          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:ListBucket
-                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET"
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                  - s3:PutObject
-                  - s3:AbortMultipartUpload
-                  - s3:DeleteObject
-                Resource: !Sub "arn:${AWS::Partition}:s3:::DOC-EXAMPLE-BUCKET/*"
-        - PolicyName: MountPointS3ExpressAccess
-          PolicyDocument: # MountPoint for S3: https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3express:CreateSession
-                Resource: !Sub "arn:${AWS::Partition}:s3express:${AWS::Region}:${AWS::AccountId}:bucket/DOC-EXAMPLE-BUCKET--az_id--x-s3"
+                Resource: !Sub arn:aws:s3:::dcv-license.${AWS::Region}/*
         - PolicyName: Route53CertbotAccess
           PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
             Version: "2012-10-17"
@@ -1121,22 +1070,6 @@ Resources:
             - 00_dcv_install
           console:
             - 01_console
-          dcv_gpu_install:
-            - 02_dcv_gpu_install
-          console-with-NVIDIA_GRID_Driver:
-            - 03_gpu_nvidia_grid_install
-          console-with-NVIDIA_Gaming_Driver:
-            - 04_gpu_nvidia_gaming_install
-          console-with-NVIDIA_repo_Driver:
-            - 05_gpu_nvidia_repo_install
-          console-with-NVIDIA_runfile_Driver:
-            - 06_gpu_nvidia_runfile_install
-          virtual-with-NVIDIA_repo_Driver:
-            - 05_gpu_nvidia_repo_install
-          virtual-with-NVIDIA_runfile_Driver:
-            - 06_gpu_nvidia_runfile_install
-          console-with-Debian_repo_Driver:
-            - 07_gpu_debian_driver_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/admin/update-dcv":
@@ -1156,7 +1089,7 @@ Resources:
               mode: "000755"
               owner: "admin"
               group: "admin"
-            "/home/ubuntu/update-awscli":
+            "/home/admin/update-awscli":
               content: |
                 #!/bin/bash
                 cd /tmp
@@ -1169,55 +1102,6 @@ Resources:
               mode: "000755"
               owner: "admin"
               group: "admin"
-            "/home/admin/update-mountpoint-s3":
-              content: |
-                #!/bin/bash
-                cd /tmp
-                rm -f mount-s3.rpm
-                if (uname -a | grep -q x86); then
-                  wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb
-                else
-                  wget -4 https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.deb
-                fi
-                sudo apt-get install -y ./mount-s3.deb
-              mode: "000755"
-              owner: "admin"
-              group: "admin"
-            "/etc/systemd/system/mount-s3-helper.service":
-              content: |
-                # https://github.com/awslabs/mountpoint-s3/blob/main/doc/CONFIGURATION.md#automatically-mounting-an-s3-bucket-at-boot
-                [Unit]
-                Description=Mountpoint for S3 helper
-                Wants=network.target
-
-                [Service]
-                Restart=on-failure
-                RestartSec=5
-                Type=forking
-                ExecStart=/opt/mount-s3-helper.sh
-                ExecStop=/usr/bin/fusermount -u /mnt/s3-bucket-mount
-
-                [Install]
-                WantedBy=remote-fs.target
-              mode: "000644"
-              owner: "root"
-              group: "root"
-            "/opt/mount-s3-helper.sh":
-              content: |
-                #!/bin/bash
-                S3_BUCKET_NAME=DOC-EXAMPLE-BUCKET
-                MOUNT_FOLDER=/mnt/s3-bucket-mount
-                USER=admin
-                GROUP=admin
-
-                USERID=$(cat /etc/passwd | grep ^$USER: | cut -d":" -f 3)
-                GROUPID=$(cat /etc/group | grep ^$GROUP: | cut -d":" -f 3)
-                mkdir -p $MOUNT_FOLDER
-
-                /usr/bin/mount-s3 --uid $USERID --gid $GROUPID --allow-overwrite --allow-delete --allow-other $S3_BUCKET_NAME $MOUNT_FOLDER
-              mode: "000744"
-              owner: "root"
-              group: "root"
             "/etc/systemd/system/route53-updater.service":
               content: |
                 [Unit]
@@ -1326,28 +1210,23 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 export DEBIAN_FRONTEND=noninteractive
 
-                # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
-                if (arch | grep -q x86); then
-                  apt-get install -q -y linux-headers-cloud-amd64
-                else
-                  apt-get install -q -y linux-headers-cloud-arm64
-                fi
-                apt-get install -q -y usbutils
-                # dcvusbdriverinstaller --quiet
-
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+
+                apt-get update -q
+                apt-get upgrade -q -y
+
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
+                # Add DCV ports
+                if (systemctl list-units | grep -q ufw); then
+                  ufw allow ${listenPort}/tcp
+                  ufw allow ${listenPort}/udp
+                  ufw allow https
+                  ufw allow http
+                fi
+
                 SESSION="${sessionType}"
-                case $SESSION in
-                  console-with-NVIDIA*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                  console-with-Debian*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                esac
 
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
@@ -1407,63 +1286,66 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
-            "/home/admin/download-NVIDIA-GRID-driver":
-              content: |
+            "/root/install-sw.sh":
+              content: !Sub |
                 #!/bin/bash
-                clear
-                echo  
-                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
-                echo  
-                echo By downloading, you agree to conditions and are bound by license terms as stated on 
-                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
-                echo 
-                mkdir -p /tmp/drivers
-                cd /tmp/drivers
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1                
-                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                mkdir -p /tmp/cfn
+                cd /tmp/cfn
+
+                # Update OS
+                apt-get update
+                apt-get upgrade -q -y
+
+                # remove AWSCLI version 1
+                apt-get remove -q -y awscli
+                cd /tmp/cfn
+                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
+                unzip -q -o awscliv2.zip
+                ./aws/install -b /usr/bin
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/admin/.bashrc    
+
+                # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
+                if (arch | grep -q x86); then
+                  curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb
+                else
+                  curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
                 fi
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
+                apt-get install -q -y ./amazon-cloudwatch-agent.deb
+                /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+                systemctl enable --now amazon-cloudwatch-agent
+      
+                # Webmin: https://webmin.com/download/
+                export webmin="${installWebmin}"
+                case $webmin in
+                  Yes)
+                    cd /tmp/cfn
+                    curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
+                    echo 'Y' | sh ./setup-repos.sh -f
+                    apt-get install -q -y webmin --install-recommends
+                    ;;
+                esac
+
+                # USB and GPU driver DKMS
+                apt-get update
+                apt-get install -q -y dkms
+
+                # Kernel headers for GPU and USB remotization
+                if (arch | grep -q x86); then
+                  apt-get install -q -y linux-headers-cloud-amd64
+                else
+                  apt-get install -q -y linux-headers-cloud-arm64
                 fi
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
-                ls
-                pwd
-              mode: "000755"
-              owner: "admin"
-              group: "admin"
-            "/home/admin/download-NVIDIA-Gaming-driver":
-              content: |
-                #!/bin/bash
-                clear
-                echo  
-                echo    NOTICE: These downloads are for GPU instances and are available to AWS customers only
-                echo  
-                echo By downloading, you agree to conditions and are bound by license terms as stated on 
-                echo    https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
-                echo 
-                mkdir -p /tmp/drivers
-                cd /tmp/drivers
-                pwd
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1
-                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
-                fi
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
-                fi
-                sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sudo sysctl -w net.ipv6.conf.default.disable_ipv6=0
-                ls
-                pwd
-              mode: "000755"
-              owner: "admin"
-              group: "admin"
+                apt-get install -q -y usbutils
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"
+          commands:
+            install:
+              command: "/root/install-sw.sh >> /var/log/install-sw.log 2>&1"
+              ignoreErrors: "true"
         00_dcv_install:
           files:
             "/root/install-dcv.sh":
@@ -1472,16 +1354,20 @@ Resources:
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
 
+                # Update OS
+                apt-get update
+                apt-get upgrade -q -y
+
                 # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
                 apt-get install -q -y gnome-core
                 apt-get install -q -y gdm3
+                apt-get install -q -y amazon-ec2-utils
 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/daemon.conf
 
                 # resolve "/var/lib/dpkg/info/nice-dcv-server.postinst: 8: dpkg-architecture: not found" when installing dcv-server
                 apt-get install -q -y dpkg-dev
-
 
                 # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 apt-get install -q -y pulseaudio-utils
@@ -1508,9 +1394,9 @@ Resources:
                 usermod -a -G $GROUP dcv
                 systemctl enable cups
 
-                # glxinfo and VAAPI : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+                # glxinfo : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
                 apt-get install -q -y mesa-utils
-                apt-get install -q -y libva2 libva-drm2 vainfo
+                apt-get install -q -y vulkan-tools clinfo
 
                 # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
                 cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -1524,21 +1410,19 @@ Resources:
 
                 # X11 dummy driver for non GPU instance console session
                 apt-get install -q -y xserver-xorg-video-dummy
-                $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
                 # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"admin\"\nstorage-root=\"\%home%\"" /etc/dcv/dcv.conf
 
-                # USB and GPU driver DKMS
-                apt-get install -q -y dkms
+                rm -f ${!0}
               mode: "000740"
               owner: "root"
               group: "root"
           commands:
             install:
-              command: "/root/install-dcv.sh > /var/log/install-dcv.log"
+              command: "/root/install-dcv.sh > /var/log/install-dcv.log 2>&1"
               ignoreErrors: "true"
         01_console:
           files:
@@ -1570,219 +1454,6 @@ Resources:
                     EndSubSection
                 EndSection
               mode: "000644"
-              owner: "root"
-              group: "root"
-        02_dcv_gpu_install:
-          files:
-            "/etc/systemd/system/dcv-gpu-install.service":
-              content: |
-                [Unit]
-                Description=Install GPU driver
-                After=default.target network.target
-
-                [Service]
-                ExecStart=/opt/install-gpu-driver
-
-                [Install]
-                WantedBy=default.target
-              mode: "000644"
-              owner: "root"
-              group: "root"
-        03_gpu_nvidia_grid_install:
-          files:
-            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
-              content: |
-                #!/bin/bash
-                mkdir -p /tmp/gpu
-                cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-                apt-get install -q -y linux-headers-cloud-amd64
-                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
-                fi
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
-                fi
-                if [ $? -eq 1 ]; then
-                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-17.4/NVIDIA-Linux-x86_64-550.90.10-grid-aws.run
-                fi
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-                chmod +x NVIDIA-Linux-x86_64*.run
-                ./NVIDIA-Linux-x86_64*.run -s
-
-                touch /etc/modprobe.d/nvidia.conf
-                echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
-
-                systemctl enable dcv-post-reboot
-                rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
-                reboot
-              mode: "000755"
-              owner: "root"
-              group: "root"
-        04_gpu_nvidia_gaming_install:
-          files:
-            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver
-              content: |
-                #!/bin/bash
-                mkdir -p /tmp/gpu
-                cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-                apt-get install -q -y linux-headers-cloud-amd64
-                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
-                fi
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
-                fi
-                if [ $? -eq 1 ]; then
-                  curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/550.73-Apr2024-Cloud_Gaming-Linux-Guest-Drivers.zip
-                fi
-
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-                unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
-                chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
-                cd nvidia-drivers/
-                ./NVIDIA-Linux-x86_64*.run -s
-
-                cat << EOF | tee -a /etc/nvidia/gridd.conf
-                vGamingMarketplace=2
-                EOF
-
-                curl -L -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2023_9_22.cert"
-
-                touch /etc/modprobe.d/nvidia.conf
-                echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
-
-                systemctl enable dcv-post-reboot
-                rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
-                reboot
-              mode: "000755"
-              owner: "root"
-              group: "root"
-        05_gpu_nvidia_repo_install:
-          files: # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#ubuntu
-            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#ubuntu-lts
-              content: |
-                #!/bin/bash
-                mkdir -p /tmp/gpu
-                cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-                if (arch | grep -q x86); then
-                  apt-get install -q -y linux-headers-cloud-amd64
-                else
-                  apt-get install -q -y linux-headers-cloud-arm64
-                fi
-                DISTRO=debian12
-                if (arch | grep -q x86); then
-                  ARCH=x86_64
-                else
-                  ARCH=sbsa
-                fi
-                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
-                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
-                apt-get update -q
-                apt-get install -q -y cuda-drivers
-                apt-get install -q -y nvidia-settings
-
-                # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages
-                #apt-get install -q -y cuda-toolkit
-                # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
-                #apt-get install -q -y cudnn
-                # Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installation
-                #apt-get install -q -y nvidia-container-toolkit
-
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-                systemctl enable dcv-post-reboot
-                rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
-                reboot
-              mode: "000755"
-              owner: "root"
-              group: "root"
-        06_gpu_nvidia_runfile_install:
-          files:
-            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#runfile
-              content: !Sub |
-                #!/bin/bash
-                mkdir -p /tmp/gpu
-                cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-                if (arch | grep -q x86); then
-                  apt-get install -q -y linux-headers-cloud-amd64
-                else
-                  apt-get install -q -y linux-headers-cloud-arm64
-                fi
-                DRIVER_VERSION="${teslaDriverVersion}"
-                ARCH=$( /bin/arch )
-                curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
-
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-                chmod +x ./NVIDIA-Linux-*.run
-                ./NVIDIA-Linux-*.run -s
-
-                systemctl enable dcv-post-reboot
-                rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${!0}
-                reboot
-              mode: "000755"
-              owner: "root"
-              group: "root"
-        07_gpu_debian_driver_install:
-          files:
-            "/opt/install-gpu-driver": # https://ubuntu.com/server/docs/nvidia-drivers-installation
-              content: !Sub |
-                #!/bin/bash
-                mkdir -p /tmp/gpu
-                cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
-                export DEBIAN_FRONTEND=noninteractive
-                apt-get update -q
-                if (arch | grep -q x86); then
-                  apt-get install -q -y linux-headers-cloud-amd64
-                else
-                  apt-get install -q -y linux-headers-cloud-arm64
-                fi
-
-                # https://wiki.debian.org/NvidiaGraphicsDrivers#Debian_12_.22Bookworm.22
-                echo "deb http://deb.debian.org/debian/ bookworm main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/nvidia.list
-                apt-get update -q
-                apt-get install -q -y nvidia-driver firmware-misc-nonfree
-
-                # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages
-                #apt-get install -q -y nvidia-cuda-toolkit
-                # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
-                #apt-get install -q -y nvidia-cudnn
-
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
-                systemctl enable dcv-post-reboot
-                rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${!0}
-                reboot
-              mode: "000755"
               owner: "root"
               group: "root"
     Properties:
@@ -1855,8 +1526,8 @@ Resources:
           curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
           cd aws-cfn-bootstrap-2.0
-          python3 setup.py build
-          python3 setup.py install
+          python3 setup.py build > /var/log/install-cfn-helper.log 2>&1
+          python3 setup.py install >> /var/log/install-cfn-helper.log 2>&1
           cd /tmp/cfn
           export CFN_INIT="python3 /usr/local/bin/cfn-init"
 
@@ -1866,88 +1537,11 @@ Resources:
 
           $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
 
-          # remove AWSCLI version 1
-          apt-get remove -q -y awscli
-          cd /tmp/cfn
-          # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-          curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-          unzip -q -o awscliv2.zip
-          ./aws/install -b /usr/bin
-          echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/admin/.bashrc
-
-          # Update OS
-          apt-get update -q
-          apt-get upgrade -q -y
-          apt-get autoremove -q -y
-
           # 
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
 
-          export SESSION="${sessionType}"
-          case $SESSION in
-            *Debian*)
-              systemctl disable dcv-post-reboot
-
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
-              systemctl daemon-reload
-              systemctl enable dcv-gpu-install
-              ;;
-            *NVIDIA*) # install GPU driver after reboot
-              systemctl disable dcv-post-reboot
-
-              apt-get install -q -y unzip gcc make
-              apt-get install -q -y libglvnd-dev pkg-config
-
-              # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#ubuntu
-              if (! cat /etc/modprobe.d/blacklist.conf | grep -q nouveau); then
-                echo "blacklist vga16fb" >> /etc/modprobe.d/blacklist.conf
-                echo "blacklist nouveau" >> /etc/modprobe.d/blacklist.conf
-                echo "blacklist rivafb" >> /etc/modprobe.d/blacklist.conf
-                echo "blacklist nvidiafb" >> /etc/modprobe.d/blacklist.conf
-                echo "blacklist rivatv" >> /etc/modprobe.d/blacklist.conf
-              fi
-              LINE_NUMBER=`grep -n ^GRUB_CMDLINE_LINUX= /etc/default/grub | cut -d ":" -f 1`
-              sed -i "$LINE_NUMBER s/.$/ rdblacklist=nouveau\"/" /etc/default/grub    
-              update-grub
-
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
-              systemctl daemon-reload
-              systemctl enable dcv-gpu-install
-              ;;
-          esac
-
-          # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
-          if (arch | grep -q x86); then
-            curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb
-          else
-            curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
-          fi
-          apt-get install -q -y ./amazon-cloudwatch-agent.deb
-          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
-          systemctl enable --now amazon-cloudwatch-agent
-
-          # Webmin: https://webmin.com/download/
-          export webmin="${installWebmin}"
-          case $webmin in
-            Yes)
-              cd /tmp/cfn
-              curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
-              echo 'Y' | sh ./setup-repos.sh -f
-              apt-get install -q -y webmin
-              ;;
-          esac
-
-          # MountPoint-S3: https://github.com/awslabs/mountpoint-s3
-          if (uname -a | grep -q x86); then
-            curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/x86_64/mount-s3.deb
-          else
-            curl -s -L -O https://s3.amazonaws.com/mountpoint-s3-release/latest/arm64/mount-s3.deb
-          fi
-          apt-get install -q -y ./mount-s3.deb
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -2026,7 +1620,11 @@ Resources:
     Properties:
       BackupVaultName: !Sub
         - "${AWS::StackName}-backupVault-${UID}"
-        - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+        - UID:
+            !Select [
+              3,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ]
       BackupVaultTags:
         {
           "StackName": !Ref AWS::StackName,
@@ -2045,7 +1643,11 @@ Resources:
           - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
         SelectionName: !Sub
           - "${AWS::StackName}-backupSelection-${UID}"
-          - UID: !Select [5, !Split ["-", !Sub "${AWS::StackId}"]]
+          - UID:
+              !Select [
+                3,
+                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+              ]
 
   backupRestoreRole:
     Type: AWS::IAM::Role

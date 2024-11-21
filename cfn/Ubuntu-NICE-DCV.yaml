@@ -853,12 +853,12 @@ Resources:
                     - s3:Get*
                     - s3:List*
                   Resource:
-                    - !Sub "arn:*:s3:::nvidia-gaming"
-                    - !Sub "arn:*:s3:::nvidia-gaming/*"
-                    - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers"
-                    - !Sub "arn:*:s3:::ec2-linux-nvidia-drivers/*"
-                    - !Sub "arn:*:s3:::ec2-amd-linux-drivers"
-                    - !Sub "arn:*:s3:::ec2-amd-linux-drivers/*"
+                    - arn:*:s3:::nvidia-gaming
+                    - arn:*:s3:::nvidia-gaming/*
+                    - arn:*:s3:::ec2-linux-nvidia-drivers
+                    - arn:*:s3:::ec2-linux-nvidia-drivers/*
+                    - arn:*:s3:::ec2-amd-linux-drivers
+                    - arn:*:s3:::ec2-amd-linux-drivers/*
           - !Ref AWS::NoValue
         - PolicyName: Route53CertbotAccess
           PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
@@ -1174,13 +1174,11 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 sudo rm -f /tmp/awscliv2.zip
-                if (uname -a | grep -q x86); then
-                  curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
-                else
-                  curl https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
-                fi
+                curl https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
                 unzip -q -o awscliv2.zip
+                /usr/bin/aws --version
                 sudo ./aws/install --update -b /usr/bin
+                /usr/bin/aws --version
               mode: "000755"
               owner: "ubuntu"
               group: "ubuntu"
@@ -1311,8 +1309,8 @@ Resources:
                 SESSION="${sessionType}"
                 case $SESSION in
                   console-with-NVIDIA_GRID_Driver)
-                     nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
-                     ;;
+                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                    ;;
                   console-with-NVIDIA*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
@@ -1372,16 +1370,13 @@ Resources:
                 # Update OS
                 apt-get update
                 apt-get upgrade -q -y
+                apt-get autoremove -q -y
 
                 # remove AWSCLI version 1
                 apt-get remove -q -y awscli
                 cd /tmp/cfn
                 # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                if (uname -a | grep -q x86); then
-                  curl -s https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip
-                else
-                  curl -s https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip -o awscliv2.zip
-                fi
+                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
                 unzip -q -o awscliv2.zip
                 ./aws/install -b /usr/bin
                 echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ubuntu/.bashrc
