@@ -735,27 +735,6 @@ Resources:
                   ForAllValues:StringLike:
                     route53:ChangeResourceRecordSetsNormalizedRecordNames:
                       - _acme-challenge.*
-        - PolicyName: Route53UpdaterAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
-              - Effect: Allow
-                Action:
-                  - route53:ListHostedZones
-                  - route53:GetChange
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - route53:ChangeResourceRecordSets
-                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
-                Condition:
-                  ForAllValues:StringEquals:
-                    route53:ChangeResourceRecordSetsRecordTypes:
-                      - A
-                  ForAllValues:StringLike:
-                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
-                      - site.example.com
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
         - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy

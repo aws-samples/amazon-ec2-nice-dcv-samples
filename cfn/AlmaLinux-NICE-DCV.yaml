@@ -882,25 +882,6 @@ Resources:
                   ForAllValues:StringLike:
                     route53:ChangeResourceRecordSetsNormalizedRecordNames:
                       ["_acme-challenge.*"]
-        - PolicyName: Route53UpdaterAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
-              - Effect: Allow
-                Action:
-                  - route53:ListHostedZones
-                  - route53:GetChange
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - route53:ChangeResourceRecordSets
-                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
-                Condition:
-                  ForAllValues:StringEquals:
-                    route53:ChangeResourceRecordSetsRecordTypes: [A]
-                  ForAllValues:StringLike:
-                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
-                      [site.example.com]
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
@@ -1183,54 +1164,6 @@ Resources:
               mode: "000755"
               owner: "ec2-user"
               group: "ec2-user"
-            "/etc/systemd/system/route53-updater.service":
-              content: |
-                [Unit]
-                Description=Route53 DNS updater
-                After=network.target
-
-                [Service]
-                Restart=on-failure
-                RestartSec=5
-                Type=oneshot
-                ExecStart=/opt/route53-updater.sh
-                RemainAfterExit=true
-
-                [Install]
-                WantedBy=multi-user.target
-              mode: "000644"
-              owner: "root"
-              group: "root"
-            "/opt/route53-updater.sh":
-              content: !Sub |
-                #!/bin/bash
-                R53_ZONE_ID=EXAMPLE-ZONE-ID
-                DNS_ENTRY=site.example.com
-
-                AWS_IP=`curl -s checkip.amazonaws.com`
-                aws route53 change-resource-record-sets --cli-input-json '{
-                "HostedZoneId": "/hostedzone/'$R53_ZONE_ID'",
-                "ChangeBatch": {
-                    "Comment": "Stack ${AWS::StackName}",
-                    "Changes": [
-                        {
-                          "Action": "UPSERT",
-                          "ResourceRecordSet": {
-                              "Name": "'$DNS_ENTRY'",
-                              "Type": "A",
-                              "TTL": 60,
-                            "ResourceRecords": [
-                              {
-                                "Value": "'$AWS_IP'"
-                              }
-                            ]
-                          }
-                        }
-                    ]
-                }}'
-              mode: "000755"
-              owner: "root"
-              group: "root"
             "/etc/systemd/system/dcv-virtual-session.service":
               content: |
                 [Unit]
