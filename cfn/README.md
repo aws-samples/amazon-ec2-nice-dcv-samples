@@ -91,7 +91,7 @@ Backup
 - `enableBackup` : EC2 data protection with [AWS Backup](https://aws.amazon.com/backup/). Default is `No`
 - `scheduleExpression`: start time of backup using [CRON expression](https://en.wikipedia.org/wiki/Cron#CRON_expression). Default is 1 am daily
 - `scheduleExpressionTimezone`: timezone in which the schedule expression is set. Default is `Etc/UTC`
-- `deleteAfterDays`:  number of days after backup creation that a recovery point is deleted. Default is `7`
+- `deleteAfterDays`:  number of days after backup creation that a recovery point is deleted. Default is `35`
 
 Others
 - `r53ZoneID` (optional): *This option requires [domain ownership](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html) with DNS hosting by [Amazon Route 53](https://aws.amazon.com/route53/)*
