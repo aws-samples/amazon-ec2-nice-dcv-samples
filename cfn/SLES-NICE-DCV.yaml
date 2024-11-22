@@ -1072,54 +1072,6 @@ Resources:
               mode: "000755"
               owner: "ec2-user"
               group: "users"
-            "/etc/systemd/system/route53-updater.service":
-              content: |
-                [Unit]
-                Description=Route53 DNS updater
-                After=network.target
-
-                [Service]
-                Restart=on-failure
-                RestartSec=5
-                Type=oneshot
-                ExecStart=/opt/route53-updater.sh
-                RemainAfterExit=true
-
-                [Install]
-                WantedBy=multi-user.target
-              mode: "000644"
-              owner: "root"
-              group: "root"
-            "/opt/route53-updater.sh":
-              content: !Sub |
-                #!/bin/bash
-                R53_ZONE_ID=EXAMPLE-ZONE-ID
-                DNS_ENTRY=site.example.com
-
-                AWS_IP=`curl -s checkip.amazonaws.com`
-                aws route53 change-resource-record-sets --cli-input-json '{
-                "HostedZoneId": "/hostedzone/'$R53_ZONE_ID'",
-                "ChangeBatch": {
-                    "Comment": "Stack ${AWS::StackName}",
-                    "Changes": [
-                        {
-                          "Action": "UPSERT",
-                          "ResourceRecordSet": {
-                              "Name": "'$DNS_ENTRY'",
-                              "Type": "A",
-                              "TTL": 60,
-                            "ResourceRecords": [
-                              {
-                                "Value": "'$AWS_IP'"
-                              }
-                            ]
-                          }
-                        }
-                    ]
-                }}'
-              mode: "000755"
-              owner: "root"
-              group: "root"
             "/etc/systemd/system/dcv-virtual-session.service":
               content: |
                 [Unit]
