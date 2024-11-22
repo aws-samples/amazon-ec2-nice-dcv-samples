@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Windows Server with DCV (
-  https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
+Description: Windows Server with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
+Transform: "AWS::LanguageExtensions"
 
 Metadata:
   License:
@@ -61,6 +61,10 @@ Metadata:
           - scheduleExpression
           - scheduleExpressionTimezone
           - deleteAfterDays
+      - Label:
+          default: Others
+        Parameters:
+          - r53ZoneID
 
 Parameters:
   imageId:
@@ -129,18 +133,14 @@ Parameters:
     ConstraintDescription: Select a Subnet
   displayPublicIP:
     Type: String
-    Description:
-      Display EC2 public IP in CloudFormation Outputs (select No if EC2
-      has no public IP)
+    Description: Display EC2 public IP in CloudFormation Outputs (select No if EC2 has no public IP)
     AllowedValues:
       - "Yes"
       - "No"
     Default: "Yes"
   assignStaticIP:
     Type: String
-    Description: Associate static public IPv4 address (
-      https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
-      )
+    Description: Associate static public IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
     AllowedValues:
       - "Yes"
       - "No"
@@ -148,20 +148,16 @@ Parameters:
 
   ingressIPv4:
     Type: String
-    Description:
-      Allowed source prefix (IPv4) ( e.g. 1.2.3.4/32, get your source IP
-      from https://checkip.amazonaws.com )
-    AllowedPattern: ^\d+\.\d+\.\d+\.\d+\/\d+$
+    Description: Allowed source prefix (IPv4) ( e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com )
+    AllowedPattern: "^\\d+\\.\\d+\\.\\d+\\.\\d+\\/\\d+$"
     ConstraintDescription: Specify valid IPv4 prefix
     Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
-    Description: Allowed source prefix (IPv6) (
-      https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing
-      )
+    Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
     AllowedPattern: .+
     ConstraintDescription: Specify valid IPv6 prefix
-    Default: "::/0"
+    Default: ::/0
   allowRDPport:
     Type: String
     Description: Allow remote desktop inbound
@@ -566,6 +562,11 @@ Parameters:
     Description: Number of days after creation that a recovery point (backup) is deleted
     Default: 35
 
+  r53ZoneID:
+    Type: String
+    Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
+    Default: ""
+
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
@@ -588,15 +589,18 @@ Conditions:
       !Equals [!Ref allowWebServerPorts, HTTPS],
       !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
     ]
-  hasCFprefix: !Not
-    - !Equals
-      - !FindInMap [
+  hasCFprefix:
+    !Not [
+      !Equals [
+        !FindInMap [
           CFprefixMap,
           !Ref AWS::Region,
           PrefixList,
           DefaultValue: pl-none,
-        ]
-      - pl-none
+        ],
+        pl-none,
+      ],
+    ]
   createCFsgHTTP:
     !And [
       !And [!Condition hasCFprefix, !Condition displayPublicIP],
@@ -610,9 +614,10 @@ Conditions:
   createSgRDP: !Equals [!Ref allowRDPport, "Yes"]
   createBackup: !Equals [!Ref enableBackup, "Yes"]
 
+  hasR53Zone: !Not [!Equals [!Ref r53ZoneID, ""]]
+
 Mappings:
-  CFprefixMap:
-    # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
+  CFprefixMap: # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
     af-south-1:
       PrefixList: pl-c0aa4fa9
     ap-east-1:
@@ -687,8 +692,7 @@ Resources:
       Path: /
       Policies:
         - PolicyName: dcvLicensing
-          PolicyDocument:
-            # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
+          PolicyDocument: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
@@ -713,28 +717,30 @@ Resources:
                     - arn:*:s3:::ec2-amd-windows-drivers
                     - arn:*:s3:::ec2-amd-windows-drivers/*
           - !Ref AWS::NoValue
-        - PolicyName: Route53CertbotAccess
-          PolicyDocument:
-            # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
-            Version: "2012-10-17"
-            Statement:
-              # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
-              - Effect: Allow
-                Action:
-                  - route53:ListHostedZones
-                  - route53:GetChange
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - route53:ChangeResourceRecordSets
-                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
-                Condition:
-                  ForAllValues:StringEquals:
-                    route53:ChangeResourceRecordSetsRecordTypes:
-                      - TXT
-                  ForAllValues:StringLike:
-                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
-                      - _acme-challenge.*
+        - !If
+          - hasR53Zone
+          - PolicyName: Route53CertbotAccess
+            PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
+              Version: "2012-10-17"
+              Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
+                - Effect: Allow
+                  Action:
+                    - route53:ListHostedZones
+                    - route53:GetChange
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - route53:ChangeResourceRecordSets
+                  Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/${r53ZoneID}
+                  Condition:
+                    IpAddress:
+                      aws:SourceIp: 0.0.0.0/0
+                    ForAllValues:StringEquals:
+                      route53:ChangeResourceRecordSetsRecordTypes: [TXT]
+                    ForAllValues:StringLike:
+                      route53:ChangeResourceRecordSetsNormalizedRecordNames:
+                        [_acme-challenge.*]
+          - !Ref AWS::NoValue
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
         - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
@@ -1197,14 +1203,16 @@ Resources:
       EbsOptimized: true
       SecurityGroupIds:
         - !Ref securityGroup
-        - !If
-          - createCFsgHTTP
-          - !Ref securityGroupForCloudFrontHTTP
-          - !Ref AWS::NoValue
-        - !If
-          - createCFsgHTTPS
-          - !Ref securityGroupForCloudFrontHTTPS
-          - !Ref AWS::NoValue
+        - !If [
+            createCFsgHTTP,
+            !Ref securityGroupForCloudFrontHTTP,
+            !Ref AWS::NoValue,
+          ]
+        - !If [
+            createCFsgHTTPS,
+            !Ref securityGroupForCloudFrontHTTPS,
+            !Ref AWS::NoValue,
+          ]
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:

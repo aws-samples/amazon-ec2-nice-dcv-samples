@@ -61,6 +61,10 @@ Metadata:
           - scheduleExpression
           - scheduleExpressionTimezone
           - deleteAfterDays
+      - Label:
+          default: Others
+        Parameters:
+          - r53ZoneID
 
 Parameters:
   osVersion:
@@ -68,7 +72,7 @@ Parameters:
     Description: Version
     AllowedValues:
       - SUSE Linux Enterprise Server 15 SP5
-    #      - SUSE Linux Enterprise Server 12 SP5
+      - SUSE Linux Enterprise Server 12 SP5
     Default: SUSE Linux Enterprise Server 15 SP5
 
   ec2Name:
@@ -78,7 +82,7 @@ Parameters:
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )
-    AllowedPattern: ".+"
+    AllowedPattern: .+
     ConstraintDescription: Select a key pair
   instanceType:
     Type: String
@@ -111,12 +115,12 @@ Parameters:
   vpcID:
     Type: AWS::EC2::VPC::Id
     Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
-    AllowedPattern: ".+"
+    AllowedPattern: .+
     ConstraintDescription: Select a VPC
   subnetID:
     Type: AWS::EC2::Subnet::Id
     Description: "Subnet with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#subnets: )"
-    AllowedPattern: ".+"
+    AllowedPattern: .+
     ConstraintDescription: Select a Subnet
   displayPublicIP:
     Type: String
@@ -142,7 +146,7 @@ Parameters:
   ingressIPv6:
     Type: String
     Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
-    AllowedPattern: ".+"
+    AllowedPattern: .+
     ConstraintDescription: Specify valid IPv6 prefix
     Default: ::/0
   allowSSHport:
@@ -186,7 +190,7 @@ Parameters:
   scheduleExpression:
     Type: String
     Description: CRON expression specifying when AWS Backup initiates a backup job
-    AllowedPattern: ".+"
+    AllowedPattern: .+
     Default: "cron(0 1 ? * * *)"
   scheduleExpressionTimezone: # https://nodatime.org/TimeZones?version=2024a&format=json
     Type: String
@@ -549,6 +553,11 @@ Parameters:
     Description: Number of days after creation that a recovery point (backup) is deleted
     Default: 35
 
+  r53ZoneID:
+    Type: String
+    Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
+    Default: ""
+
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   useSles15: !Equals [!Ref osVersion, "SUSE Linux Enterprise Server 15 SP6"]
@@ -602,6 +611,8 @@ Conditions:
     ]
   createSgSSH: !Equals [!Ref allowSSHport, "Yes"]
   createBackup: !Equals [!Ref enableBackup, "Yes"]
+
+  hasR53Zone: !Not [!Equals [!Ref r53ZoneID, ""]]
 
 Mappings:
   EICprefixMap: # EC2 instance connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html#ec2-instance-connect-setup-security-group
@@ -787,44 +798,30 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource: !Sub arn:aws:s3:::dcv-license.${AWS::Region}/*
-        - PolicyName: Route53CertbotAccess
-          PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
-            Version: "2012-10-17"
-            Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
-              - Effect: Allow
-                Action:
-                  - route53:ListHostedZones
-                  - route53:GetChange
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - route53:ChangeResourceRecordSets
-                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
-                Condition:
-                  ForAllValues:StringEquals:
-                    route53:ChangeResourceRecordSetsRecordTypes: [TXT]
-                  ForAllValues:StringLike:
-                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
-                      ["_acme-challenge.*"]
-        - PolicyName: Route53UpdaterAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
-              - Effect: Allow
-                Action:
-                  - route53:ListHostedZones
-                  - route53:GetChange
-                Resource: "*"
-              - Effect: Allow
-                Action:
-                  - route53:ChangeResourceRecordSets
-                Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/EXAMPLE-ZONE-ID
-                Condition:
-                  ForAllValues:StringEquals:
-                    route53:ChangeResourceRecordSetsRecordTypes: [A]
-                  ForAllValues:StringLike:
-                    route53:ChangeResourceRecordSetsNormalizedRecordNames:
-                      [site.example.com]
+        - !If
+          - hasR53Zone
+          - PolicyName: Route53CertbotAccess
+            PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
+              Version: "2012-10-17"
+              Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
+                - Effect: Allow
+                  Action:
+                    - route53:ListHostedZones
+                    - route53:GetChange
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - route53:ChangeResourceRecordSets
+                  Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/${r53ZoneID}
+                  Condition:
+                    IpAddress:
+                      aws:SourceIp: 0.0.0.0/0
+                    ForAllValues:StringEquals:
+                      route53:ChangeResourceRecordSetsRecordTypes: [TXT]
+                    ForAllValues:StringLike:
+                      route53:ChangeResourceRecordSetsNormalizedRecordNames:
+                        [_acme-challenge.*]
+          - !Ref AWS::NoValue
       ManagedPolicyArns:
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
         - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
