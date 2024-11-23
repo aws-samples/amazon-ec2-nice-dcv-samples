@@ -1153,7 +1153,7 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\.//g')
-                sudo rm -f /tmp/nice-dcv-$OS_VERSION-$(arch).tgz
+                sudo rm -f /tmp/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
                 tar -xvzf nice-dcv-ubuntu$OS_VERSION-$(arch).tgz && cd nice-dcv-*-ubuntu$OS_VERSION-$(arch)
                 sudo apt-get install -y ./nice-dcv-server_*.deb
@@ -1241,7 +1241,7 @@ Resources:
 
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
-                apt-get update -q
+                apt-get update
                 apt-get upgrade -q -y
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -1856,8 +1856,7 @@ Resources:
                 echo "blacklist nvidiafb" >> /etc/modprobe.d/blacklist.conf
                 echo "blacklist rivatv" >> /etc/modprobe.d/blacklist.conf
               fi
-              LINE_NUMBER=`grep -n ^GRUB_CMDLINE_LINUX= /etc/default/grub | cut -d ":" -f 1`
-              sed -i "$LINE_NUMBER s/.$/ rdblacklist=nouveau\"/" /etc/default/grub    
+              sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="rdblacklist=nouveau /g' /etc/default/grub
               update-grub
 
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
