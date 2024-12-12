@@ -1672,12 +1672,13 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
+                chmod +x ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
                 if (lsb_release -r -s | grep -q 22); then
-                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
+                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
                 else
-                  ./NVIDIA-Linux-x86_64*.run -s
+                  ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s
                 fi
 
                 systemctl enable dcv-post-reboot
