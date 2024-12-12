@@ -1547,7 +1547,7 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 chmod +x NVIDIA-Linux-x86_64*.run
-                if (lsb_release -r -s | grep 22); then
+                if (lsb_release -r -s | grep -q 22); then
                   CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
@@ -1592,7 +1592,7 @@ Resources:
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
                 cd nvidia-drivers/
-                if (lsb_release -r -s | grep 22); then
+                if (lsb_release -r -s | grep -q 22); then
                   CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
@@ -1672,7 +1672,7 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
-                if (lsb_release -r -s | grep 22); then
+                if (lsb_release -r -s | grep -q 22); then
                   CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
