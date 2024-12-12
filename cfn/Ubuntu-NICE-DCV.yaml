@@ -1547,7 +1547,13 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 chmod +x NVIDIA-Linux-x86_64*.run
-                ./NVIDIA-Linux-x86_64*.run -s
+                if (lsb_release -r -s | grep 22); then
+                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
+                  cd /usr/src/nvidia-*
+                  sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
+                else
+                  ./NVIDIA-Linux-x86_64*.run -s
+                fi
 
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
@@ -1586,7 +1592,13 @@ Resources:
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
                 cd nvidia-drivers/
-                ./NVIDIA-Linux-x86_64*.run -s
+                if (lsb_release -r -s | grep 22); then
+                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
+                  cd /usr/src/nvidia-*
+                  sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
+                else
+                  ./NVIDIA-Linux-x86_64*.run -s
+                fi
 
                 cat << EOF | tee -a /etc/nvidia/gridd.conf
                 vGamingMarketplace=2
@@ -1660,8 +1672,13 @@ Resources:
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
-                chmod +x ./NVIDIA-Linux-*.run
-                ./NVIDIA-Linux-*.run -s
+                if (lsb_release -r -s | grep 22); then
+                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
+                  cd /usr/src/nvidia-*
+                  sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
+                else
+                  ./NVIDIA-Linux-x86_64*.run -s
+                fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
