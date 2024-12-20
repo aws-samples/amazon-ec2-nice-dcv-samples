@@ -1168,8 +1168,7 @@ Resources:
                 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr "2019 202">nul && (
                   @echo ** https://www.powershellgallery.com/packages/DisplaySettings
                   powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
-                  powershell -command "Install-Module -Name DisplaySettings  -Force"
-                  powershell -command "Set-DisplayResolution -Width 1920 -Height 1080 -Force"
+                  powershell -command "Install-Module -Name DisplaySettings  -Force"                  
                 ) || (
                   echo.
                 )
@@ -1259,17 +1258,18 @@ Resources:
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-all
           choco install --no-progress -y vcredist140
           SET DRIVER_TYPE=${driverType}
-          IF %DRIVER_TYPE% EQU DCV-IDD (
-            msiexec.exe /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
-          ) ELSE IF %DRIVER_TYPE% EQU NVIDIA-Tesla (
-            msiexec.exe  /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
-          ) ELSE (
+          IF %DRIVER_TYPE% EQU DCV (
             msiexec /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL REMOVE=iddDriver /quiet /norestart /l*v dcv_install_msi.log
+          ) ELSE IF %DRIVER_TYPE% EQU none (
+            msiexec /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL REMOVE=iddDriver /quiet /norestart /l*v dcv_install_msi.log
+          ) ELSE (
+            msiexec.exe /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
+            reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
           )
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-auto
-          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
+          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
 
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-storage.html
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
@@ -1280,6 +1280,9 @@ Resources:
           @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v web-port /t REG_DWORD /d ${listenPort} /f
           reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v quic-port /t REG_DWORD /d ${listenPort} /f
+
+          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#display
+          reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
 
           @echo ** install graphics driver
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_gpu_install
