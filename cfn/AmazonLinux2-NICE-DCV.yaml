@@ -64,6 +64,10 @@ Metadata:
           - scheduleExpressionTimezone
           - deleteAfterDays
       - Label:
+          default: AWS Global Accelerator (AGA)
+        Parameters:
+          - enableAGA
+      - Label:
           default: Others
         Parameters:
           - r53ZoneID
@@ -574,6 +578,14 @@ Parameters:
     Description: Number of days after creation that a recovery point (backup) is deleted
     Default: 35
 
+  enableAGA:
+    Type: String
+    Description: Deploy Global Accelerator
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+
   r53ZoneID:
     Type: String
     Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
@@ -643,6 +655,8 @@ Conditions:
   installWebmin: !Equals [!Ref installWebmin, "Yes"]
 
   hasR53Zone: !Not [!Equals [!Ref r53ZoneID, ""]]
+
+  createAGA: !Equals [!Ref enableAGA, "Yes"]
 
 Mappings:
   EICprefixMap: # EC2 instance connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html#ec2-instance-connect-setup-security-group
@@ -1090,6 +1104,275 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
+  securityGroupForR53HealthChecks:
+    Type: AWS::EC2::SecurityGroup
+    Condition: createAGA
+    Properties:
+      GroupDescription: Allow Route 53 Health Checks
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - Description: R53 Health Checks (IPv4) 01
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 15.177.0.0/18
+        - Description: R53 Health Checks (IPv4) 02
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.80.197.0/25
+        - Description: R53 Health Checks (IPv4) 03
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.80.197.128/25
+        - Description: R53 Health Checks (IPv4) 04
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.80.198.0/25
+        - Description: R53 Health Checks (IPv4) 05
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.83.34.128/25
+        - Description: R53 Health Checks (IPv4) 06
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.83.35.0/25
+        - Description: R53 Health Checks (IPv4) 07
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.83.35.128/25
+        - Description: R53 Health Checks (IPv4) 08
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.183.255.128/26
+        - Description: R53 Health Checks (IPv4) 09
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.228.16.0/26
+        - Description: R53 Health Checks (IPv4) 10
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.232.40.64/26
+        - Description: R53 Health Checks (IPv4) 11
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.241.32.64/26
+        - Description: R53 Health Checks (IPv4) 12
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.243.31.192/26
+        - Description: R53 Health Checks (IPv4) 13
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.244.52.192/26
+        - Description: R53 Health Checks (IPv4) 14
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.245.168.0/26
+        - Description: R53 Health Checks (IPv4) 15
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.248.220.0/26
+        - Description: R53 Health Checks (IPv4) 16
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.250.253.192/26
+        - Description: R53 Health Checks (IPv4) 17
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.251.31.128/26
+        - Description: R53 Health Checks (IPv4) 18
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.252.79.128/26
+        - Description: R53 Health Checks (IPv4) 19
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.252.254.192/26
+        - Description: R53 Health Checks (IPv4) 20
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.255.254.192/26
+        - Description: R53 Health Checks (IPv4) 21
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 107.23.255.0/26
+        - Description: R53 Health Checks (IPv4) 22
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 176.34.159.192/26
+        - Description: R53 Health Checks (IPv4) 23
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 177.71.207.128/26
+        - Description: R53 Health Checks (IPv6) 01
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2400:7fc0:83cc:cc00::/56
+        - Description: R53 Health Checks (IPv6) 02
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2400:7fc0:83cc:cd00::/56
+        - Description: R53 Health Checks (IPv6) 03
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2400:7fc0:83cc:ce00::/56
+        - Description: R53 Health Checks (IPv6) 04
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2404:c2c0:83cc:cc00::/56
+        - Description: R53 Health Checks (IPv6) 05
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2404:c2c0:83cc:cd00::/56
+        - Description: R53 Health Checks (IPv6) 06
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2404:c2c0:83cc:ce00::/56
+        - Description: R53 Health Checks (IPv6) 07
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da14:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 08
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da14:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 09
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da18:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 10
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da18:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 11
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da1c:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 12
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da1c:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 13
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f14:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 14
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f14:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 15
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f18:3fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 16
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f18:7fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 17
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f1c:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 18
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f1c:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 19
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f1e:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 20
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f1e:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 21
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:f0f0:300:100::/56
+        - Description: R53 Health Checks (IPv6) 22
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:f0f0:30e::/48
+        - Description: R53 Health Checks (IPv6) 23
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:f0f0:30f::/48
+        - Description: R53 Health Checks (IPv6) 24
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2a05:d018:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 25
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2a05:d018:fff:f800::/56
+      SecurityGroupEgress:
+        - Description: Ping
+          IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 127.0.0.1/32
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: Name
+          Value: !Sub
+            - "${AWS::StackName}-R53HealthChecks-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
   ec2Instance:
     Type: AWS::EC2::Instance
     CreationPolicy:
@@ -1125,9 +1408,9 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp
-                sudo rm -f /tmp/nice-dcv-el7-$(arch).tgz
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-$(arch).tgz
-                tar -xvzf nice-dcv-el7-$(arch).tgz && cd nice-dcv-*-el7-$(arch)
+                sudo rm -f /tmp/nice-dcv-amzn2-$(arch).tgz
+                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-amzn2-$(arch).tgz
+                tar -xvzf nice-dcv-amzn2-$(arch).tgz && cd nice-dcv-*-amzn2-$(arch)
                 sudo yum install -y ./nice-dcv-server-*.rpm
                 sudo yum install -y ./nice-dcv-web-viewer-*.rpm
                 sudo yum install -y ./nice-xdcv-*.rpm
@@ -1224,12 +1507,18 @@ Resources:
                     firewall-cmd --permanent --add-port ${listenPort}/udp
                     firewall-cmd --permanent --add-service http
                     firewall-cmd --permanent --add-service https
+                    if [ "${installWebmin}" = "Yes" ]; then
+                      firewall-cmd --permanent --add-port 10000/tcp
+                    fi
                     firewall-cmd --reload
                   else
                     firewall-offline-cmd --add-port ${listenPort}/tcp
                     firewall-offline-cmd --add-port ${listenPort}/udp
                     firewall-offline-cmd --add-service http
                     firewall-offline-cmd --add-service https
+                    if [ "${installWebmin}" = "Yes" ]; then
+                      firewall-offline-cmd --add-port 10000/tcp
+                    fi
                   fi
                 fi
 
@@ -1374,8 +1663,8 @@ Resources:
 
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-$(arch).tgz
-                tar -xvzf nice-dcv-el7-$(arch).tgz && cd nice-dcv-*-el7-$(arch)
+                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-amzn2-$(arch).tgz
+                tar -xvzf nice-dcv-amzn2-$(arch).tgz && cd nice-dcv-*-amzn2-$(arch)
                 yum install -q -y ./nice-dcv-server-*.rpm
                 yum install -q -y ./nice-dcv-web-viewer-*.rpm
                 yum install -q -y ./nice-xdcv-*.rpm
@@ -1656,6 +1945,11 @@ Resources:
             !Ref securityGroupForCloudFrontHTTPS,
             !Ref AWS::NoValue,
           ]
+        - !If [
+            createAGA,
+            !Ref securityGroupForR53HealthChecks,
+            !Ref AWS::NoValue,
+          ]
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
@@ -1843,6 +2137,82 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
+  aga:
+    Type: AWS::GlobalAccelerator::Accelerator
+    Condition: createAGA
+    Properties:
+      Name: !Sub
+        - "${AWS::StackName}-AGA-${UID}"
+        - UID:
+            !Select [
+              3,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ]
+      IpAddressType: IPV4
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  agaListener1:
+    Type: AWS::GlobalAccelerator::Listener
+    Condition: createAGA
+    Properties:
+      AcceleratorArn: !Ref aga
+      ClientAffinity: SOURCE_IP
+      Protocol: TCP
+      PortRanges:
+        - FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+        - !If
+          - createSgSSH
+          - FromPort: 22
+            ToPort: 22
+          - !Ref AWS::NoValue
+        - !If
+          - installWebmin
+          - FromPort: 10000
+            ToPort: 10000
+          - !Ref AWS::NoValue
+
+  agaListener2:
+    Type: AWS::GlobalAccelerator::Listener
+    Condition: createAGA
+    Properties:
+      AcceleratorArn: !Ref aga
+      ClientAffinity: SOURCE_IP
+      Protocol: UDP
+      PortRanges:
+        - FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+
+  agaEndpointGroup1:
+    Type: AWS::GlobalAccelerator::EndpointGroup
+    Condition: createAGA
+    Properties:
+      ListenerArn: !GetAtt agaListener1.ListenerArn
+      EndpointGroupRegion: !Ref AWS::Region
+      HealthCheckPort: !Ref listenPort
+      HealthCheckProtocol: TCP
+      ThresholdCount: 1
+      EndpointConfigurations:
+        - EndpointId: !Ref ec2Instance
+
+  agaEndpointGroup2:
+    Type: AWS::GlobalAccelerator::EndpointGroup
+    Condition: createAGA
+    Properties:
+      ListenerArn: !GetAtt agaListener2.ListenerArn
+      EndpointGroupRegion: !Ref AWS::Region
+      HealthCheckPort: !Ref listenPort
+      HealthCheckProtocol: TCP
+      ThresholdCount: 1
+      EndpointConfigurations:
+        - EndpointId: !Ref ec2Instance
+
 Outputs:
   EC2console:
     Description: EC2 console
@@ -1872,6 +2242,11 @@ Outputs:
             !GetAtt ec2Instance.PrivateIp,
           ]
 
+  DCVwebConsoleAGA:
+    Condition: createAGA
+    Description: DCV web browser client through AGA (login as ec2-user)
+    Value: !Sub https://${aga.DnsName}:${listenPort}
+
   SecurityGroup:
     Description: Security Group
     Value: !Ref securityGroup
@@ -1899,3 +2274,13 @@ Outputs:
         !Sub "https://${ec2Instance.PublicIp}:10000",
         !Sub "https://${ec2Instance.PrivateIp}:10000",
       ]
+
+  AGAconsole:
+    Condition: createAGA
+    Description: Global Accelerator console
+    Value: !Sub https://us-west-2.console.aws.amazon.com/globalaccelerator/home#AcceleratorDetails:AcceleratorArn=${aga}
+
+  AGAipv4Addresses:
+    Condition: createAGA
+    Description: Global Accelerator IPv4 addresses
+    Value: !Join [", ", !GetAtt aga.Ipv4Addresses]

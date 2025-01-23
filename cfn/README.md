@@ -1,5 +1,5 @@
 ## Notice
-Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life are not supported by DCV and *may not work*. Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. Refer to [DCV documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
+Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life *are not supported* by DCV and *may not work*. Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. Refer to [DCV documentation](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
 
 
 ## About CloudFormation templates
@@ -82,16 +82,20 @@ Allowed IP prefix and ports
 - `allowWebServerPorts`: allow inbound HTTP and/or HTTPS. Use this option if you intend to setup web server. Default is `No`
 - `installWebmin`(some Linux OS): install [Webmin](https://webmin.com/) web-based system administration tool. Default is `No`
 
-
 EBS
 - `volumeSize`: EBS root volume size in GiB
 - `volumeType`: `gp2` or `gp3` [general purpose](https://aws.amazon.com/ebs/general-purpose/) EBS type. Default is `gp3`
 
 Backup
-- `enableBackup` : EC2 data protection with [AWS Backup](https://aws.amazon.com/backup/). Default is `No`
+- `enableBackup` : EC2 data protection with [AWS Backup](https://aws.amazon.com/backup/). There are charges associated with using this service as listed at [AWS Backup pricing](https://aws.amazon.com/backup/pricing) page. Default is `No`
 - `scheduleExpression`: start time of backup using [CRON expression](https://en.wikipedia.org/wiki/Cron#CRON_expression). Default is 1 am daily
 - `scheduleExpressionTimezone`: timezone in which the schedule expression is set. Default is `Etc/UTC`
 - `deleteAfterDays`:  number of days after backup creation that a recovery point is deleted. Default is `35`
+
+AWS Global Accelerator (AGA)
+- `enableAGA` : deploy [AWS Global Accelerator (AGA)](https://aws.amazon.com/global-accelerator/) network accelerator, which can optimize streaming traffic especially when connecting over long distances or over unreliable networks. You can use the [AWS Global Accelerator Speed Comparison Tool](https://speedtest.globalaccelerator.aws) to see the performance difference when transferring data using Global Accelerator. There are charges associated with using this service as listed at [AWS Global Accelerator pricing](https://aws.amazon.com/global-accelerator/pricing/) page. Default is `No`
+
+    *Note: verify AGA [Region and Availability Zone (AZ) availability](https://docs.aws.amazon.com/global-accelerator/latest/dg/preserve-client-ip-address.regions.html) before using this service.* 
 
 Others
 - `r53ZoneID` (optional): *This option requires [domain ownership](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-register.html) with DNS hosting by [Amazon Route 53](https://aws.amazon.com/route53/)*
@@ -105,7 +109,7 @@ It may take more than 15 minutes to provision the EC2 instance. After your stack
 
 ### CloudFormation Outputs and Exports
 The following URLs are available in **Outputs** section 
-- `SSMsessionManager`* : [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to set a strong DCV login user password. Password change command is in *Description* field.
+- `SSMsessionManager`*: [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to set a strong DCV login user password. Password change command is in *Description* field.
 - `DCVwebConsole`: DCV web browser console URL link. Login as user specified in *Description* field. 
 - `EC2console`: EC2 console URL link to manage EC2 instance.
 - `EC2instanceConnect`* (if available, Linux): [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html).
@@ -113,14 +117,20 @@ The following URLs are available in **Outputs** section
 - `RDPconnect` (Windows): in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update DCV server.
 - `WebminUrl` (if available, Linux): [Webmin](https://webmin.com/) URL link. Set the root password by running `sudo passwd root` from `EC2instanceConnect`, `SSMsessionManager` or SSH session, and login as `root`.
 
-
 \* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to DCV server using [native clients](#dcv-clients).*
+
+The following are available if `enableAGA` is `Yes`
+- `DCVwebConsoleAGA`: DCV web browser console URL link through AGA
+- `AGAconsole`: Global Accelerator console URL link
+- `AGAipv4Addresses`: IPv4 addresses
+
+*When [connecting](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting.html) to AGA using native [Windows](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-win.html), [Linux](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-linux.html) or [macOS](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-mac.html) clients, you may want to explicitly select WebSocket (TCP) protocol. QUIC (UDP) is only supported for direct client-server communication where there are no intermediate proxies, gateways, or load balancers.*
+
 
 The following values are available as [CloudFormation Exports](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html)
 - `<Stack Name>-IAMRole`: IAM role name
 - `<Stack Name>-InstanceID`: EC2 instance ID
 - `<Stack Name>-SecurityGroup`: Security group ID
-
 
 ## Using DCV
 Refer to [DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getting-started.html)
@@ -133,6 +143,9 @@ On Linux instances, the web browser client can be disabled by removing `nice-dcv
 
 ### USB remotization
 DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html), allowing use of specialized USB devices, such as 3D pointing devices and two-factor authentication USB dongles, on Windows and Linux OSs. To use feature on a supported Linux OS, run the command `sudo dcvusbdriverinstaller` and restart EC2 instance. USB device redirection is [supported](https://docs.aws.amazon.com/dcv/latest/userguide/client.html#client-features) by installable Windows clients. 
+
+### Secure centralized access
+If you have a fleet of Amazon DCV servers, you can use [Amazon DCV Connection Gateway](https://docs.aws.amazon.com/dcv/latest/gw-admin/what-is-gw.html) to centralize access. Refer to blog [Getting started with managing NICE DCV sessions secured behind a NICE DCV Connection Gateway](https://aws.amazon.com/blogs/desktop-and-application-streaming/getting-started-with-managing-nice-dcv-sessions-secured-behind-a-nice-dcv-connection-gateway/) and [dcv-samples](https://github.com/aws-samples/dcv-samples) for more information. 
 
 ## About Windows template
 Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console), [AWS CloudShell](https://aws.amazon.com/cloudshell/) or [AWS CLI](https://aws.amazon.com/cli/). Refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog for more information.
