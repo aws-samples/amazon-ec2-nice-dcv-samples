@@ -182,7 +182,6 @@ With virtual sessions, DCV starts an X server instance, Xdcv, and runs a desktop
 The CloudFormation template configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual` and `console` session type options respectively.
 
 
-
 ### GPU driver installation
 On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with GPU drivers installed and configured, DCV console sessions have direct access to the GPU, providing features such as GPU accelerated OpenGL and hardware accelerated video streaming encoding (screen shot below). For best results, connect to your EC2 instance using [native client](#dcv-clients).
 
@@ -229,6 +228,14 @@ NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit installation scripts are a
 - [How do I install NVIDIA GPU driver, CUDA toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Amazon Linux 2023 (AL2023)?](https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-amazon-linux-2023-al2023)
 - [How do I install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running RHEL/Rocky Linux 8/9?](https://repost.aws/articles/ARpmJcNiCtST2A3hrrM_4R4A/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9)
 - [How do I install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Ubuntu Linux?](https://repost.aws/articles/ARWGxLArMBQ4y1MKoSHTq3gQ/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-ubuntu-linux)
+
+
+### Troubleshooting
+To troubleshoot any installation issue, you can view contents of the following log files
+- /var/log/install-cfn-helper.log
+- /var/log/install-dcv.log
+- /var/log/install-sw.log
+- /var/log/nvidia-installer.log (NVIDIA GRID, Gaming and Tesla driver)
 
 
 ## About EC2
