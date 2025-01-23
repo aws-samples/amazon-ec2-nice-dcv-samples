@@ -232,11 +232,11 @@ NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit installation scripts are a
 
 ### Troubleshooting
 To troubleshoot any installation issue, you can view contents of the following log files
+- /var/log/cloud-init-output.log
 - /var/log/install-cfn-helper.log
 - /var/log/install-dcv.log
 - /var/log/install-sw.log
 - /var/log/nvidia-installer.log (NVIDIA GRID, Gaming and Tesla driver)
-
 
 ## About EC2
 ### Private subnet
