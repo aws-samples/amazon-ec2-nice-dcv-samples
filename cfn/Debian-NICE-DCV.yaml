@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Debian with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples )
+Description: Debian with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Debian)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
   License:
     Description: |
-      Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved. (uksb-632il17651)
+      Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
       SPDX-License-Identifier: MIT-0
 
       Permission is hereby granted, free of charge, to any person obtaining a copy of this
