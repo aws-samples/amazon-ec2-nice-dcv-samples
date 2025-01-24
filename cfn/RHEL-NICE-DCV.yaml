@@ -1485,7 +1485,7 @@ Resources:
                 After=default.target network.target
 
                 [Service]
-                ExecStart=/opt/dcv-post-reboot.sh
+                ExecStart=/bin/sh -c "/opt/dcv-post-reboot.sh 2>&1 | tee -a /var/log/install-sw.log"
 
                 [Install]
                 WantedBy=default.target
@@ -1768,7 +1768,7 @@ Resources:
                 After=default.target network.target
 
                 [Service]
-                ExecStart=/opt/install-gpu-driver
+                ExecStart=/bin/sh -c "/opt/install-gpu-driver 2>&1 | tee -a /var/log/install-gpu-driver.log"
 
                 [Install]
                 WantedBy=default.target
