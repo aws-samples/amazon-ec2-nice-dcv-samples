@@ -1,4 +1,4 @@
-## amazon-ec2-nice-dcv-samples 
+## EC2 DCV samples
 Sample [AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates to provision Windows or Linux [Amazon EC2](https://aws.amazon.com/ec2/) instances with GUI (graphical user interface) running [Amazon DCV](https://aws.amazon.com/hpc/dcv/) server. Includes option to install GPU drivers. 
 
 ## Description
