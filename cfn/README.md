@@ -37,16 +37,16 @@ DCV
 - `driverType` (Windows) : graphics driver to install
     - [DCV-IDD](https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2023-1-16220) (Windows Server 2019 or later) : Indirect Display Driver (IDD) that optimizes the graphics pipeline for higher frame rates and significantly reduces overall CPU usage (default)
     - [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)    
-    - [NVIDIA-GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance) : for professional visualization applications and up to four 4K displays per GPU
+    - [NVIDIA-GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance) : for professional visualization applications
     - [NVIDIA-Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance) : contain optimizations for gaming
-    - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance) : for compute workloads. Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
+    - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance) : for compute workloads. Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install. As it operates in headless TCC (Tesla Compute Cluster) [mode](https://docs.nvidia.com/nsight-visual-studio-edition/reference/index.html#setting-tcc-mode-for-tesla-products), IDD driver is also installed
     - [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
     - `none` : do not install any driver
 
 
-    *IDD and DCV driver [supports](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) custom display resolution, up to four monitors and 4K resolution.*
+    *IDD, DCV and NVIDIA GRID driver [supports](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) custom display resolution, up to four monitors and 4K resolution.*
 
-    *NVIDIA GRID and Gaming drivers operate in WDDM (Windows Display Driver Model) [mode](https://docs.nvidia.com/nsight-visual-studio-edition/reference/index.html#setting-tcc-mode-for-tesla-products), and support both compute and graphics workloads. NVIDIA Tesla drivers operates in TCC (Tesla Compute Cluster) mode, with GPU card dedicated to compute workloads.*
+    *NVIDIA GRID and Gaming drivers operate in WDDM (Windows Display Driver Model) mode, and support both compute and graphics workloads.*
   
     *If GPU driver installation does not work, you can select `DCV-IDD` or `none` option, and install driver manually. Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for GPU driver installation and configuration details.*
 
@@ -165,7 +165,7 @@ For NVIDIA GPU instances, [CUDA® Toolkit](https://developer.nvidia.com/cuda-too
 ### Windows screen resolution
 Template configures a default Windows screen resolution of 1920 by 1080. If you wish to modify resolution settings, refer to community article [Change Windows EC2 instance default screen resolution](https://repost.aws/articles/ARI3oOjo6OTmqmIoMBfGandg)
 
-### Updating DCV server
+### Updating DCV server on Windows
 To update DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
 
@@ -179,18 +179,16 @@ The login user name depends on Linux distributions as follows:
 - [Rocky Linux](RockyLinux-NICE-DCV.yaml) : rocky
 - [Ubuntu, Ubuntu Pro](Ubuntu-NICE-DCV.yaml) : ubuntu
 
-You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder from SSM Session Manager or EC2 Instance Connect to update DCV and AWS CLI. 
-
 ### Console and virtual sessions
 DCV offers [console and virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html) on Linux OS.
 
 
 With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server instance, `Xdcv`, and runs a desktop environment inside the X server. Multiple user sessions are supported for virtual sessions. Virtual sessions also support custom resolution and [multi-screen](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html) across up to four monitors.
 
-With console sessions, DCV directly captures the content of the desktop screen. Only one console session can be hosted at a time. 
+With console sessions  (`console`, `console-with-*`), DCV directly captures the content of the desktop screen. Only one console session can be hosted at a time. 
 
 #### GPU driver installation
-On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/accelerated-computing-instances.html#gpu-instances) with drivers installed (`*-with-NVIDA-*`), DCV server have access to the GPU for hardware accelerated video streaming encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan (screen shot below). 
+DCV server on [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) with drivers installed (`*-with-NVIDIA-*`) have access to the GPU for hardware based video encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan. (screen shot below)
 
 <img alternate="DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
 
@@ -201,8 +199,6 @@ There are limits to display resolution and multi-screen support per GPU for cons
 
 
 The CloudFormation templates configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` and `console*` session type options respectively, and increases maximum web client resolution to 4K. 
-
-
 
 
 ### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
@@ -241,22 +237,24 @@ The CloudFormation templates configure *multi-user.target* and *graphical.target
 - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) : [Supported Platforms](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/supported-platforms.html)
 
 #### Driver and Toolkit installation scripts 
-NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit installation scripts are available from the following [re:Post](https://repost.aws/) community articles:
+NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit, and Docker installation/configuration scripts are available from the following [re:Post](https://repost.aws/) community articles:
 - [How do I install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Amazon Linux 2 (AL2)?](https://repost.aws/articles/ARR29omO1-S5OfOPQKD904Jg/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-amazon-linux-2-al2)
 - [How do I install NVIDIA GPU driver, CUDA toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Amazon Linux 2023 (AL2023)?](https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-amazon-linux-2023-al2023)
 - [How do I install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running RHEL/Rocky Linux 8/9?](https://repost.aws/articles/ARpmJcNiCtST2A3hrrM_4R4A/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9)
 - [How do I install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Ubuntu Linux?](https://repost.aws/articles/ARWGxLArMBQ4y1MKoSHTq3gQ/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-ubuntu-linux)
 
+### Updating DCV server on Linux
+You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder from SSM Session Manager or EC2 Instance Connect to update DCV and AWS CLI. 
 
 ### Troubleshooting
 To troubleshoot any installation issue, you can view contents of the following log files
-- /var/log/cloud-init-output.log
-- /var/log/install-cfn-helper.log
-- /var/log/install-dcv.log
-- /var/log/install-sw.log
+- `/var/log/cloud-init-output.log`
+- `/var/log/install-cfn-helper.log`
+- `/var/log/install-dcv.log`
+- `/var/log/install-sw.log`
 - if GPU driver install option is selected
-  - /var/log/install-gpu-driver.log
-  - /var/log/nvidia-installer.log (NVIDIA GRID, Gaming and Tesla driver)
+  - `/var/log/install-gpu-driver.log`
+  - `/var/log/nvidia-installer.log` (NVIDIA GRID, Gaming and Tesla driver)
 
 ## About EC2
 ### Private subnet
