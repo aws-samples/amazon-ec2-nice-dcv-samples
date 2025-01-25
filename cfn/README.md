@@ -188,7 +188,7 @@ With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server inst
 With console sessions  (`console`, `console-with-*`), DCV directly captures the content of the desktop screen. Only one console session can be hosted at a time. 
 
 #### GPU driver installation
-DCV server on [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) with drivers installed (`*-with-NVIDIA-*`) have access to the GPU for hardware based video encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan. (screen shot below)
+DCV server on [supported](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) with drivers installed (`*-with-NVIDIA-*`) will use GPU for hardware based video encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan. (screen shot below)
 
 <img alternate="DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
 
