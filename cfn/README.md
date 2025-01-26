@@ -186,7 +186,7 @@ With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server inst
 With console sessions  (`console`, `console-with-*`), DCV directly captures the content of the desktop screen. Only one console session can be hosted at a time. 
 
 ### GPU Linux instances
-DCV server on [supported](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) with drivers installed (`*-with-NVIDIA-*`) will use GPU for hardware based video encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan. (screen shot below)
+DCV server on [supported](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) with drivers installed (`*-with-NVIDIA-*`) will use GPU for hardware based video streaming encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan. (screen shot below)
 
 <img alternate="DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
 
@@ -195,7 +195,7 @@ There are limits to display resolution and multi-screen support per GPU for cons
 - Gaming driver (`console-with-NVIDIA_Gaming_Driver`) : one display of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 - GRID driver (`console-with-NVIDIA_GRID_Driver`) : four displays of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 
-The CloudFormation templates configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` and `console*` session type options respectively, and increases maximum web client resolution to 4K. 
+You can choose `virtual-with-NVIDIA-*` option if using GPU only for compute workloads. The CloudFormation templates configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` and `console*` session type options respectively, and increases maximum web client resolution to 4K. 
 
 ### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
 [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit), [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) may subsequently be installed on supported** GPU EC2 instances based on selected `sessionType` option: 
