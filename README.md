@@ -13,18 +13,20 @@ DCV client do not require a license while DCV server requires [licensing](https:
 The CloudFormation templates provision EC2 instances running DCV server with the following features:
 - [GNOME](https://www.gnome.org/) desktop environment (Linux)
 - [Amazon DCV](https://aws.amazon.com/hpc/dcv/) server
-  - [Web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) 
+  - [HTML 5 web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) 
   - [Adaptable display resolution](https://docs.aws.amazon.com/dcv/latest/userguide/changing-resolution.html)
-  - [QUIC UDP transport protocol](https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html)
+  - [Multiple monitors](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html)
+  - [Session collaboration](https://docs.aws.amazon.com/dcv/latest/userguide/managing-sessions-session-collaboration.html)
   - [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html)
   - [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html)
-  - [Audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html)
+  - [Multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html)
   - [Printing](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html)
   - [Webcam redirection](https://docs.aws.amazon.com/dcv/latest/userguide/using-webcam.html) (Windows DCV server)
   - [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html) (Windows client)
   - Virtual or console [session](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) (Linux)
   - Specify DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
 - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) GPU driver (optional: Windows and some Linux distros)
+- [AWS Global Accelerator](https://aws.amazon.com/global-accelerator/) network acceleration (optional)
 - Administration, Observability and Data Protection
   - [AWS Systems Manager Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) browser-based terminal access
   - [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html) browser-based SSH (Linux)
@@ -32,11 +34,10 @@ The CloudFormation templates provision EC2 instances running DCV server with the
   - [EC2 IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) for [DCV license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2), [Systems Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-permissions.html), [CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/create-iam-roles-for-cloudwatch-agent.html#create-iam-roles-for-cloudwatch-agent-roles), and [AWS X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/security_iam_service-with-iam.html#xray-permissions-aws)
   - [Amazon CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html)
   - [AWS CLI v2](https://aws.amazon.com/blogs/developer/aws-cli-v2-is-now-generally-available/) with [partial mode](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html#cli-usage-auto-prompt-modes) [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html) 
+  - Static public IPv4 address with [Elastic IP](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html) (optional)
+  - Allow inbound port 80 (HTTP) and 443 (HTTPS) traffic for web hosting (optional)
   - [gp3 or gp2](https://aws.amazon.com/ebs/general-purpose/) volume type with option to specify volume size
   - [AWS Backup](https://aws.amazon.com/backup/) data protection (optional)
-- Static, public IPv4 address with [Elastic IP](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html) (optional)
-- [AWS Global Accelerator](https://aws.amazon.com/global-accelerator/) network acceleration (optional)
-- Allow inbound port 80 (HTTP) and 443 (HTTPS) traffic for web hosting (optional)
 
 
 
