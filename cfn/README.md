@@ -181,7 +181,7 @@ The login user name depends on Linux distributions as follows:
 DCV offers [console and virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html) on Linux OS.
 
 
-With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server instance, `Xdcv`, and runs a desktop environment inside the X server. Multiple user sessions are supported for virtual sessions. Virtual sessions also support custom resolution and [multi-screen](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html) across up to four monitors.
+With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server instance, `Xdcv`, and runs a desktop environment inside the X server. Multiple user sessions are supported for virtual sessions. Virtual sessions support custom resolution, [multi-screen](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html) across up to [four monitors](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-num-heads), and up to [4K resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-head-resolution) per display.
 
 With console sessions  (`console`, `console-with-*`), DCV directly captures the content of the desktop screen. Only one console session can be hosted at a time. 
 
@@ -195,7 +195,7 @@ There are limits to display resolution and multi-screen support per GPU for cons
 - Gaming driver (`console-with-NVIDIA_Gaming_Driver`) : one display of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 - GRID driver (`console-with-NVIDIA_GRID_Driver`) : four displays of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 
-You can choose `virtual-with-NVIDIA-*` option if using GPU only for compute workloads. The CloudFormation templates configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` and `console*` session type options respectively, and increases maximum web client resolution to 4K. 
+You can choose `virtual-with-NVIDIA-*` option if using GPU only for compute workloads. The CloudFormation templates configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` and `console*` session type options respectively, and increases maximum [web client resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.web-client-max-head-resolution) to 4K. 
 
 ### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
 [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit), [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) may subsequently be installed on supported** GPU EC2 instances based on selected `sessionType` option: 
