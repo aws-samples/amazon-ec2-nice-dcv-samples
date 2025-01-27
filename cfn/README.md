@@ -57,11 +57,11 @@ DCV
 
     - `console-with-NVIDIA_Gaming_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance) : install [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers
 
-    - `console-with-Ubuntu_repo_Driver` (Ubuntu) : install NVIDIA [Enterprise Ready Drivers (ERD)](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/) from Ubuntu repository
-
     - `*-with-NVIDIA_repo_Driver` ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)  instance, e.g. [G5g](https://aws.amazon.com/ec2/instance-types/g5g/)) : uses the operating system package manager to install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also known as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) drivers from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation), and provides access to [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#available-packages), [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) and other software. Refer to [NVIDIA Driver Installation Guide](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html#system-requirements) for supported OS (`$distro`) and architecture (`$arch`)
 
     -  `*-with-NVIDIA_runfile_Driver` (NVIDIA [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)) : install NVIDIA Tesla driver using [runfile installer](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile-installation) from [driver downloads](https://www.nvidia.com/Download/Find.aspx). Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
+
+    - `console-with-Ubuntu_repo_Driver` (Ubuntu) : install NVIDIA [Enterprise Ready Drivers (ERD)](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/) from Ubuntu repository
 
     *Due to various combinations of drivers, OSs and instance types, GPU driver installation may not work. You can [troubleshoot](#troubleshooting) the installation, or select `console` or `virtual` option to install driver manually. Refer to [Prerequisites for Linux DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) for GPU driver installation and configuration guidance.*
 
@@ -200,11 +200,6 @@ You can choose virtual session option (`virtual-with-NVIDIA-*`) if using GPU onl
 ### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
 [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit), [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) may subsequently be installed on supported** GPU EC2 instances based on selected `sessionType` option: 
 
-- `*-Ubuntu_repo_Driver`
-    - CUDA : `sudo apt install -y nvidia-cuda-toolkit`
-    - cuDNN : `sudo apt install -y nvidia-cudnn`
-    - Container Toolkit : refer to [https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
-
 - `*-NVIDIA_repo_Driver`
 
    `<packmgr_cli>` below is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively.
@@ -226,6 +221,11 @@ You can choose virtual session option (`virtual-with-NVIDIA-*`) if using GPU onl
     - cuDNN : refer to [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads?target_os=Linux) 
     - Container Toolkit : refer to [https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
+
+- `*-Ubuntu_repo_Driver`
+    - CUDA : `sudo apt install -y nvidia-cuda-toolkit`
+    - cuDNN : `sudo apt install -y nvidia-cudnn`
+    - Container Toolkit : refer to [https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
 **Refer to NVIDIA site for supported CPU architecture and OS:
 - [CUDA](https://docs.nvidia.com/cuda/) : [System Requirements](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#system-requirements)
@@ -253,6 +253,10 @@ To troubleshoot any installation issue, you can view contents of the following l
   - `/var/log/nvidia-installer.log` (NVIDIA GRID, Gaming and Tesla driver)
 
 ## About EC2
+
+### Restoring from backup
+If you enable AWS Backup (`enableBackup`), you can restore your [EC2 instance](https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-ec2.html) from recovery points (backups) in your [backup vault](https://docs.aws.amazon.com/aws-backup/latest/devguide/vaults.html). The CloudFormation template creates an IAM role that grants AWS Backup permission to restore your backup. Role name can be located in your CoudFormation stack Resources section as the Physical ID value whose Logical ID value is `backupRestoreRole`
+
 ### Private subnet
 The CloudFormation templates are designed to provision EC2 instances in [public subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html). To use them for EC2 instances in [private subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) with internet connectivity, set `displayPublicIP` and `assignStaticIP` parameter values to `No`.
 
