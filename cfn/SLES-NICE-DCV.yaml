@@ -572,7 +572,7 @@ Parameters:
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
-  useSles15: !Equals [!Ref osVersion, "SUSE Linux Enterprise Server 15 SP6"]
+  useSles15: !Equals [!Ref osVersion, "SUSE Linux Enterprise Server 15 SP5"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
 
