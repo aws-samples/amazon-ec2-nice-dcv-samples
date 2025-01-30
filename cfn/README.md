@@ -202,25 +202,16 @@ There are limits to display resolution and multi-screen support per GPU for cons
 You can choose virtual session option (`virtual-with-NVIDIA-*`) if using GPU only for compute workloads. The CloudFormation templates configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` and `console*` session type options respectively, and increases maximum [web client resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.web-client-max-head-resolution) to 4K. 
 
 ### NVIDIA CUDA Toolkit installation
-[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may subsequently be installed on supported** GPU EC2 instances based on selected `sessionType` option: 
+[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may subsequently be installed on [supported](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#system-requirements) GPU EC2 instances based on selected `sessionType` option: 
 
-- `*-NVIDIA_repo_Driver`
+- `*-NVIDIA_repo_Driver` : `sudo <packmgr_cli> install -y cuda-toolkit` ( where  `<packmgr_cli>` is the OS package manager command-line tool, e.g.`apt` or `yum`/`dnf` for Ubuntu, and other Linux OSs respectively )
 
-   `<packmgr_cli>` below is the OS package manager command-line tool, e.g.`apt`, `zypper` or `yum`/`dnf` for Ubuntu, SLES and other Linux OSs respectively.
+   *Refer to [CUDA documentation](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#) for [installation options](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#additional-package-manager-capabilities) and [post-installation actions](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#post-installation-actions)*
 
+- `*-NVIDIA_runfile_Driver`, `*-NVIDIA_GRID_Driver` or `*-NVIDIA_Gaming_Driver` : refer to [CUDA Toolkit Downloads](https://developer.nvidia.com/cuda-downloads?target_os=Linux)
 
-    - CUDA : `sudo <packmgr_cli> install -y cuda-toolkit`
-      
-      Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for installation options
+- `*-Ubuntu_repo_Driver` :  `sudo apt install -y nvidia-cuda-toolkit`
 
-- `*-NVIDIA_runfile_Driver`, `*-NVIDIA_GRID_Driver` or `*-NVIDIA_Gaming_Driver`
-    - CUDA : refer to [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads?target_os=Linux)
-
-- `*-Ubuntu_repo_Driver`
-    - CUDA : `sudo apt install -y nvidia-cuda-toolkit`
-
-**Refer to NVIDIA site for supported CPU architecture and OS:
-- [CUDA](https://docs.nvidia.com/cuda/) : [System Requirements](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#system-requirements)
 
 #### Driver and Toolkit installation scripts 
 NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit, and Docker installation/configuration scripts are available from the following [re:Post](https://repost.aws/) community articles:
