@@ -201,7 +201,7 @@ There are limits to display resolution and multi-screen support per GPU for cons
 
 You can choose virtual session option (`virtual-with-NVIDIA-*`) if using GPU only for compute workloads. The CloudFormation templates configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` and `console*` session type options respectively, and increases maximum [web client resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.web-client-max-head-resolution) to 4K. 
 
-### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
+### NVIDIA CUDA Toolkit installation
 [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may subsequently be installed on supported** GPU EC2 instances based on selected `sessionType` option: 
 
 - `*-NVIDIA_repo_Driver`
