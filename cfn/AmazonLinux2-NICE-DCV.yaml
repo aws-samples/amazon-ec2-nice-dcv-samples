@@ -71,6 +71,7 @@ Metadata:
           default: Others
         Parameters:
           - r53ZoneID
+          - installDocker
 
 Parameters:
   osVersion:
@@ -590,6 +591,14 @@ Parameters:
     Type: String
     Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
     Default: ""
+
+  installDocker:
+    Type: String
+    Description: Install Docker
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -1544,6 +1553,18 @@ Resources:
                 esac
                 systemctl enable dcvserver && systemctl restart dcvserver
 
+                # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+                if ( echo "${sessionType}" | grep -q NVIDIA ); then
+                  if [ "${installDocker}" = "Yes" ]; then                 
+                    if (! yum search nvidia | grep -q nvidia-container-toolkit); then
+                      yum-config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+                    fi
+                    yum install -q -y nvidia-container-toolkit
+                    nvidia-ctk runtime configure --runtime=docker
+                    systemctl restart docker
+                  fi
+                fi
+
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
                 systemctl daemon-reload
@@ -1587,15 +1608,6 @@ Resources:
                 yum clean all
                 yum update -q -y
 
-                # remove AWSCLI version 1
-                yum remove -q -y awscli
-                cd /tmp/cfn
-                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-                unzip -q -o awscliv2.zip
-                ./aws/install -b /usr/bin
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
-
                 # yum-cron
                 yum install -q -y yum-cron
                 sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/yum/yum-cron.conf
@@ -1630,8 +1642,68 @@ Resources:
                 yum install -q -y kernel-devel
                 yum install -q -y usbutils
 
+                # Docker:
+                if [ "${installDocker}" = "Yes" ]; then
+                  amazon-linux-extras install -y docker
+                  systemctl enable docker
+                  usermod -aG docker ec2-user
+                fi
+
+                # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                yum remove -q -y awscli
+                cd /tmp/cfn
+                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
+                unzip -q -o awscliv2.zip
+                ./aws/install -b /usr/bin
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
+
+                # Certbot: https://certbot.eff.org/instructions?ws=other&os=pip
+                yum install -q -y augeas-libs
+                amazon-linux-extras install -q -y python3.8 
+                
+                /usr/bin/python3.8 -m venv /opt/certbot/
+                /opt/certbot/bin/pip install --upgrade pip
+                /opt/certbot/bin/pip install certbot
+                /opt/certbot/bin/pip install certbot-dns-route53
+                /opt/certbot/bin/pip install certbot-apache
+                /opt/certbot/bin/pip install certbot-nginx
+                ln -s /opt/certbot/bin/certbot /usr/bin/certbot
+
+                touch /etc/sysconfig/certbot
+                chmod og-rwx /etc/sysconfig/certbot
+                systemctl daemon-reload
+                systemctl enable --now certbot-renew.timer
+
                 rm -f ${!0}
               mode: "000740"
+              owner: "root"
+              group: "root"
+            "/usr/lib/systemd/system/certbot-renew.timer":
+              content: |
+                [Unit]
+                Description=This is the timer to set the schedule for automated renewals
+                
+                [Timer]
+                OnCalendar=*-*-* 00/12:00:00
+                RandomizedDelaySec=12hours
+                Persistent=true
+                
+                [Install]
+                WantedBy=timers.target
+              mode: "000640"
+              owner: "root"
+              group: "root"
+            "/usr/lib/systemd/system/certbot-renew.service":
+              content: |
+                [Unit]
+                Description=This service automatically renews any certbot certificates found
+
+                [Service]
+                EnvironmentFile=/etc/sysconfig/certbot
+                Type=oneshot
+                ExecStart=/usr/bin/certbot renew --noninteractive --no-random-sleep-on-renew $PRE_HOOK $POST_HOOK $RENEW_HOOK $DEPLOY_HOOK $CERTBOT_ARGS
+              mode: "000640"
               owner: "root"
               group: "root"
           commands:

@@ -23,6 +23,8 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
+          default: Versions that have EOL (end of life) are not supported by DCV
+      - Label:
           default: EC2
         Parameters:
           - ec2Name
@@ -71,6 +73,7 @@ Metadata:
           default: Others
         Parameters:
           - r53ZoneID
+          - installDocker
 
 Parameters:
   osVersion:
@@ -99,7 +102,7 @@ Parameters:
     Default: Ubuntu
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: "Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )"
+    Description: Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )
     AllowedPattern: .+
     ConstraintDescription: Select a key pair
   instanceType:
@@ -121,11 +124,11 @@ Parameters:
     Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
     AllowedValues:
       - "virtual"
-      - "console-with-Ubuntu_repo_Driver"
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
+      - "console-with-Ubuntu_repo_Driver"
       - "console"
       - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
@@ -603,6 +606,14 @@ Parameters:
     Type: String
     Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
     Default: ""
+
+  installDocker:
+    Type: String
+    Description: Install Docker Engine aka Docker CE ( https://docs.docker.com/engine/ )
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -1536,6 +1547,9 @@ Resources:
                   ufw allow ${listenPort}/udp
                   ufw allow https
                   ufw allow http
+                  if [ "${installWebmin}" = "Yes" ]; then
+                    ufw allow 10000/tcp
+                  fi
                 fi
 
                 SESSION="${sessionType}"
@@ -1562,6 +1576,23 @@ Resources:
                     ;;
                 esac
                 systemctl enable dcvserver && systemctl restart dcvserver
+
+                # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+                if ( echo "${sessionType}" | grep -q "NVIDIA\|Ubuntu" ); then
+                  if [ "${installDocker}" = "Yes" ]; then
+                    if (! apt-get search nvidia | grep -q nvidia-container-toolkit); then
+                      cd /tmp
+                      curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+                        && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+                        sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+                        sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+                    fi
+                    apt-get update
+                    apt-get install -q -y nvidia-container-toolkit
+                    nvidia-ctk runtime configure --runtime=docker
+                    systemctl restart docker
+                  fi
+                fi
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -1604,15 +1635,6 @@ Resources:
                 apt-get upgrade -q -y
                 apt-get autoremove -q -y
 
-                # remove AWSCLI version 1
-                apt-get remove -q -y awscli
-                cd /tmp/cfn
-                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-                unzip -q -o awscliv2.zip
-                ./aws/install -b /usr/bin
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ubuntu/.bashrc
-
                 # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
                 if (arch | grep -q x86); then
                   curl -s -L -O https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
@@ -1642,6 +1664,38 @@ Resources:
                 apt-get install -q -y linux-headers-aws
                 apt-get install -q -y linux-modules-extra-aws
                 apt-get install -q -y usbutils
+
+                # Docker: https://docs.docker.com/engine/install/ubuntu/
+                if [ "${installDocker}" = "Yes" ]; then
+                  # Add Docker's official GPG key
+                  apt-get install -q -y ca-certificates curl
+                  install -m 0755 -d /etc/apt/keyrings
+                  curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+                  chmod a+r /etc/apt/keyrings/docker.asc
+                  # Add the repository to Apt sources
+                  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+                    tee /etc/apt/sources.list.d/docker.list > /dev/null
+                  apt-get update
+                  apt-get install -q -y docker-ce
+                  systemctl enable docker
+                  usermod -aG docker ubuntu
+                fi
+
+                # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                apt-get remove -q -y awscli
+                sudo snap install aws-cli --classic
+                if [ -e /snap/bin/aws ]; then
+                  rm -f /home/ubuntu/update-awscli
+                else
+                  /home/ubuntu/update-awscli
+                fi
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ubuntu/.bashrc
+
+                # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
+                sudo snap install certbot --classic
+                ln -s /snap/bin/certbot /usr/bin/certbot
+                sudo snap set certbot trust-plugin-with-root=ok
+                sudo snap install certbot-dns-route53
 
                 rm -f ${!0}
               mode: "000740"
@@ -2456,4 +2510,3 @@ Outputs:
     Condition: createAGA
     Description: Global Accelerator IPv4 addresses
     Value: !Join [", ", !GetAtt aga.Ipv4Addresses]
-

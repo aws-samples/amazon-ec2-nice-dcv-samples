@@ -71,6 +71,7 @@ Metadata:
           default: Others
         Parameters:
           - r53ZoneID
+          - installDocker
 
 Parameters:
   osVersion:
@@ -82,7 +83,6 @@ Parameters:
       - Red Hat Enterprise Linux 8 (arm64)
       - Red Hat Enterprise Linux 8 (x86_64)
     Default: Red Hat Enterprise Linux 9 (arm64)
-
   ec2Name:
     Type: String
     Description: EC2 instance name
@@ -592,6 +592,14 @@ Parameters:
     Type: String
     Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
     Default: ""
+
+  installDocker:
+    Type: String
+    Description: Install Docker Engine aka Docker CE ( https://docs.docker.com/engine/ )
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -1549,6 +1557,18 @@ Resources:
                 esac
                 systemctl enable dcvserver && systemctl restart dcvserver
 
+                # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+                if ( echo "${sessionType}" | grep -q NVIDIA ); then
+                  if [ "${installDocker}" = "Yes" ]; then                 
+                    if (! dnf search nvidia | grep -q nvidia-container-toolkit); then
+                      dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+                    fi
+                    dnf install -q -y nvidia-container-toolkit
+                    nvidia-ctk runtime configure --runtime=docker
+                    systemctl restart docker
+                  fi
+                fi
+
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
                 systemctl daemon-reload
@@ -1591,18 +1611,14 @@ Resources:
                 subscription-manager repos --enable codeready-builder-for-rhel-$OS_VERSION-$(arch)-rpms
                 dnf install -q -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-$OS_VERSION.noarch.rpm
 
+                # Snap: https://snapcraft.io/install/snapd/rhel
+                dnf install -q -y snapd
+                systemctl enable --now snapd snapd.socket
+                ln -s /var/lib/snapd/snap /snap
+
                 # Update OS
                 dnf clean all
                 dnf update -q -y
-
-                # remove AWSCLI version 1
-                dnf remove -q -y awscli
-                cd /tmp/cfn
-                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-                unzip -q -o awscliv2.zip
-                ./aws/install -b /usr/bin
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
 
                 # dnf-automatic
                 dnf install -q -y dnf-automatic
@@ -1639,6 +1655,30 @@ Resources:
                 dnf install -q -y kernel-devel
                 dnf install -q -y kernel-modules-extra
                 dnf install -q -y usbutils
+
+                # Docker: https://docs.docker.com/engine/install/rhel/
+                if [ "${installDocker}" = "Yes" ]; then
+                  dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+                  dnf install -q -y docker-ce
+                  systemctl enable docker
+                  usermod -aG docker ec2-user
+                fi
+
+                # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                dnf remove -q -y awscli
+                sudo snap install aws-cli --classic
+                if [ -e /snap/bin/aws ]; then
+                  rm -f /home/ec2-user/update-awscli
+                else
+                  /home/ec2-user/update-awscli
+                fi
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
+
+                # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
+                sudo snap install certbot --classic
+                ln -s /snap/bin/certbot /usr/bin/certbot
+                sudo snap set certbot trust-plugin-with-root=ok
+                sudo snap install certbot-dns-route53
 
                 rm -f ${!0}
               mode: "000740"
@@ -2335,4 +2375,3 @@ Outputs:
     Condition: createAGA
     Description: Global Accelerator IPv4 addresses
     Value: !Join [", ", !GetAtt aga.Ipv4Addresses]
-

@@ -23,7 +23,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default:  Note that this OS is not supported by DCV
+          default: Note that this OS is not supported by DCV
       - Label:
           default: EC2
         Parameters:
@@ -72,6 +72,7 @@ Metadata:
           default: Others
         Parameters:
           - r53ZoneID
+          - installDocker
 
 Parameters:
   osVersion:
@@ -579,6 +580,14 @@ Parameters:
     Type: String
     Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
     Default: ""
+
+  installDocker:
+    Type: String
+    Description: Install Docker Engine aka Docker CE ( https://docs.docker.com/engine/ )
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -1529,18 +1538,13 @@ Resources:
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
 
+                # Snap: https://snapcraft.io/install/snap-store/debian
+                apt-get install -q -y snapd
+
                 # Update OS
                 apt-get update
                 apt-get upgrade -q -y
-
-                # remove AWSCLI version 1
-                apt-get remove -q -y awscli
-                cd /tmp/cfn
-                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-                unzip -q -o awscliv2.zip
-                ./aws/install -b /usr/bin
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/admin/.bashrc    
+                apt-get autoremove -q -y
 
                 # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
                 if (arch | grep -q x86); then
@@ -1574,6 +1578,39 @@ Resources:
                   apt-get install -q -y linux-headers-cloud-arm64
                 fi
                 apt-get install -q -y usbutils
+
+                # Docker: https://docs.docker.com/engine/install/debian/
+                if [ "${installDocker}" = "Yes" ]; then
+                  # Add Docker's official GPG key
+                  apt-get install -q -y ca-certificates curl
+                  install -m 0755 -d /etc/apt/keyrings
+                  curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+                  chmod a+r /etc/apt/keyrings/docker.asc
+                  # Add the repository to Apt sources
+                  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+                    tee /etc/apt/sources.list.d/docker.list > /dev/null
+                  apt-get update
+                  apt-get install -q -y docker-ce
+                  systemctl enable docker
+                  usermod -aG docker admin
+                fi
+
+                # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                apt-get remove -q -y awscli
+                sudo snap install aws-cli --classic
+                if [ -e /snap/bin/aws ]; then
+                  rm -f /home/admin/update-awscli
+                  ln -s /snap/bin/aws /usr/bin/aws
+                else
+                  /home/admin/update-awscli
+                fi
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/admin/.bashrc
+
+                # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
+                sudo snap install certbot --classic
+                ln -s /snap/bin/certbot /usr/bin/certbot
+                sudo snap set certbot trust-plugin-with-root=ok
+                sudo snap install certbot-dns-route53
 
                 rm -f ${!0}
               mode: "000740"
@@ -1783,7 +1820,6 @@ Resources:
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
-
 
           # enable back IPv6
           sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -2069,4 +2105,3 @@ Outputs:
     Condition: createAGA
     Description: Global Accelerator IPv4 addresses
     Value: !Join [", ", !GetAtt aga.Ipv4Addresses]
-

@@ -15,7 +15,7 @@ Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/inst
 
 NVIDIA [GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver), NVIDIA [Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) drivers are for AWS customers only. You are bound by their respective End User License Agreements upon installation of software.
 
-Some Linux templates offer the option to install [Webmin](https://github.com/webmin/webmin) which is released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) license. 
+Templates may offer the option to install [Webmin](https://github.com/webmin/webmin) and/or [Docker Engine](https://docs.docker.com/engine/), which are released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) and [Apache License, Version 2.0](https://github.com/moby/moby/blob/master/LICENSE) respectively.
 
 
 ## Deployment from CloudFormation console
@@ -104,10 +104,13 @@ AWS Global Accelerator (AGA)
 
     *Verify AGA [Region and Availability Zone (AZ) availability](https://docs.aws.amazon.com/global-accelerator/latest/dg/preserve-client-ip-address.regions.html) before enabling this service.* 
 
-Others
-- `r53ZoneID` (optional) : [Amazon Route 53](https://aws.amazon.com/route53/) hosted zone ID to grant [EC2 IAM Role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) access to, for use by [Certbot](https://eff-certbot.readthedocs.io/en/stable/intro.html)'s [certbot-dns-route53](https://certbot-dns-route53.readthedocs.io/en/stable/) DNS plugin to obtain certificates for [DCV server](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) and other applications. A `*` value will grant access to all Route 53 zones in your AWS account. Permission is restricted to **_acme-challenge.\*** TXT DNS records using [resource record set permissions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-permissions.html). Default is empty string for no access. 
+Others (optional)
+- `r53ZoneID` : [Amazon Route 53](https://aws.amazon.com/route53/) hosted zone ID to grant [EC2 IAM Role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) access to. To be used for [Route 53 DNS-01 challenge](https://certbot-dns-route53.readthedocs.io/en/stable/) by [Certbot](https://eff-certbot.readthedocs.io/en/stable/intro.html) (or other [ACME clients](https://letsencrypt.org/docs/client-options/)), to obtain certificates for [DCV server](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) and other applications. A `*` value will grant access to all Route 53 zones in your AWS account. Permission is restricted to **_acme-challenge.\*** TXT DNS records using [resource record set permissions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-permissions.html). Default is empty string for no access. 
 
     *Route 53 must be [configured](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring.html) as DNS service for your domain.*
+- `installDocker` : install [Docker Engine](https://docs.docker.com/engine/) (also known as Docker CE) from [Docker repository](https://download.docker.com/) or Linux OS package repository. On Linux, [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) will be installed and configured if `*-with-NVIDIA-*` option is selected. Docker on [Windows](https://docs.docker.com/engine/install/binaries/#install-server-and-client-binaries-on-windows) runs in [process isolation](https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/hyperv-container#process-isolation) mode. Default is `No`
+
+   *Docker Engine is not [Docker Desktop](https://www.docker.com/products/docker-desktop/). Docker on Linux will use `172.17.0.0/16` subnet.*
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html), and click **Submit** to launch your stack. 
 
@@ -142,7 +145,7 @@ The following values are available as [CloudFormation Exports](https://docs.aws.
 Refer to [DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getting-started.html)
 
 ### DCV clients
-Besides [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-browser-connect.html), DCV offers [Windows](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-win.html), [Linux](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-linux.html) and [macOS](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-mac.html) native clients that [support additional features](https://docs.aws.amazon.com/dcv/latest/userguide/client-features.html) such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/disable-quic.html) transport protocol, [multiple monitors](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html), [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html), and [printer redirection](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html). Native clients can be downloaded from [https://www.amazondcv.com/](https://www.amazondcv.com/). 
+Besides [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-browser-connect.html), DCV offers [Windows](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-win.html), [Linux](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-linux.html) and [macOS](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-mac.html) native clients with additional features such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/disable-quic.html) protocol support, [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html), and [printer redirection support](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html). Native clients can be download from [https://www.amazondcv.com/](https://www.amazondcv.com/). 
 
 ### Remove web browser client
 On Linux instances, the web browser client can be disabled by removing `nice-dcv-web-viewer` package. On Windows instances, download [nice-dcv-server-x64-Release.msi](https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi) and run the command *msiexec /i nice-dcv-server-x64-Release.msi REMOVE=webClient* from administrator command prompt.
@@ -199,7 +202,7 @@ There are limits to display resolution and multi-screen support per GPU for cons
 You can choose virtual session option (`virtual-with-NVIDIA-*`) if using GPU only for compute workloads. The CloudFormation templates configure *multi-user.target* and *graphical.target* as default [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` and `console*` session type options respectively, and increases maximum [web client resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.web-client-max-head-resolution) to 4K. 
 
 ### NVIDIA CUDA Toolkit, cuDNN and NVIDIA Container Toolkit installation
-[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit), [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) and [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) may subsequently be installed on supported** GPU EC2 instances based on selected `sessionType` option: 
+[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may subsequently be installed on supported** GPU EC2 instances based on selected `sessionType` option: 
 
 - `*-NVIDIA_repo_Driver`
 
@@ -209,29 +212,15 @@ You can choose virtual session option (`virtual-with-NVIDIA-*`) if using GPU onl
     - CUDA : `sudo <packmgr_cli> install -y cuda-toolkit`
       
       Refer to [CUDA documentation site](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities) for installation options
-    - cuDNN : `sudo <packmgr_cli> install -y cudnn`
-    
-      Refer to [cuDNN documentation site](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities) for installation options
-    - Container Toolkit : `sudo <packmgr_cli> install -y nvidia-container-toolkit`
-    
-      Refer to [NVIDIA Container Toolkit documentation site](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#) for installation details
-
 
 - `*-NVIDIA_runfile_Driver`, `*-NVIDIA_GRID_Driver` or `*-NVIDIA_Gaming_Driver`
     - CUDA : refer to [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads?target_os=Linux)
-    - cuDNN : refer to [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads?target_os=Linux) 
-    - Container Toolkit : refer to [https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
-
 
 - `*-Ubuntu_repo_Driver`
     - CUDA : `sudo apt install -y nvidia-cuda-toolkit`
-    - cuDNN : `sudo apt install -y nvidia-cudnn`
-    - Container Toolkit : refer to [https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
 
 **Refer to NVIDIA site for supported CPU architecture and OS:
 - [CUDA](https://docs.nvidia.com/cuda/) : [System Requirements](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#system-requirements)
-- [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/) : [CPU Architecture and OS Requirements](https://docs.nvidia.com/deeplearning/cudnn/latest/reference/support-matrix.html#cpu-architecture-and-os-requirements)
-- [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) : [Supported Platforms](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/supported-platforms.html)
 
 #### Driver and Toolkit installation scripts 
 NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit, and Docker installation/configuration scripts are available from the following [re:Post](https://repost.aws/) community articles:
@@ -241,7 +230,7 @@ NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit, and Docker installation/c
 - [How do I install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Ubuntu Linux?](https://repost.aws/articles/ARWGxLArMBQ4y1MKoSHTq3gQ/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-ubuntu-linux)
 
 ### Updating DCV server on Linux
-You can use update scripts (`update-dcv`, `update-awscli`) in */home/{user name}* folder from SSM Session Manager or EC2 Instance Connect to update DCV and AWS CLI. 
+Use */home/{user name}/update-dcv* script to update DCV server. 
 
 ### Troubleshooting
 To troubleshoot any installation issue, you can view contents of the following log files

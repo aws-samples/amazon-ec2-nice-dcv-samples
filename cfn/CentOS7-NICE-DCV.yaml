@@ -72,6 +72,7 @@ Metadata:
           default: Others
         Parameters:
           - r53ZoneID
+          - installDocker
 
 Parameters:
   imageId:
@@ -576,6 +577,14 @@ Parameters:
     Type: String
     Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
     Default: ""
+
+  installDocker:
+    Type: String
+    Description: Install Docker Engine aka Docker CE ( https://docs.docker.com/engine/ )
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -1520,18 +1529,14 @@ Resources:
                 # EPEL: https://docs.fedoraproject.org/en-US/epel/
                 yum install -q -y epel-release
 
+                # Snap: https://snapcraft.io/docs/installing-snap-on-centos
+                yum install -q -y snapd
+                systemctl enable --now snapd snapd.socket
+                ln -s /var/lib/snapd/snap /snap
+
                 # Update OS
                 yum clean all
                 yum update -q -y
-
-                # remove AWSCLI version 1
-                yum remove -q -y awscli
-                cd /tmp/cfn
-                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-                unzip -q -o awscliv2.zip
-                ./aws/install -b /usr/bin
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/centos/.bashrc
 
                 # yum-cron
                 yum install -q -y yum-cron
@@ -1562,6 +1567,30 @@ Resources:
                 # Kernel headers for GPU and USB remotization
                 yum install -q -y kernel-devel
                 yum install -q -y usbutils
+
+                # Docker: https://docs.docker.com/engine/install/centos/
+                if [ "${installDocker}" = "Yes" ]; then
+                  yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+                  yum install -q -y docker-ce
+                  systemctl enable docker
+                  usermod -aG docker centos
+                fi
+
+                # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                dnf remove -q -y awscli
+                sudo snap install aws-cli --classic
+                if [ -e /snap/bin/aws ]; then
+                  rm -f /home/centos/update-awscli
+                else
+                  /home/centos/update-awscli
+                fi
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/centos/.bashrc
+
+                # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
+                sudo snap install certbot --classic
+                ln -s /snap/bin/certbot /usr/bin/certbot
+                sudo snap set certbot trust-plugin-with-root=ok
+                sudo snap install certbot-dns-route53
 
                 rm -f ${!0}
               mode: "000740"

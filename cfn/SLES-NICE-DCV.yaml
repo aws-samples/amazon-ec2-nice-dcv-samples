@@ -69,6 +69,7 @@ Metadata:
           default: Others
         Parameters:
           - r53ZoneID
+          - installDocker
 
 Parameters:
   osVersion:
@@ -569,6 +570,14 @@ Parameters:
     Type: String
     Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
     Default: ""
+
+  installDocker:
+    Type: String
+    Description: Enable Docker
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -1346,7 +1355,7 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp
-                sudo rm -f awscliv2.zip
+                sudo rm -f /tmp/awscliv2.zip
                 curl https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
                 unzip -q -o awscliv2.zip
                 /usr/bin/aws --version
@@ -1492,15 +1501,6 @@ Resources:
                 # Update OS
                 zypper -n update -y
 
-                # remove AWSCLI version 1
-                zypper -n remove -y aws-cli
-                cd /tmp/cfn
-                # AWS CLI v2: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
-                unzip -q -o awscliv2.zip
-                ./aws/install -b /usr/bin
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
-
                 # Automatic updates : https://documentation.suse.com/sles/15-SP5/html/SLES-all/cha-onlineupdate-you.html#sec-onlineupdate-you-automatically
                 zypper -n install -y yast2-online-update-configuration
 
@@ -1521,7 +1521,7 @@ Resources:
                 fi
 
                 # Kernel headers for GPU and USB remotization
-                zypper -n install -y kernel-devel
+                zypperinstall -y kernel-devel
                 zypper -n install -y usbutils
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
@@ -1531,10 +1531,84 @@ Resources:
                 #  dcvusbdriverinstaller --quiet
                 #fi
 
+                # Docker is part of SLES install
+                if [ "${installDocker}" = "Yes" ]; then
+                  systemctl enable docker
+                  usermod -aG docker ec2-user
+                fi
+
+                # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                zypper -n remove -y aws-cli
+                cd /tmp/cfn
+                curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
+                unzip -q -o awscliv2.zip
+                ./aws/install -b /usr/bin
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
+
+                # Certbot on SLES 15 is version 1.22
+                # Install Certbot via Python 3.11: https://www.suse.com/c/python-3-11-stack-for-suse-linux-enterprise-15/
+                if (cat /etc/os-release | grep -q 15\.); then
+                  zypper -n install -y python311 python311-pip
+                  /usr/bin/python3.11 -m venv /opt/certbot/
+                  /opt/certbot/bin/pip install --upgrade pip
+                  /opt/certbot/bin/pip install certbot
+                  /opt/certbot/bin/pip install certbot-dns-route53
+                  /opt/certbot/bin/pip install certbot-apache
+                  /opt/certbot/bin/pip install certbot-nginx
+                  ln -s /opt/certbot/bin/certbot /usr/bin/certbot
+
+                  touch /etc/sysconfig/certbot
+                  chmod og-rwx /etc/sysconfig/certbot
+                  systemctl daemon-reload
+                  systemctl enable --now certbot-renew.timer
+                else
+                  rm -f /usr/lib/systemd/system/certbot-renew.timer
+                  rm -f /usr/lib/systemd/system/certbot-renew.service
+                  rm -f /home/ec2-user/update-certbot
+                fi
+
                 rm -f ${!0}
               mode: "000740"
               owner: "root"
               group: "root"
+            "/usr/lib/systemd/system/certbot-renew.timer":
+              content: |
+                [Unit]
+                Description=This is the timer to set the schedule for automated renewals
+                
+                [Timer]
+                OnCalendar=*-*-* 00/12:00:00
+                RandomizedDelaySec=12hours
+                Persistent=true
+                
+                [Install]
+                WantedBy=timers.target
+              mode: "000640"
+              owner: "root"
+              group: "root"
+            "/usr/lib/systemd/system/certbot-renew.service":
+              content: |
+                [Unit]
+                Description=This service automatically renews any certbot certificates found
+
+                [Service]
+                EnvironmentFile=/etc/sysconfig/certbot
+                Type=oneshot
+                ExecStart=/usr/bin/certbot renew --noninteractive --no-random-sleep-on-renew $PRE_HOOK $POST_HOOK $RENEW_HOOK $DEPLOY_HOOK $CERTBOT_ARGS
+              mode: "000640"
+              owner: "root"
+              group: "root"
+            "/home/ec2-user/update-certbot":
+              content: |
+                #!/bin/bash
+                sudo /opt/certbot/bin/pip install --upgrade pip
+                sudo /opt/certbot/bin/pip install --upgrade certbot
+                sudo /opt/certbot/bin/pip install --upgrade certbot-dns-route53
+                sudo /opt/certbot/bin/pip install --upgrade certbot-apache
+                sudo /opt/certbot/bin/pip install --upgrade certbot-nginx
+              mode: "000755"
+              owner: "ec2-user"
+              group: "users"
           commands:
             install:
               command: "/root/install-sw.sh >> /var/log/install-sw.log 2>&1"
@@ -1551,7 +1625,7 @@ Resources:
                 zypper -n update -y
 
                 # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
-                if (cat /etc/os-release | grep -q 15.); then
+                if (cat /etc/os-release | grep -q 15\.); then
                   zypper -n install -y -t pattern gnome_basic
                 else
                   zypper -n install -y -t pattern gnome-basic
@@ -2012,4 +2086,3 @@ Outputs:
     Condition: createAGA
     Description: Global Accelerator IPv4 addresses
     Value: !Join [", ", !GetAtt aga.Ipv4Addresses]
-

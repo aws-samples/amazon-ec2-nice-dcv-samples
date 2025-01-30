@@ -69,6 +69,7 @@ Metadata:
           default: Others
         Parameters:
           - r53ZoneID
+          - installDocker
 
 Parameters:
   imageId:
@@ -578,6 +579,14 @@ Parameters:
     Type: String
     Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
     Default: ""
+
+  installDocker:
+    Type: String
+    Description: Install Docker Engine aka Docker CE ( https://docs.docker.com/engine/ )
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -1223,8 +1232,14 @@ Resources:
         configSets:
           setup:
             - 00_setup
+          dcv_install:
+            - 02_dcv_install
+          dcv_sw_install:
+            - 01_dcv_sw_install
           dcv_gpu_install:
-            - 02_dcv_gpu_install
+            - 03_dcv_gpu_install
+          dcv_docker_install:
+            - 04_dcv_docker_install
         00_setup:
           files:
             c:\\Users\\Administrator\\update-DCV.cmd:
@@ -1232,10 +1247,10 @@ Resources:
                 @echo off
                 cd \windows\temp
                 del \windows\temp\nice-dcv-*.msi
-                del \windows\temp\dcv_install_msi.log
-                powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
+                del \windows\temp\dcv-install-msi.log
+                powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
                 wmic product where "name like '%%DCV%%'" get name,version
-                start /wait msiexec.exe /i nice-dcv-server-x64-Release.msi /quiet /norestart /l*v dcv_install_msi.log
+                start /wait msiexec.exe /i nice-dcv-server-x64-Release.msi /quiet /norestart /l*v dcv-install-msi.log
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
@@ -1279,7 +1294,7 @@ Resources:
                 @echo.
                 pause
                 @echo Downloading drivers...
-                if not exist "C:\Users\Administrator\Downloads\Drivers" md "C:\Users\Administrator\Downloads\Drivers"
+                IF NOT EXIST "C:\Users\Administrator\Downloads\Drivers" md "C:\Users\Administrator\Downloads\Drivers"
                 cd C:\Users\Administrator\Downloads\Drivers
                 cd
                 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ .
@@ -1299,7 +1314,7 @@ Resources:
                 @echo.
                 pause
                 @echo Downloading drivers...
-                if not exist "C:\Users\Administrator\Downloads\Drivers" md "C:\Users\Administrator\Downloads\Drivers"
+                IF NOT EXIST "C:\Users\Administrator\Downloads\Drivers" md "C:\Users\Administrator\Downloads\Drivers"
                 cd C:\Users\Administrator\Downloads\Drivers
                 cd
                 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ .
@@ -1307,7 +1322,7 @@ Resources:
                 IF %ERRORLEVEL% NEQ 0 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --no-sign-request
                 reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
                 reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2
-                powershell -command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
+                powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
                 cd
             c:\\Users\\Administrator\\download-AMD-driver.cmd:
               content: |
@@ -1321,18 +1336,119 @@ Resources:
                 @echo.
                 pause
                 @echo Downloading drivers...
-                if not exist "C:\Users\Administrator\Downloads\Drivers" md "C:\Users\Administrator\Downloads\Drivers"
+                IF NOT EXIST "C:\Users\Administrator\Downloads\Drivers" md "C:\Users\Administrator\Downloads\Drivers"
                 cd C:\Users\Administrator\Downloads\Drivers
                 cd
                 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ .
                 IF %ERRORLEVEL% NEQ 0 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --region us-east-1
                 IF %ERRORLEVEL% NEQ 0 "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --no-sign-request
                 cd
-        02_dcv_gpu_install:
+        01_dcv_sw_install:
           files:
-            c:\\windows\\temp\\install-gpu-driver.cmd:
+            c:\\windows\\temp\\dcv-sw-install.cmd:
               content: !Sub |
                 @echo off
+                IF EXIST c:\windows\temp\dcv-sw-install.txt EXIT
+                ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-sw-install.txt
+
+                @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-win.html
+                powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazon-ssm-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
+                c:\windows\temp\AmazonSSMAgentSetup.exe /S
+
+                @echo ** https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
+                powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/windows/amd64/latest/amazon-cloudwatch-agent.msi', 'amazon-cloudwatch-agent.msi')
+                msiexec.exe /i amazon-cloudwatch-agent.msi /quiet /norestart /l*v amazon-cloudwatch-agent.log          
+                copy \windows\temp\config.json "\Program Files\Amazon\AmazonCloudWatchAgent\"
+                cd "\Program Files\Amazon\AmazonCloudWatchAgent"
+                powershell -Command ".\amazon-cloudwatch-agent-ctl.ps1 -a fetch-config -m ec2 -c file:config.json"
+                cd \windows\temp\
+                sc config AmazonCloudWatchAgent start=auto
+
+                @echo ** https://docs.chocolatey.org/en-us/choco/setup
+                @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+
+                @echo ** install AWSCLI
+                choco install --no-progress -y awscli
+                setx /M AWS_CLI_AUTO_PROMPT on-partial
+
+                @echo ** install Chocolatey GUI
+                choco install --no-progress -y chocolateygui
+
+                @Echo ** install 7-zip
+                choco install --no-progress -y 7zip.install
+
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-all
+                choco install --no-progress -y vcredist140
+
+                IF ${installDocker} EQU Yes (
+                  powershell -Command "Add-WindowsFeature Containers"
+                  shutdown /r /t 1 /f
+                  powershell -Command "Start-Sleep -s 5"
+                )
+
+                exit
+          commands:
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
+            install:
+              command: c:\windows\temp\dcv-sw-install.cmd >> c:\windows\temp\dcv-sw-install.log
+              ignoreErrors: true
+              waitAfterCompletion: forever
+        02_dcv_install:
+          files:
+            c:\\windows\\temp\\dcv-install.cmd:
+              content: !Sub |
+                @echo off
+                powershell -Command "Start-Sleep -s 5"
+                IF EXIST c:\windows\temp\dcv-install.txt EXIT
+                ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-install.txt
+                cd \windows\temp
+
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
+                powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
+
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html#setting-up-installing-windows-unattended
+                SET DRIVER_TYPE=${driverType}
+                IF %DRIVER_TYPE% EQU DCV (
+                  msiexec /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL REMOVE=iddDriver /quiet /norestart /l*v dcv-install-msi.log
+                ) ELSE IF %DRIVER_TYPE% EQU none (
+                  msiexec /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL REMOVE=iddDriver /quiet /norestart /l*v dcv-install-msi.log
+                ) ELSE (
+                  msiexec.exe /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv-install-msi.log                  
+                )
+
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-auto
+                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
+                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
+
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-storage.html
+                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
+
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
+                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
+
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v web-port /t REG_DWORD /d ${listenPort} /f
+                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v quic-port /t REG_DWORD /d ${listenPort} /f
+
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#display
+                reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
+                reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
+
+                exit
+          commands:
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
+            install:
+              command: c:\windows\temp\dcv-install.cmd >> c:\windows\temp\dcv-install.log
+              ignoreErrors: true
+        03_dcv_gpu_install:
+          files:
+            c:\\windows\\temp\\dcv-gpu-install.cmd:
+              content: !Sub |
+                @echo off
+                powershell -Command "Start-Sleep -s 5"
+                IF EXIST c:\windows\temp\dcv-gpu-install.txt EXIT                
+                ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-gpu-install.txt
+
                 start /wait c:\windows\temp\install-PSReadLine.cmd
                 start /wait c:\windows\temp\install-DisplaySettings.cmd
                 SET DRIVER_TYPE=${driverType}
@@ -1350,7 +1466,7 @@ Resources:
                   del c:\Users\Administrator\download-AMD-driver.cmd
 
                   @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general
-                  powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
+                  powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-virtual-display-x64-Release.msi', 'nice-dcv-virtual-display-x64-Release.msi')"
                   msiexec.exe /i nice-dcv-virtual-display-x64-Release.msi /quiet /l dcv-display.log
                 )
                 IF %DRIVER_TYPE% EQU NVIDIA-GRID (
@@ -1360,14 +1476,14 @@ Resources:
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver
                   "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
-                  ) || (
+                    ) || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --no-sign-request
-                  ) || (
+                    ) || (
                     curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-17.4/552.96_grid_win11_win10-dch_64bit_international_whql.exe
                   )
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
                   forfiles /M *.exe /C "cmd /c 7z x @file"
-                  @echo ** https://enterprise-support.nvidia.com/s/article/Silent-Install-of-GRID-VM-Driver-for-Windows
+                  @rem ** https://enterprise-support.nvidia.com/s/article/Silent-Install-of-GRID-VM-Driver-for-Windows
                   start /wait setup.exe -s -n
                 )
                 IF %DRIVER_TYPE% EQU NVIDIA-Gaming (
@@ -1377,14 +1493,14 @@ Resources:
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver
                   "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
-                  ) || (
+                    ) || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --no-sign-request
-                  ) || (
+                    ) || (
                     curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/windows/552.13_Cloud_Gaming_win10_win11_server2022_dch_64bit_international.exe
                   )
                   reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
-                  powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
+                  powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertWindows_2023_9_22.cert', 'C:\Users\Public\Documents\GridSwCert.txt')"
                   forfiles /M *.exe /C "cmd /c 7z x @file"
                   start /wait setup.exe -s
                 )
@@ -1394,7 +1510,7 @@ Resources:
                   del c:\Users\Administrator\download-AMD-driver.cmd
 
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver
-                  if not exist c:\windows\system32\curl.exe choco install --no-progress -y curl
+                  IF NOT EXIST c:\windows\system32\curl.exe choco install --no-progress -y curl
                   copy \windows\temp\install-if-available.cmd \windows\temp\driver\
                   install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2022-dch-international.exe
                   install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2019-2022-dch-international.exe
@@ -1405,43 +1521,50 @@ Resources:
                   install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver2008-2012r2-64bit-international.exe
                 )
                 IF %DRIVER_TYPE% EQU AMD (
-                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . || (
-                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --region us-east-1
-                  ) || (
-                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --no-sign-request
-                  ) || (
-                    curl -s -L -O https://ec2-amd-windows-drivers.s3.amazonaws.com/AMD_GPU_WINDOWS_2K22_DRIVER-23.10.02.02-230926a-397145C-Retail_End_User.zip
-                  )
                   del c:\Users\Administrator\download-NVIDIA-GRID-driver.cmd
                   del c:\Users\Administrator\download-NVIDIA-Gaming-driver.cmd
 
+                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver
+                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --region us-east-1
+                    ) || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-amd-windows-drivers/latest/ . --no-sign-request
+                  )
                   @echo ** AMD_GPU_WINDOWS_2K22_DRIVER*.ZIP?
                   reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 202">nul && (
                     cmd /c 7z x AMD*2K22*.zip
-                    cd *22*\Packages\Drivers\Display\*INF
+                    cd Packages\Drivers\Display\*INF
                   ) || (
                     echo Not Windows 202*
                   )
                   @echo ** AMD_GPU_WINDOWS_2K19_DRIVER*.ZIP?
-                  reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 201">nul) && (
+                  reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 2019">nul && (
                     cmd /c 7z x AMD*2K19*.zip
-                    cd *19*\Packages\Drivers\Display\*INF
+                    cd Packages\Drivers\Display\*INF
                   ) || (
-                    echo Not Windows 201*
+                    echo Not Windows 2019
+                  )
+                  @echo ** archives/*2016*.ZIP?
+                  reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 2016">nul && (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp s3://ec2-amd-windows-drivers/archives/Windows_2019_2016-20.10.25.01-201109a-361679C-WHQL.zip . --no-sign-request                    
+                    cmd /c 7z x Windows_2019_2016-20.10.25.01-201109a-361679C-WHQL.zip
+                    cd *WHQL*\Drivers\Display\*INF
+                  ) || (
+                    echo Not Windows 2016
                   )
                   pnputil /add-driver *.inf /install /subdirs
-                  cd \windows\temp\driver\Packages\Drivers\Audio\HDMI\W*\
-                  pnputil /add-driver *.inf /install /subdirs
                 )
+
                 shutdown /r /t 1 /f
+                powershell -Command "Start-Sleep -s 5"
                 exit
             c:\\windows\\temp\\install-PSReadLine.cmd:
               content: |
                 @echo off
                 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr /C:"Server 202">nul && (
                   @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html#fleet-rdp-prerequisites
-                  powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.4.201 -Force"
-                  powershell -command "Install-Module -Name PSReadLine -Repository PSGallery -MinimumVersion 2.2.2 -Force"
+                  powershell -Command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.4.201 -Force"
+                  powershell -Command "Install-Module -Name PSReadLine -Repository PSGallery -MinimumVersion 2.2.2 -Force"
                 ) || (
                   echo.
                 )
@@ -1451,8 +1574,8 @@ Resources:
                 @echo off
                 reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ProductName | findstr "2019 202">nul && (
                   @echo ** https://www.powershellgallery.com/packages/DisplaySettings
-                  powershell -command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
-                  powershell -command "Install-Module -Name DisplaySettings  -Force"                  
+                  powershell -Command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
+                  powershell -Command "Install-Module -Name DisplaySettings  -Force"                  
                 ) || (
                   echo.
                 )
@@ -1465,15 +1588,74 @@ Resources:
                   echo Download and install
                   curl -s -L %1 -o nvidia-driver.exe
                   start /wait nvidia-driver -s
+                  ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-gpu-install.txt
                   shutdown /r /t 1 /f
+                  powershell -Command "Start-Sleep -s 5"
                 ) || (
                   echo.
                 )
           commands:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             restart-computer:
-              command: c:\windows\temp\install-gpu-driver.cmd >>
-                c:\windows\temp\gpu-install.log
+              command: c:\windows\temp\dcv-gpu-install.cmd >> c:\windows\temp\dcv-gpu-install.log
+              ignoreErrors: true
+              waitAfterCompletion: forever
+        04_dcv_docker_install:
+          files:
+            c:\\windows\\temp\\dcv-docker-install.cmd:
+              content: !Sub |
+                @echo off
+                powershell -Command "Start-Sleep -s 10"
+                IF EXIST c:\windows\temp\dcv-docker-install.txt EXIT
+                IF EXIST c:\windows\System32\docker.exe EXIT
+
+                powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"           
+                ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-docker-install.txt
+                
+                exit
+            c:\\windows\\temp\\install-docker-ce.ps1:
+              content: |
+                $global:progressPreference = 'silentlyContinue'
+
+                # Get latest Docker .zip package
+                $availableVersions = ((Invoke-WebRequest -Uri "https://download.docker.com/win/static/stable/x86_64/" -UseBasicParsing).Links | Where-Object {$_.href -like "docker-*.zip"}).href | Sort-Object -Descending
+                $dockerZip = $availableVersions[0]
+                $zipUrl = "https://download.docker.com/win/static/stable/x86_64/$dockerZip"
+
+                # download package
+                $destinationFolder = "c:\windows\temp"
+                (New-Object System.Net.WebClient).DownloadFile($zipUrl, "$destinationFolder\$dockerZip")
+
+                # Extract and copy to \windows\system32
+                Expand-Archive -Path "$destinationFolder\$dockerZip" -DestinationPath "$destinationFolder"
+                Copy-Item -Path "$destinationFolder\docker\docker.exe" -Destination c:\windows\System32\docker.exe
+                Copy-Item -Path "$destinationFolder\docker\dockerd.exe" -Destination c:\windows\System32\dockerd.exe
+
+                # Prepare docker config path
+                $DockerDataPath = "c:\ProgramData\docker"
+                $dockerConfigPath = Join-Path $global:DockerDataPath "config"
+                md -Path $dockerConfigPath | Out-Null
+
+                # Prepare docker daemon.json
+                $daemonSettings = New-Object PSObject
+                $daemonSettings | Add-Member NoteProperty hosts @("npipe://")
+
+                $daemonSettingsFile = Join-Path $dockerConfigPath "daemon.json"
+                $daemonSettings | ConvertTo-Json | Out-File -FilePath $daemonSettingsFile -Encoding ASCII
+
+                # Register docker service.
+                &c:\windows\System32\dockerd.exe --register-service --service-name docker
+                Start-Service docker
+
+                $windowsFeature = "Containers"
+                if (-not (Get-WindowsFeature $windowsFeature).Installed)
+                {
+                  Add-WindowsFeature $windowsFeature
+                }
+          commands:
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
+            install-docker:
+              command: c:\windows\temp\dcv-docker-install.cmd >> c:\windows\temp\dcv-docker-install.log
               ignoreErrors: true
               waitAfterCompletion: forever
     Properties:
@@ -1514,67 +1696,19 @@ Resources:
           @echo off
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets setup
 
-          cd \windows\temp\
+          @echo ** install software
+          cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_sw_install
 
-          @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-win.html
-          powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazon-ssm-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
-          c:\windows\temp\AmazonSSMAgentSetup.exe /S
-
-          @echo ** https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
-          powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/windows/amd64/latest/amazon-cloudwatch-agent.msi', 'amazon-cloudwatch-agent.msi')
-          msiexec.exe /i amazon-cloudwatch-agent.msi /quiet /norestart /l*v amazon-cloudwatch-agent.log          
-          copy \windows\temp\config.json "\Program Files\Amazon\AmazonCloudWatchAgent\"
-          cd "\Program Files\Amazon\AmazonCloudWatchAgent"
-          powershell -command ".\amazon-cloudwatch-agent-ctl.ps1 -a fetch-config -m ec2 -c file:config.json"
-          cd \windows\temp\
-          sc config AmazonCloudWatchAgent start=auto
-
-          @echo ** https://docs.chocolatey.org/en-us/choco/setup
-          @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
-
-          @echo ** install AWSCLI
-          choco install --no-progress -y awscli
-          setx /M AWS_CLI_AUTO_PROMPT on-partial
-
-          @echo ** install Chocolatey GUI
-          choco install --no-progress -y chocolateygui
-
-          @Echo ** install 7-zip
-          choco install --no-progress -y 7zip.install
-
-          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
-          powershell -command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
-          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-all
-          choco install --no-progress -y vcredist140
-          SET DRIVER_TYPE=${driverType}
-          IF %DRIVER_TYPE% EQU DCV (
-            msiexec /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL REMOVE=iddDriver /quiet /norestart /l*v dcv_install_msi.log
-          ) ELSE IF %DRIVER_TYPE% EQU none (
-            msiexec /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL REMOVE=iddDriver /quiet /norestart /l*v dcv_install_msi.log
-          ) ELSE (
-            msiexec.exe /i nice-dcv-server-x64-Release.msi ADDLOCAL=ALL /quiet /norestart /l*v dcv_install_msi.log
-            reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
-          )
-
-          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-auto
-          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
-          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
-
-          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-storage.html
-          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
-
-          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
-          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
-
-          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
-          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v web-port /t REG_DWORD /d ${listenPort} /f
-          reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v quic-port /t REG_DWORD /d ${listenPort} /f
-
-          @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#display
-          reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
+          @echo ** install DCV
+          cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_install
 
           @echo ** install graphics driver
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_gpu_install
+
+          @echo ** install Docker
+          IF ${installDocker} EQU Yes (
+            cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_docker_install
+          )
 
           cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region}
           </script>
@@ -1791,7 +1925,7 @@ Outputs:
     Value: !Sub https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}
 
   SSMsessionManager:
-    Description: SSM Session Manager ("net user administrator MyStr@ngAdminPassw0rd" to change administrator password)
+    Description: SSM Session Manager ("net user administrator MyStr@ngAdminPassw0rd" to change password. Use a strong password)
     Value: !Sub https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}
 
   DCVwebConsole:
