@@ -1412,20 +1412,15 @@ Resources:
                   for dcvUser in "${dcvUsers[@]}"
                   do
                     if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                      case $dcvUser in
-                        root)
-                          /usr/bin/dcv create-session $dcvUser --owner root --storage-root /root
-                          ;;
-                        *)
-                          /usr/bin/dcv create-session $dcvUser --owner $dcvUser --user $dcvUser --storage-root /home/$dcvUser
-                          ;;
-                      esac
+                      dcvHome=$(grep ^$dcvUser /etc/passwd | cut -d: -f 6 | head -n 1)
+                      /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root $dcvHome
                     fi
                   done
+                  date
                   /usr/bin/dcv list-sessions
                   sleep 5
                 done
-              mode: "000755"
+              mode: "000744"
               owner: "root"
               group: "root"
             "/etc/systemd/system/dcv-post-reboot.service":
@@ -1529,14 +1524,14 @@ Resources:
                 # EPEL: https://docs.fedoraproject.org/en-US/epel/
                 yum install -q -y epel-release
 
+                # Update OS
+                yum clean all
+                yum update -q -y
+
                 # Snap: https://snapcraft.io/docs/installing-snap-on-centos
                 yum install -q -y snapd
                 systemctl enable --now snapd snapd.socket
                 ln -s /var/lib/snapd/snap /snap
-
-                # Update OS
-                yum clean all
-                yum update -q -y
 
                 # yum-cron
                 yum install -q -y yum-cron

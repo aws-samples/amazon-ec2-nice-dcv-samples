@@ -1496,20 +1496,15 @@ Resources:
                   for dcvUser in "${dcvUsers[@]}"
                   do
                     if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                      case $dcvUser in
-                        root)
-                          /usr/bin/dcv create-session $dcvUser --owner root --storage-root /root
-                          ;;
-                        *)
-                          /usr/bin/dcv create-session $dcvUser --owner $dcvUser --user $dcvUser --storage-root /home/$dcvUser
-                          ;;
-                      esac
+                      dcvHome=$(grep ^$dcvUser /etc/passwd | cut -d: -f 6 | head -n 1)
+                      /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root $dcvHome
                     fi
                   done
+                  date
                   /usr/bin/dcv list-sessions
                   sleep 5
                 done
-              mode: "000755"
+              mode: "000744"
               owner: "root"
               group: "root"
             "/etc/systemd/system/dcv-post-reboot.service":
