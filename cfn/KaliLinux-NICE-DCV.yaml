@@ -23,13 +23,13 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Subscribe from AWS Marketplace before launching ( https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to ). Note that this OS is not supported by DCV
+          default: Subscribe from AWS Marketplace before launching ( https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350 ). Note that this OS is not supported by DCV
       - Label:
           default: EC2
         Parameters:
           - ec2Name
           - ec2KeyPair
-          - imageId
+          - osVersion
           - instanceType
           - ec2TerminationProtection
       - Label:
@@ -58,6 +58,11 @@ Metadata:
           - volumeSize
           - volumeType
       - Label:
+          default: AMI ID
+        Parameters:
+          - kaliX86
+          - kaliARM64
+      - Label:
           default: Backup
         Parameters:
           - enableBackup
@@ -75,10 +80,13 @@ Metadata:
           - installDocker
 
 Parameters:
-  imageId:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
-    Description: Kali AMI ID ( aws ssm get-parameters-by-path --path /aws/service/marketplace/prod-tsqyof4l3a3aa/ --query "Parameters[].Name" )
-    Default: /aws/service/marketplace/prod-tsqyof4l3a3aa/latest
+  osVersion:
+    Type: String
+    Description: Version and processor architecture
+    AllowedValues:
+      - Kali Linux (arm64)
+      - Kali Linux (x86_64)
+    Default: Kali Linux (x86_64)
 
   ec2Name:
     Type: String
@@ -109,8 +117,7 @@ Parameters:
     AllowedValues:
       - "virtual_(xfce)"
       - "virtual_(gnome)"
-      - "virtual-with-NVIDIA_Driver_(xfce)"
-      - "console-with-NVIDIA_Driver_(gnome)"
+      - "console_(gnome)"
     Default: "virtual_(xfce)"
   listenPort:
     Type: Number
@@ -193,6 +200,15 @@ Parameters:
       - gp3
       - gp2
     Default: gp3
+
+  kaliX86:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Kali Linux (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-fznsw3f7mq7to
+    Default: /aws/service/marketplace/prod-tsqyof4l3a3aa/latest
+  kaliARM64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Kali Linux (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-kie6xvt5r3spi
+    Default: /aws/service/marketplace/prod-aeyf4lmofcb5s/latest
 
   enableBackup:
     Type: String
@@ -590,6 +606,7 @@ Parameters:
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
+  useKaliX86: !Equals [!Ref osVersion, "Kali Linux (x86_64)"]
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
 
@@ -1590,7 +1607,11 @@ Resources:
                 apt-get install -q -y dkms
 
                 # Kernel headers for GPU and USB remotization
-                apt-get install -q -y linux-headers-cloud-amd64
+                if (arch | grep -q x86); then
+                  apt-get install -q -y linux-headers-cloud-amd64
+                else
+                  apt-get install -q -y linux-headers-cloud-arm64
+                fi
                 apt-get install -q -y usbutils
 
                 if [ "${installDocker}" = "Yes" ]; then
@@ -1669,7 +1690,9 @@ Resources:
                 # from /etc/lightdm/lightdm.conf.d
                 # sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
                 apt-get install -q -y ./nice-xdcv_*.deb
-                apt-get install -q -y ./nice-dcv-gltest_*.deb
+                if (arch | grep -q x86); then
+                  apt-get install -q -y ./nice-dcv-gltest_*.deb
+                fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
                 apt-get install -q -y cups
@@ -1766,7 +1789,11 @@ Resources:
                 sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 export DEBIAN_FRONTEND=noninteractive
 
-                apt-get install -q -y linux-headers-cloud-amd64
+                if (arch | grep -q x86); then
+                  apt-get install -q -y linux-headers-cloud-amd64
+                else
+                  apt-get install -q -y linux-headers-cloud-arm64
+                fi
                 apt-get install -q -y nvidia-driver nvidia-cuda-toolkit
                 apt-get install -q -y nvidia-xconfig
 
@@ -1781,7 +1808,7 @@ Resources:
               owner: "root"
               group: "root"
     Properties:
-      ImageId: !Ref imageId
+      ImageId: !If [useKaliX86, !Ref kaliX86, !Ref kaliARM64]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair
@@ -1875,23 +1902,6 @@ Resources:
               python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload
               systemctl enable dcv-gpu-install
-              ;;
-          esac
-
-          # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
-          curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/debian/amd64/latest/amazon-cloudwatch-agent.deb            
-          apt-get install -q -y ./amazon-cloudwatch-agent.deb
-          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
-          systemctl enable --now amazon-cloudwatch-agent
-
-          # Webmin: https://webmin.com/download/
-          export webmin="${installWebmin}"
-          case $webmin in
-            Yes)
-              cd /tmp/cfn
-              curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
-              echo 'Y' | sh ./setup-repos.sh -f
-              apt-get install -q -y webmin
               ;;
           esac
 
