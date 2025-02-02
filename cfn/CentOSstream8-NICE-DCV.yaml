@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: CentOS Stream 8 with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:CentOS8)
+Description:  CentOS Stream 8 with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:CentOS8)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -1430,8 +1430,13 @@ Resources:
                   for dcvUser in "${dcvUsers[@]}"
                   do
                     if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                      dcvHome=$(grep ^$dcvUser /etc/passwd | cut -d: -f 6 | head -n 1)
-                      /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root $dcvHome
+                      dcvHome=$(grep ^$dcvUser: /etc/passwd | cut -d: -f 6 | head -n 1)
+                      if [ -z $dcvHome ]; then
+                        echo User "$dcvUser" does not exist!
+                      else
+                        /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root $dcvHome
+                      fi
+                      dcvHome=""
                     fi
                   done
                   date
