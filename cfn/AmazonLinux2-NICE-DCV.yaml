@@ -123,7 +123,7 @@ Parameters:
     Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 535.216.03
+    Default: 535.230.02
   listenPort:
     Type: Number
     Description: DCV server TCP/UDP port
@@ -1405,10 +1405,10 @@ Resources:
             - 04_gpu_nvidia_gaming_install
           console-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
-          console-with-NVIDIA_runfile_Driver:
-            - 06_gpu_nvidia_runfile_install
           virtual-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
+          console-with-NVIDIA_runfile_Driver:
+            - 06_gpu_nvidia_runfile_install
           virtual-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
@@ -1425,6 +1425,9 @@ Resources:
                 sudo yum install -y ./nice-xdcv-*.rpm
                 if (arch | grep -q x86); then
                   sudo yum install -y ./nice-dcv-gltest-*.rpm
+                fi
+                if (yum info nice-dcv-gl | grep -qi Installed); then
+                  sudo yum install -y ./nice-dcv-gl-*.rpm
                 fi
                 sudo systemctl daemon-reload
               mode: "000755"
@@ -1466,13 +1469,7 @@ Resources:
                   for dcvUser in "${dcvUsers[@]}"
                   do
                     if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                      dcvHome=$(grep ^$dcvUser: /etc/passwd | cut -d: -f 6 | head -n 1)
-                      if [ -z $dcvHome ]; then
-                        echo User "$dcvUser" does not exist!
-                      else
-                        /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root $dcvHome
-                      fi
-                      dcvHome=""
+                      /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root %home% --type virtual
                     fi
                   done
                   date
@@ -1531,6 +1528,7 @@ Resources:
                   fi
                 fi
 
+                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
                 case $SESSION in
                   console-with-NVIDIA_GRID_Driver)
@@ -1828,6 +1826,27 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+            "/root/install-gpu-sw.sh":
+              content: !Sub |
+                #!/bin/bash
+
+                export SESSION="${sessionType}"
+                case $SESSION in
+                  *NVIDIA*) # install GPU driver after reboot
+                    yum install -q -y unzip gcc make
+                    yum install -q -y vulkan-devel libglvnd-devel
+                    yum install -q -y tar bzip2 make automake gcc gcc-c++ pciutils elfutils-libelf-devel libglvnd-devel iptables vim bind-utils wget
+                    ;;
+                esac
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"          
+          commands:
+            install:
+              command: "/root/install-gpu-sw.sh > /var/log/install-gpu-driver.log 2>&1"
+              ignoreErrors: "true"
         03_gpu_nvidia_grid_install:
           files:
             "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
@@ -1943,8 +1962,6 @@ Resources:
                 #yum install -q -y cuda-toolkit
                 # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
                 #yum install -q -y cudnn
-                # Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installation
-                #yum install -q -y nvidia-container-toolkit
 
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
                 cd /usr/src/nvidia-*
@@ -2060,10 +2077,6 @@ Resources:
           case $SESSION in
             *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
-
-              yum install -q -y unzip gcc make
-              yum install -q -y vulkan-devel libglvnd-devel
-              yum install -q -y tar bzip2 make automake gcc gcc-c++ pciutils elfutils-libelf-devel libglvnd-devel iptables vim bind-utils wget
 
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION

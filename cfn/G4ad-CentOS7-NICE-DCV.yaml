@@ -1431,13 +1431,7 @@ Resources:
                   for dcvUser in "${dcvUsers[@]}"
                   do
                     if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                      dcvHome=$(grep ^$dcvUser: /etc/passwd | cut -d: -f 6 | head -n 1)
-                      if [ -z $dcvHome ]; then
-                        echo User "$dcvUser" does not exist!
-                      else
-                        /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root $dcvHome
-                      fi
-                      dcvHome=""
+                      /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root %home% --type virtual
                     fi
                   done
                   date

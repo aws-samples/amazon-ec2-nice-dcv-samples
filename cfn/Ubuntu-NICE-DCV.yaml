@@ -138,7 +138,7 @@ Parameters:
     Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
     AllowedPattern: "^[\\d\\.]+$"
     ConstraintDescription: Specify valid driver version
-    Default: 535.216.03
+    Default: 535.230.02
   listenPort:
     Type: Number
     Description: DCV server TCP/UDP port
@@ -1432,10 +1432,10 @@ Resources:
             - 04_gpu_nvidia_gaming_install
           console-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
-          console-with-NVIDIA_runfile_Driver:
-            - 06_gpu_nvidia_runfile_install
           virtual-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
+          console-with-NVIDIA_runfile_Driver:
+            - 06_gpu_nvidia_runfile_install
           virtual-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
           console-with-Ubuntu_repo_Driver:
@@ -1455,6 +1455,9 @@ Resources:
                 sudo apt-get install -y ./nice-xdcv_*.deb
                 if (arch | grep -q x86); then
                   sudo apt-get install -y ./nice-dcv-gltest_*.deb
+                fi
+                if ( apt search nice-dcv-gl | grep -q installed ); then
+                  sudo apt-get install -y ./nice-dcv-gl_*.deb
                 fi
                 sudo systemctl daemon-reload
               mode: "000755"
@@ -1496,13 +1499,7 @@ Resources:
                   for dcvUser in "${dcvUsers[@]}"
                   do
                     if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                      dcvHome=$(grep ^$dcvUser: /etc/passwd | cut -d: -f 6 | head -n 1)
-                      if [ -z $dcvHome ]; then
-                        echo User "$dcvUser" does not exist!
-                      else
-                        /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root $dcvHome
-                      fi
-                      dcvHome=""
+                      /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root %home% --type virtual
                     fi
                   done
                   date
@@ -1552,6 +1549,7 @@ Resources:
                   fi
                 fi
 
+                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
                 case $SESSION in
                   console-with-NVIDIA_GRID_Driver)
@@ -1631,7 +1629,7 @@ Resources:
                 cd /tmp/cfn
 
                 # Update OS
-                apt-get update
+                apt-get update -q
                 apt-get upgrade -q -y
                 apt-get autoremove -q -y
 
@@ -1657,7 +1655,7 @@ Resources:
                 esac
 
                 # USB and GPU driver DKMS
-                apt-get update
+                apt-get update -q
                 apt-get install -q -y dkms
 
                 # Kernel headers for GPU and USB remotization
@@ -1675,7 +1673,7 @@ Resources:
                   # Add the repository to Apt sources
                   echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
                     tee /etc/apt/sources.list.d/docker.list > /dev/null
-                  apt-get update
+                  apt-get update -q
                   apt-get install -q -y docker-ce
                   systemctl enable docker
                   usermod -aG docker ubuntu
@@ -1714,7 +1712,7 @@ Resources:
                 cd /tmp/cfn
 
                 # Update OS
-                apt-get update
+                apt-get update -q
                 apt-get upgrade -q -y
 
                 # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
@@ -1860,6 +1858,44 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+            "/root/install-gpu-sw.sh":
+              content: !Sub |
+                #!/bin/bash
+
+                  case $SESSION in
+                    *Ubuntu*) # https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/
+
+                      ;;
+                    *NVIDIA*) # install GPU driver after reboot
+                      apt-get install -q -y unzip gcc make
+                      apt-get install -q -y libglvnd-dev pkg-config
+        
+                      # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#ubuntu
+                      if (! cat /etc/modprobe.d/blacklist.conf | grep -q nouveau); then
+                        echo "blacklist vga16fb" >> /etc/modprobe.d/blacklist.conf
+                        echo "blacklist nouveau" >> /etc/modprobe.d/blacklist.conf
+                        echo "blacklist rivafb" >> /etc/modprobe.d/blacklist.conf
+                        echo "blacklist nvidiafb" >> /etc/modprobe.d/blacklist.conf
+                        echo "blacklist rivatv" >> /etc/modprobe.d/blacklist.conf
+                      fi
+                      sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="rdblacklist=nouveau /g' /etc/default/grub
+                      update-grub
+        
+                      $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+                      $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+                      systemctl daemon-reload
+                      systemctl enable dcv-gpu-install
+                      ;;
+                  esac
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"          
+          commands:
+            install:
+              command: "/root/install-gpu-sw.sh > /var/log/install-gpu-driver.log 2>&1"
+              ignoreErrors: "true"
         03_gpu_nvidia_grid_install:
           files:
             "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
@@ -1979,8 +2015,6 @@ Resources:
                 #apt-get install -q -y cuda-toolkit
                 # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
                 #apt-get install -q -y cudnn
-                # Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installation
-                #apt-get install -q -y nvidia-container-toolkit
 
                 sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -2162,8 +2196,11 @@ Resources:
           # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
           export DEBIAN_FRONTEND=noninteractive
 
+          systemctl stop apt-daily.timer apt-daily-upgrade.timer
           apt-get clean all
           apt-get update -q
+          apt-get install -q -y procps
+          pkill apt
           apt-get install -q -y wget tmux unzip tar curl sed
 
           # EC2 Instance Connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-set-up.html
@@ -2194,30 +2231,9 @@ Resources:
 
           export SESSION="${sessionType}"
           case $SESSION in
-            *Ubuntu*) # https://ubuntu.com/server/docs/nvidia-drivers-installation
-              systemctl disable dcv-post-reboot
-
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
-              systemctl daemon-reload
-              systemctl enable dcv-gpu-install
-              ;;
+            *Ubuntu*) # https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/
             *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
-
-              apt-get install -q -y unzip gcc make
-              apt-get install -q -y libglvnd-dev pkg-config
-
-              # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#ubuntu
-              if (! cat /etc/modprobe.d/blacklist.conf | grep -q nouveau); then
-                echo "blacklist vga16fb" >> /etc/modprobe.d/blacklist.conf
-                echo "blacklist nouveau" >> /etc/modprobe.d/blacklist.conf
-                echo "blacklist rivafb" >> /etc/modprobe.d/blacklist.conf
-                echo "blacklist nvidiafb" >> /etc/modprobe.d/blacklist.conf
-                echo "blacklist rivatv" >> /etc/modprobe.d/blacklist.conf
-              fi
-              sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="rdblacklist=nouveau /g' /etc/default/grub
-              update-grub
 
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
