@@ -49,8 +49,13 @@ Metadata:
           - ingressIPv4
           - ingressIPv6
           - allowSSHport
-          - allowWebServerPorts
           - installWebmin
+      - Label:
+          default: Web server
+        Parameters:
+          - enableCloudFront
+          - originType
+          - allowWebServerPorts
       - Label:
           default: EBS volume
         Parameters:
@@ -70,8 +75,8 @@ Metadata:
       - Label:
           default: Others
         Parameters:
-          - r53ZoneID
           - installDocker
+          - r53ZoneID
 
 Parameters:
   osVersion:
@@ -117,6 +122,8 @@ Parameters:
       - "console"
       - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
+      - "virtual-with-NVIDIA_GRID_Driver-GPU_sharing"
+      - "virtual-with-NVIDIA_repo_Driver-GPU_sharing"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
@@ -175,21 +182,36 @@ Parameters:
       - "Yes"
       - "No"
     Default: "Yes"
-  allowWebServerPorts:
-    Type: String
-    Description: Allow HTTP and/or HTTPS inbound
-    AllowedValues:
-      - "No"
-      - HTTP-and-HTTPS
-      - HTTP
-      - HTTPS
-    Default: "No"
   installWebmin:
     Type: String
     Description: https://webmin.com/
     AllowedValues:
       - "Yes"
       - "No"
+    Default: "No"
+
+  enableCloudFront:
+    Type: String
+    Description: Create Amazon CloudFront distribution
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  originType:
+    Type: String
+    Description: CloudFront origin type
+    AllowedValues:
+      - "EC2"
+      - "VPC Origin"
+    Default: "EC2"
+  allowWebServerPorts:
+    Type: String
+    Description: Allow HTTP/HTTPS inbound to EC2 instance
+    AllowedValues:
+      - "No"
+      - HTTP-and-HTTPS
+      - HTTP
+      - HTTPS
     Default: "No"
 
   volumeSize:
@@ -587,11 +609,6 @@ Parameters:
       - "No"
     Default: "No"
 
-  r53ZoneID:
-    Type: String
-    Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
-    Default: ""
-
   installDocker:
     Type: String
     Description: Install Docker
@@ -599,6 +616,11 @@ Parameters:
       - "Yes"
       - "No"
     Default: "No"
+  r53ZoneID:
+    Type: String
+    Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
+    Default: ""
+
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -650,14 +672,18 @@ Conditions:
     ]
   createCFsgHTTP:
     !And [
-      !And [!Condition hasCFprefix, !Condition displayPublicIP],
-      !Condition createSgHTTP,
+      !Or [!Condition createSgHTTP, !Condition createCloudFront],
+      !Condition hasCFprefix,
     ]
   createCFsgHTTPS:
     !And [
-      !And [!Condition hasCFprefix, !Condition displayPublicIP],
-      !Condition createSgHTTPS,
+      !Or [!Condition createSgHTTPS, !Condition createCloudFront],
+      !Condition hasCFprefix,
     ]
+  createCloudFront: !Equals [!Ref enableCloudFront, "Yes"]
+  cfVPCOrigin:
+    !And [!Condition createCloudFront, !Equals [!Ref originType, "VPC Origin"]]
+
   createSgSSH: !Equals [!Ref allowSSHport, "Yes"]
   createBackup: !Equals [!Ref enableBackup, "Yes"]
 
@@ -1401,11 +1427,15 @@ Resources:
             - 02_dcv_gpu_install
           console-with-NVIDIA_GRID_Driver:
             - 03_gpu_nvidia_grid_install
+          virtual-with-NVIDIA_GRID_Driver-GPU_sharing:
+            - 03_gpu_nvidia_grid_install
           console-with-NVIDIA_Gaming_Driver:
             - 04_gpu_nvidia_gaming_install
           console-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
           virtual-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
+          virtual-with-NVIDIA_repo_Driver-GPU_sharing:
             - 05_gpu_nvidia_repo_install
           console-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
@@ -1531,6 +1561,14 @@ Resources:
                 # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
                 case $SESSION in
+                  virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                    sed -i '/Section "Device"/a \    \HardDPMS       false' /etc/X11/xorg.conf
+                    ;;
+                  *GPU_sharing*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    sed -i '/Section "Device"/a \    \HardDPMS       false' /etc/X11/xorg.conf
+                    ;;
                   console-with-NVIDIA_GRID_Driver)
                     nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
                     ;;
@@ -1541,8 +1579,12 @@ Resources:
 
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
+                  *GPU_sharing*)
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
                   console*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
                     sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
                     ;;
                   virtual*)
@@ -1659,7 +1701,7 @@ Resources:
                 # Certbot: https://certbot.eff.org/instructions?ws=other&os=pip
                 yum install -q -y augeas-libs
                 amazon-linux-extras install -q -y python3.8 
-                
+
                 /usr/bin/python3.8 -m venv /opt/certbot/
                 /opt/certbot/bin/pip install --upgrade pip
                 /opt/certbot/bin/pip install certbot
@@ -1681,12 +1723,12 @@ Resources:
               content: |
                 [Unit]
                 Description=This is the timer to set the schedule for automated renewals
-                
+
                 [Timer]
                 OnCalendar=*-*-* 00/12:00:00
                 RandomizedDelaySec=12hours
                 Persistent=true
-                
+
                 [Install]
                 WantedBy=timers.target
               mode: "000640"
@@ -1740,6 +1782,9 @@ Resources:
                 yum install -q -y ./nice-xdcv-*.rpm
                 if (arch | grep -q x86); then
                   yum install -q -y ./nice-dcv-gltest-*.rpm
+                fi
+                if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
+                  yum install -q -y ./nice-dcv-gl-*.rpm
                 fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
@@ -1842,7 +1887,7 @@ Resources:
                 rm -f ${!0}
               mode: "000740"
               owner: "root"
-              group: "root"          
+              group: "root"
           commands:
             install:
               command: "/root/install-gpu-sw.sh > /var/log/install-gpu-driver.log 2>&1"
@@ -2298,6 +2343,67 @@ Resources:
       EndpointConfigurations:
         - EndpointId: !Ref ec2Instance
 
+  cfVpcOrigin:
+    Type: AWS::CloudFront::VpcOrigin
+    Condition: cfVPCOrigin
+    Properties:
+      VpcOriginEndpointConfig:
+        Arn: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
+        Name: !Sub ${AWS::StackName}-${ec2Instance}
+        OriginProtocolPolicy: http-only
+        OriginSSLProtocols:
+          - TLSv1.2
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  cfDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: createCloudFront
+    Properties:
+      DistributionConfig:
+        Origins:
+          - !If
+            - cfVPCOrigin
+            - DomainName: !GetAtt ec2Instance.PrivateDnsName
+              Id: !Ref ec2Instance
+              VpcOriginConfig:
+                VpcOriginId: !GetAtt cfVpcOrigin.Id
+            - DomainName: !GetAtt ec2Instance.PublicDnsName
+              Id: !Ref ec2Instance
+              CustomOriginConfig:
+                OriginProtocolPolicy: http-only
+                OriginSSLProtocols:
+                  - TLSv1.2
+        Enabled: true
+        Comment: !Sub "${AWS::StackName}-CloudFront"
+        HttpVersion: http2and3
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+          MinimumProtocolVersion: TLSv1.2_2021
+        DefaultCacheBehavior:
+          AllowedMethods: !Split [",", "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE"]
+          CachedMethods:
+            - "HEAD"
+            - "GET"
+          Compress: true
+          CachePolicyId: "83da9c7e-98b4-4e11-a168-04f0df8e2c65"
+          OriginRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3"
+          ResponseHeadersPolicyId: "67f7725c-6f97-4210-82d7-5512b31e9d03"
+          TargetOriginId: !Ref ec2Instance
+          ViewerProtocolPolicy: "redirect-to-https"
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
 Outputs:
   EC2console:
     Description: EC2 console
@@ -2369,3 +2475,13 @@ Outputs:
     Condition: createAGA
     Description: Global Accelerator IPv4 addresses
     Value: !Join [", ", !GetAtt aga.Ipv4Addresses]
+
+  CloudFrontConsole:
+    Condition: createCloudFront
+    Description: CloudFront console
+    Value: !Sub "https://console.aws.amazon.com/cloudfront/home#/distributions/${cfDistribution.Id}"
+
+  CloudFrontURL:
+    Condition: createCloudFront
+    Description: CloudFront distribution URL
+    Value: !Sub "https://${cfDistribution.DomainName}"

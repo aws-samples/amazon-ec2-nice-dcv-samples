@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Kali Linux with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Kali)
+# Description: Kali Linux with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Kali)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -50,8 +50,13 @@ Metadata:
           - ingressIPv4
           - ingressIPv6
           - allowSSHport
-          - allowWebServerPorts
           - installWebmin
+      - Label:
+          default: Web server
+        Parameters:
+          - enableCloudFront
+          - originType
+          - allowWebServerPorts
       - Label:
           default: EBS volume
         Parameters:
@@ -76,8 +81,8 @@ Metadata:
       - Label:
           default: Others
         Parameters:
-          - r53ZoneID
           - installDocker
+          - r53ZoneID
 
 Parameters:
   osVersion:
@@ -170,21 +175,36 @@ Parameters:
       - "Yes"
       - "No"
     Default: "Yes"
-  allowWebServerPorts:
-    Type: String
-    Description: Allow HTTP and/or HTTPS inbound
-    AllowedValues:
-      - "No"
-      - HTTP-and-HTTPS
-      - HTTP
-      - HTTPS
-    Default: "No"
   installWebmin:
     Type: String
     Description: https://webmin.com/
     AllowedValues:
       - "Yes"
       - "No"
+    Default: "No"
+
+  enableCloudFront:
+    Type: String
+    Description: Create Amazon CloudFront distribution
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  originType:
+    Type: String
+    Description: CloudFront origin type
+    AllowedValues:
+      - "EC2"
+      - "VPC Origin"
+    Default: "EC2"
+  allowWebServerPorts:
+    Type: String
+    Description: Allow HTTP/HTTPS inbound to EC2 instance
+    AllowedValues:
+      - "No"
+      - HTTP-and-HTTPS
+      - HTTP
+      - HTTPS
     Default: "No"
 
   volumeSize:
@@ -591,11 +611,6 @@ Parameters:
       - "No"
     Default: "No"
 
-  r53ZoneID:
-    Type: String
-    Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
-    Default: ""
-
   installDocker:
     Type: String
     Description: Install Docker Engine aka Docker CE ( https://docs.docker.com/engine/ )
@@ -603,6 +618,10 @@ Parameters:
       - "Yes"
       - "No"
     Default: "No"
+  r53ZoneID:
+    Type: String
+    Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
+    Default: ""
 
 Conditions:
   useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
@@ -647,14 +666,18 @@ Conditions:
     ]
   createCFsgHTTP:
     !And [
-      !And [!Condition hasCFprefix, !Condition displayPublicIP],
-      !Condition createSgHTTP,
+      !Or [!Condition createSgHTTP, !Condition createCloudFront],
+      !Condition hasCFprefix,
     ]
   createCFsgHTTPS:
     !And [
-      !And [!Condition hasCFprefix, !Condition displayPublicIP],
-      !Condition createSgHTTPS,
+      !Or [!Condition createSgHTTPS, !Condition createCloudFront],
+      !Condition hasCFprefix,
     ]
+  createCloudFront: !Equals [!Ref enableCloudFront, "Yes"]
+  cfVPCOrigin:
+    !And [!Condition createCloudFront, !Equals [!Ref originType, "VPC Origin"]]
+
   createSgSSH: !Equals [!Ref allowSSHport, "Yes"]
   createBackup: !Equals [!Ref enableBackup, "Yes"]
 
@@ -1497,7 +1520,7 @@ Resources:
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
                     sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
                     ;;
                   virtual*)
@@ -2117,6 +2140,67 @@ Resources:
       EndpointConfigurations:
         - EndpointId: !Ref ec2Instance
 
+  cfVpcOrigin:
+    Type: AWS::CloudFront::VpcOrigin
+    Condition: cfVPCOrigin
+    Properties:
+      VpcOriginEndpointConfig:
+        Arn: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
+        Name: !Sub ${AWS::StackName}-${ec2Instance}
+        OriginProtocolPolicy: http-only
+        OriginSSLProtocols:
+          - TLSv1.2
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  cfDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: createCloudFront
+    Properties:
+      DistributionConfig:
+        Origins:
+          - !If
+            - cfVPCOrigin
+            - DomainName: !GetAtt ec2Instance.PrivateDnsName
+              Id: !Ref ec2Instance
+              VpcOriginConfig:
+                VpcOriginId: !GetAtt cfVpcOrigin.Id
+            - DomainName: !GetAtt ec2Instance.PublicDnsName
+              Id: !Ref ec2Instance
+              CustomOriginConfig:
+                OriginProtocolPolicy: http-only
+                OriginSSLProtocols:
+                  - TLSv1.2
+        Enabled: true
+        Comment: !Sub "${AWS::StackName}-CloudFront"
+        HttpVersion: http2and3
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+          MinimumProtocolVersion: TLSv1.2_2021
+        DefaultCacheBehavior:
+          AllowedMethods: !Split [",", "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE"]
+          CachedMethods:
+            - "HEAD"
+            - "GET"
+          Compress: true
+          CachePolicyId: "83da9c7e-98b4-4e11-a168-04f0df8e2c65"
+          OriginRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3"
+          ResponseHeadersPolicyId: "67f7725c-6f97-4210-82d7-5512b31e9d03"
+          TargetOriginId: !Ref ec2Instance
+          ViewerProtocolPolicy: "redirect-to-https"
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
 Outputs:
   EC2console:
     Description: EC2 console
@@ -2188,3 +2272,13 @@ Outputs:
     Condition: createAGA
     Description: Global Accelerator IPv4 addresses
     Value: !Join [", ", !GetAtt aga.Ipv4Addresses]
+
+  CloudFrontConsole:
+    Condition: createCloudFront
+    Description: CloudFront console
+    Value: !Sub "https://console.aws.amazon.com/cloudfront/home#/distributions/${cfDistribution.Id}"
+
+  CloudFrontURL:
+    Condition: createCloudFront
+    Description: CloudFront distribution URL
+    Value: !Sub "https://${cfDistribution.DomainName}"
