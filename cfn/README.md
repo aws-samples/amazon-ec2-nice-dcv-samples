@@ -90,9 +90,9 @@ Allowed IP prefix and ports
 - `installWebmin` (some Linux OS) : install [Webmin](https://webmin.com/) web-based system administration tool. Default is `No`
 
 Web Server
-- `enableCloudFront`: [create](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-creating-console.html) an [Amazon CloudFront](https://aws.amazon.com/cloudfront/) distribution to your EC2 instance. Default is `No`
-- `originType`: either `EC2` [custom origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html#concept_CustomOrigin) or `VPC origin`. Most [AWS Regions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html#vpc-origins-supported-regions) support [VPC Origins](https://aws.amazon.com/blogs/networking-and-content-delivery/introducing-cloudfront-virtual-private-cloud-vpc-origins-shield-your-web-applications-from-public-internet/), which allow CloudFront to deliver content even if your EC2 instance is in a VPC private subne. Default is `EC2` 
-- `allowWebServerPorts` : allow inbound HTTP and/or HTTPS. This option is not related to `enableCloudFront` Default is `No`
+- `enableCloudFront`: [create](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-creating-console.html) a [Amazon CloudFront](https://aws.amazon.com/cloudfront/) distribution to your EC2 instance. Default is `No`
+- `originType`: either `EC2` [custom origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html#concept_CustomOrigin) or `VPC origin`. Most [AWS Regions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html#vpc-origins-supported-regions) support [VPC Origins](https://aws.amazon.com/blogs/networking-and-content-delivery/introducing-cloudfront-virtual-private-cloud-vpc-origins-shield-your-web-applications-from-public-internet/), which allow CloudFront to deliver content even if your EC2 instance is in a VPC private subnet. Default is `EC2` 
+- `allowWebServerPorts` : allow inbound HTTP/HTTPS to EC2 instance. This option is not related to `enableCloudFront` Default is `No`
 
    *CloudFormation template does not install web server on EC2 instance*
 
@@ -145,8 +145,12 @@ The following are available if `enableAGA` is `Yes`
 
     *When [connecting](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting.html) to AGA using native [Windows](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-win.html), [Linux](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-linux.html) or [macOS](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-mac.html) clients, you may want to explicitly select WebSocket (TCP) protocol. QUIC (UDP) is only supported for direct client-server communication where there are no intermediate proxies, gateways, or load balancers.*
 
+The following are available if `enableCloudFront` is `Yes`
+- `CloudFrontConsole` : CloudFront console URL link
+- `CloudFrontURL` : CloudFront distribution URL link
 
-The following values are available as [CloudFormation Exports](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html)
+
+The following are available as [CloudFormation Exports](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html)
 - `<Stack Name>-IAMRole` : IAM role name
 - `<Stack Name>-InstanceID` : EC2 instance ID
 - `<Stack Name>-SecurityGroup` : Security group ID
@@ -262,7 +266,7 @@ To futher secure your EC2 instance, you may want to
   If you have [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) and [Session Manager plugin for the AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) installed, you can start a terminal session using [AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-cli) or [SSH](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-ssh).
 - Windows: Disallow RDP (`allowRDPport`) access from public internet. Use [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) for in-browser RDP access.
 - Use [AWS Backup](https://aws.amazon.com/blogs/aws/aws-backup-ec2-instances-efs-single-file-restore-and-cross-region-backup/) (`enableBackup`) and enable [AWS Backup Vault Lock](https://aws.amazon.com/blogs/storage/enhance-the-security-posture-of-your-backups-with-aws-backup-vault-lock/) for enhanced data protection. If your [Region](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) does not support AWS Backup, you can setup automatic [EBS snapshots](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html) using [Amazon Data Lifecycle Manager](https://aws.amazon.com/blogs/storage/automating-amazon-ebs-snapshot-and-ami-management-using-amazon-dlm/).
-- If hosting a website, use [Amazon CloudFront](https://aws.amazon.com/cloudfront/) (`enableCloudFront`) with [VPC Origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html). The CloudFormation template creates additional inbound HTTP and HTTPS security groups with [AWS-managed prefix list for Amazon CloudFront](https://aws.amazon.com/blogs/networking-and-content-delivery/limit-access-to-your-origins-using-the-aws-managed-prefix-list-for-amazon-cloudfront/) as source where possible. You can remove inbound HTTP and HTTPS from public internet (`0.0.0.0/0`) from your security group
+- If hosting a website, use [Amazon CloudFront](https://aws.amazon.com/cloudfront/) (`enableCloudFront`) with [VPC Origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html). The CloudFormation template creates additional inbound HTTP and HTTPS security groups with [AWS-managed prefix list for Amazon CloudFront](https://aws.amazon.com/blogs/networking-and-content-delivery/limit-access-to-your-origins-using-the-aws-managed-prefix-list-for-amazon-cloudfront/) as source where possible. You can remove HTTP and HTTPS public internet inbound (`0.0.0.0/0`) from your security group
 - [Use AWS WAF](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html) to protect your CloudFront distribution 
 - Enable [Amazon Inspector](https://aws.amazon.com/inspector/) to scan EC2 instance for software vulnerabilities and unintended network exposure.
 - Enable [Amazon GuardDuty](https://aws.amazon.com/guardduty/) security monitoring service with [Malware Protection](https://docs.aws.amazon.com/guardduty/latest/ug/malware-protection.html) to detect the potential presence of malware in EBS volumes.
