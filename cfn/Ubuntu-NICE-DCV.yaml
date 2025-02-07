@@ -1924,9 +1924,7 @@ Resources:
                       fi
                       sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="rdblacklist=nouveau /g' /etc/default/grub
                       update-grub
-        
-                      $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-                      $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+
                       systemctl daemon-reload
                       systemctl enable dcv-gpu-install
                       ;;
