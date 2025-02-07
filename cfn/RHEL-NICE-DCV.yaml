@@ -1567,11 +1567,9 @@ Resources:
                 case $SESSION in
                   virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
                     nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
-                    sed -i '/Section "Device"/a \    \HardDPMS       false' /etc/X11/xorg.conf
                     ;;
                   *GPU_sharing*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
-                    sed -i '/Section "Device"/a \    \HardDPMS       false' /etc/X11/xorg.conf
                     ;;
                   console-with-NVIDIA_GRID_Driver)
                     nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
