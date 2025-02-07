@@ -27,7 +27,7 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 - GPU
   - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) driver install (optional: Windows and some Linux OSs)
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/) to run GPU-accelerated containers (optional)
-  - DCV [GPU sharing](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html) (optinal)
+  - DCV [GPU sharing](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html) (optional)
 - Administration and Data Protection
   - [AWS Systems Manager Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager.html) browser-based terminal access
   - [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html) browser-based SSH (Linux)
