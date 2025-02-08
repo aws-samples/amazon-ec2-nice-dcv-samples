@@ -137,7 +137,7 @@ Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWS
 
 It may take more than 15 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
 
-### CloudFormation Outputs and Exports
+## CloudFormation Outputs and Exports
 The following URLs are available in **Outputs** section 
 - `SSMsessionManager`* : [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to set a strong DCV login user password. Password change command is in *Description* field.
 - `DCVwebConsole` : DCV web browser console URL link. Login as user specified in *Description* field. 
@@ -226,7 +226,7 @@ There are limits to display resolution and multi-screen support per GPU for cons
 
 You can use virtual session option (`virtual-with-NVIDIA-*`) when using GPU primarily for compute workloads. The CloudFormation templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` session, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types.
 
-### NVIDIA CUDA Toolkit installation
+### Installing NVIDIA CUDA Toolkit
 The templates [install and configure](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) if `installDocker` is enabled for `*-NVIDIA-*` session type options. [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may subsequently be installed on [supported](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#system-requirements) GPU EC2 instances for the following `sessionType` options: 
 
 - `*-NVIDIA_repo_*` : `sudo <packmgr_cli> install -y cuda-toolkit` 
