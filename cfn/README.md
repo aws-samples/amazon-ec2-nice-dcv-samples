@@ -1,24 +1,25 @@
 ## Notice
-Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life *are not supported* by DCV and *may not work*. Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. Refer to [DCV documentation](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
+Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life *are not supported* by DCV and *may not work*. Refer to [DCV documentation](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
 
 
 ## About CloudFormation templates
-EC2 instances must be provisioned in a subnet with IPv4 internet connectivity. 
 
-For templates that offers x86_64 and arm64 options, ensure that the instance type you specify matches your selected processor architecture.
+### Requirements
+- EC2 instances must be provisioned in a subnet with IPv4 internet connectivity. 
+- Ensure that the instance type you specify matches your selected processor architecture (x86_64 and arm64).
 
-Verify [availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html) of the instance type that you specify. Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error) for more information. 
+### Availability
+- Verify [availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html) of the instance type that you specify. Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error) for more information. 
+- When using a MarketPlace AMI (such as [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d), [AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4) or [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350)), subscribe before using. Marketplace AMIs may only support specific instance types, visit the corresponding Marketplace page to view available options.
+- Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html#on-demand-instance-quotas) value of your desired instance type and request quota increase where necessary.  
 
-When using a MarketPlace AMI such as [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d), [AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4) or [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), subscribe before using. Marketplace AMIs may only support specific instance types, visit the corresponding Marketplace page to view available options.
-
-Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html#on-demand-instance-quotas) value of your desired instance type and request quota increase where necessary.  
-
-NVIDIA [GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver), NVIDIA [Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) drivers are for AWS customers only. You are bound by their respective End User License Agreements upon installation of software.
-
-Templates may offer the option to install [Webmin](https://github.com/webmin/webmin) and/or [Docker Engine](https://docs.docker.com/engine/), which are released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) and [Apache License, Version 2.0](https://github.com/moby/moby/blob/master/LICENSE) respectively.
+### License Agreement
+- Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. 
+- NVIDIA [GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver), NVIDIA [Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) drivers are for AWS customers only. You are bound by their respective End User License Agreements upon installation of software.
+- Templates may offer the option to install [Webmin](https://github.com/webmin/webmin) and/or [Docker Engine](https://docs.docker.com/engine/), which are released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) and [Apache License, Version 2.0](https://github.com/moby/moby/blob/master/LICENSE) respectively.
 
 
-## Deployment from CloudFormation console
+## Deploying from CloudFormation console
 Download `<OS>-NICE-DCV.yaml` CloudFormation file where `<OS>` is the desired operating system, and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Start the [Create Stack wizard](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html#cfn-using-console-initiating-stack-creation) by choosing **Create Stack**. [Select stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html) by selecting **Upload a template file**, **Choose File**, select your `.yaml` file and click **Next**. Enter a **Stack name** and specify parameters values. 
 
 ### CloudFormation Parameters
@@ -39,7 +40,9 @@ DCV
     - [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)    
     - [NVIDIA-GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance) : for professional visualization applications
     - [NVIDIA-Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance) : contain optimizations for gaming
-    - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance) : for compute workloads. Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install. Windows graphics will be handled by IDD driver
+    - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance) : for compute workloads. Windows graphics will be handled by IDD driver
+    
+      Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install. 
     - [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
     - `none` : do not install any driver
 
@@ -52,15 +55,19 @@ DCV
 
 - `sessionType` (Linux) : `virtual` (default) or `console` [session type](#console-and-virtual-sessions). Virtual sessions support custom resolution, [multi-screen](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html) across up to [four monitors](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-num-heads), and up to [4K resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-head-resolution) per display.
     [GPU driver installation](#gpu-linux-instances) option may be available for some Linux OSs
-([AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [Rocky Linux](RockyLinux-NICE-DCV.yaml), [Ubuntu](Ubuntu-NICE-DCV.yaml)) as follows
+([AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [Rocky Linux](RockyLinux-NICE-DCV.yaml), [Ubuntu](Ubuntu-NICE-DCV.yaml)) as follows:
  
     - `console-with-NVIDIA_GRID_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance) : install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) drivers ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode) 
 
     - `console-with-NVIDIA_Gaming_Driver` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/) instance) : install [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) drivers
 
-    - `*-with-NVIDIA_repo_Driver` ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)  instance, e.g. [G5g](https://aws.amazon.com/ec2/instance-types/g5g/)) : uses the operating system package manager to install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also known as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) drivers from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation), and provides access to [CUDA Toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#available-packages), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) and other software. Refer to [NVIDIA Driver Installation Guide](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html#system-requirements) for supported OS (`$distro`) and architecture (`$arch`)
+    - `*-with-NVIDIA_repo_Driver` ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)  instance, e.g. [G5g](https://aws.amazon.com/ec2/instance-types/g5g/)) : uses the operating system package manager to install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also known as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) driver from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation), and provides access to [CUDA Toolkit](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#available-packages), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) and other software. 
+    
+      Refer to [NVIDIA Driver Installation Guide](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html#system-requirements) for supported OS (`$distro`) and architecture (`$arch`)
 
-    -  `*-with-NVIDIA_runfile_Driver` (NVIDIA [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)) : install NVIDIA Tesla driver using [runfile installer](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile-installation) from [driver downloads](https://www.nvidia.com/Download/Find.aspx). Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
+    -  `*-with-NVIDIA_runfile_Driver` (NVIDIA [GPU instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)) : install NVIDIA Tesla driver using [runfile installer](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile-installation) from [driver downloads](https://www.nvidia.com/Download/Find.aspx). 
+    
+       Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
 
    - `virtual-with-NVIDIA_GRID_Driver-GPU_Sharing` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance) :   install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) drivers ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode) with [GPU sharing](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html) enabled
 
@@ -70,7 +77,7 @@ DCV
 
     *Due to various combinations of drivers, OSs and instance types, GPU driver installation may not work. You can [troubleshoot](#troubleshooting) the installation, or select `console` or `virtual` option to install driver manually. Refer to [Prerequisites for Linux DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) for GPU driver installation and configuration guidance.*
 
-- `teslaDriverVersion` (where applicable) : [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `*-NVIDIA_runfile_Driver` option is selected for `driverType` or `sessionType` respectively.
+- `teslaDriverVersion` (where applicable) : [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `*-NVIDIA_runfile_Driver` option is selected
     - To obtain a suitable version, go to [NVIDIA Driver page](https://www.nvidia.com/en-us/drivers/). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value
 
 - `listenPort` : DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
@@ -80,7 +87,7 @@ Network
 - `vpcID` : [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
 - `subnetID` : subnet with internet connectivity. Select subnet in default VPC if unsure. If you specify a different `instanceType`, ensure that it is available in AZ subnet you select
 - `displayPublicIP` : set this to `No` for EC2 instance in a subnet that will not receive [public IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#concepts-public-addresses). EC2 private IP will be displayed in CloudFormation Outputs section instead. Default is `Yes`
-- `assignStaticIP` : associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) to prevent assigned IPv4 address from changing every time EC2 instance is stopped and started. There is a hourly charge when instance is stopped as listed at [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addressesv). Default is `Yes`
+- `assignStaticIP` : associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) to prevent assigned IPv4 address from changing every time EC2 instance is stopped and started. There is a hourly charge when instance is stopped as listed on [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addressesv). Default is `Yes`
 
 Allowed IP prefix and ports
 - `ingressIPv4` : allowed IPv4 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports, e.g. `1.2.3.4/32`. Get your source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
@@ -90,7 +97,7 @@ Allowed IP prefix and ports
 - `installWebmin` (some Linux OS) : install [Webmin](https://webmin.com/) web-based system administration tool. Default is `No`
 
 Web Server
-- `enableCloudFront`: [create](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-creating-console.html) a [Amazon CloudFront](https://aws.amazon.com/cloudfront/) distribution to your EC2 instance. Default is `No`
+- `enableCloudFront`: [create](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-creating-console.html) a [Amazon CloudFront](https://aws.amazon.com/cloudfront/) distribution to your EC2 instance. Associated charges are listed on [Amazon CloudFront pricing](https://aws.amazon.com/cloudfront/pricing/) page. Default is `No`
 - `originType`: either `EC2` [custom origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html#concept_CustomOrigin) or `VPC origin`. Most [AWS Regions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html#vpc-origins-supported-regions) support [VPC Origins](https://aws.amazon.com/blogs/networking-and-content-delivery/introducing-cloudfront-virtual-private-cloud-vpc-origins-shield-your-web-applications-from-public-internet/), which allow CloudFront to deliver content even if your EC2 instance is in a VPC private subnet. Default is `EC2` 
 - `allowWebServerPorts` : allow inbound HTTP/HTTPS to EC2 instance. This option is not related to `enableCloudFront` Default is `No`
 
@@ -101,7 +108,7 @@ EBS
 - `volumeType` : `gp2` or `gp3` [general purpose](https://aws.amazon.com/ebs/general-purpose/) EBS type. Default is `gp3`
 
 Backup
-- `enableBackup` : EC2 data protection with [AWS Backup](https://aws.amazon.com/backup/). There are charges associated with using this service as listed at [AWS Backup pricing](https://aws.amazon.com/backup/pricing) page. Default is `No`
+- `enableBackup` : EC2 data protection with [AWS Backup](https://aws.amazon.com/backup/). Associated charges are listed on [AWS Backup pricing](https://aws.amazon.com/backup/pricing) page. Default is `No`
 - `scheduleExpression` : start time of backup using [CRON expression](https://en.wikipedia.org/wiki/Cron#CRON_expression). Default is 1 am daily
 - `scheduleExpressionTimezone` : timezone in which the schedule expression is set. Default is `Etc/UTC`
 - `deleteAfterDays` :  number of days after backup creation that a recovery point is deleted. Default is `35`
@@ -110,17 +117,20 @@ Backup
 
   
 AWS Global Accelerator (AGA)
-- `enableAGA` : deploy [AWS Global Accelerator (AGA)](https://aws.amazon.com/global-accelerator/) network accelerator, which can optimize streaming traffic especially when connecting over long distances or over unreliable networks. You can use the [AWS Global Accelerator Speed Comparison Tool](https://speedtest.globalaccelerator.aws) to see the performance difference when transferring data using Global Accelerator. There are charges associated with using this service as listed at [AWS Global Accelerator pricing](https://aws.amazon.com/global-accelerator/pricing/) page. Default is `No`
+- `enableAGA` : deploy [AWS Global Accelerator (AGA)](https://aws.amazon.com/global-accelerator/) network accelerator, which can optimize streaming traffic especially when connecting over long distances or over unreliable networks. You can use the [AWS Global Accelerator Speed Comparison Tool](https://speedtest.globalaccelerator.aws) to see the performance difference when transferring data using Global Accelerator. Associated charges are listed on [AWS Global Accelerator pricing](https://aws.amazon.com/global-accelerator/pricing/) page. Default is `No`
 
     *Verify AGA [Region and Availability Zone (AZ) availability](https://docs.aws.amazon.com/global-accelerator/latest/dg/preserve-client-ip-address.regions.html) before enabling this service.* 
 
-Others (optional)
-- `r53ZoneID` : [Amazon Route 53](https://aws.amazon.com/route53/) hosted zone ID to grant [EC2 IAM Role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) access to. To be used for [Route 53 DNS-01 challenge](https://certbot-dns-route53.readthedocs.io/en/stable/) by [Certbot](https://eff-certbot.readthedocs.io/en/stable/intro.html) (or other [ACME clients](https://letsencrypt.org/docs/client-options/)), to obtain certificates for [DCV server](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) and other applications. A `*` value will grant access to all Route 53 zones in your AWS account. Permission is restricted to **_acme-challenge.\*** TXT DNS records using [resource record set permissions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-permissions.html). Default is empty string for no access. 
-
-    *Route 53 must be [configured](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring.html) as DNS service for your domain.*
+Others
 - `installDocker` : install [Docker Engine](https://docs.docker.com/engine/) (also known as Docker CE) from [Docker repository](https://download.docker.com/) or Linux OS package repository. On Linux, [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) will be installed and configured if `*-with-NVIDIA-*` option is selected. On [Windows](https://docs.docker.com/engine/install/binaries/#install-server-and-client-binaries-on-windows), you can run Windows containers in [process isolation](https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/hyperv-container#process-isolation) mode. Default is `No`
 
    *Docker Engine is not [Docker Desktop](https://docs.docker.com/desktop/). Docker on Linux will use `172.17.0.0/16` subnet.*
+
+- `r53ZoneID` : [Amazon Route 53](https://aws.amazon.com/route53/) hosted zone ID to grant [EC2 IAM Role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) access to. To be used for [Route 53 DNS-01 challenge](https://certbot-dns-route53.readthedocs.io/en/stable/) by [Certbot](https://eff-certbot.readthedocs.io/en/stable/intro.html) (or other [ACME clients](https://letsencrypt.org/docs/client-options/)), to obtain certificates for [DCV server](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) and/or other applications. A `*` value will grant access to all Route 53 zones in your AWS account. Permission is restricted to **_acme-challenge.\*** TXT DNS records using [resource record set permissions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-permissions.html). Default is empty string for no access. 
+
+    *Route 53 must be [configured](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring.html) as DNS service for your domain.*
+
+
 
 Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html), and click **Submit** to launch your stack. 
 
@@ -218,13 +228,15 @@ You can use virtual session option (`virtual-with-NVIDIA-*`) when using GPU prim
 ### NVIDIA CUDA Toolkit installation
 The templates [install and configure](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) if `installDocker` is enabled for `*-NVIDIA-*` session type options. [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may subsequently be installed on [supported](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#system-requirements) GPU EC2 instances for the following `sessionType` options: 
 
-- `*-NVIDIA_repo_Driver*` : `sudo <packmgr_cli> install -y cuda-toolkit` ( where  `<packmgr_cli>` is the OS package manager command-line tool, e.g.`apt` or `yum`/`dnf` for Ubuntu, and other Linux OSs respectively )
+- `*-NVIDIA_repo_*` : `sudo <packmgr_cli> install -y cuda-toolkit` 
+   
+   where  `<packmgr_cli>` is the OS package manager command-line tool, e.g.`apt` or `yum`/`dnf` for Ubuntu, and other Linux OSs respectively
 
    *Refer to [CUDA documentation](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#) for [installation options](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#additional-package-manager-capabilities) and [post-installation actions](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#post-installation-actions)*
 
-- `*-NVIDIA_runfile_Driver*`, `*-NVIDIA_GRID_Driver*` or `*-NVIDIA_Gaming_Driver*` : refer to [CUDA Toolkit Downloads](https://developer.nvidia.com/cuda-downloads?target_os=Linux)
+- `*-NVIDIA_runfile_*`, `*-NVIDIA_GRID_*` or `*-NVIDIA_Gaming_*` : refer to [CUDA Toolkit Downloads](https://developer.nvidia.com/cuda-downloads?target_os=Linux)
 
-- `*-Ubuntu_repo_Driver` :  `sudo apt install -y nvidia-cuda-toolkit`
+- `*-Ubuntu_repo_*` :  `sudo apt install -y nvidia-cuda-toolkit`
 
 
 #### Driver and Toolkit installation scripts 
@@ -296,7 +308,7 @@ After `config.json` file is created, [start CloudWatch agent](https://docs.aws.a
    - `.\amazon-cloudwatch-agent-ctl.ps1 -a fetch-config -m ec2 -c file:config.json`
    - `net.exe start AmazonCloudWatchAgent`
 
-Refer to [How do I install and configure the unified CloudWatch agent to push metrics and logs from my EC2 instance to CloudWatch?](https://repost.aws/knowledge-center/cloudwatch-push-metrics-unified-agent) for more details.
+Refer to [How do I install and configure the unified CloudWatch agent to push metrics and logs from my EC2 instance to CloudWatch?](https://repost.aws/knowledge-center/cloudwatch-push-metrics-unified-agent) for details. To collect GPU metrics, refer to [How do I send NVIDIA GPU metrics from my EC2 Linux instances to CloudWatch?](https://repost.aws/knowledge-center/send-ec2-nvidia-gpu-metrics-cloudwatch)
 
 
 
