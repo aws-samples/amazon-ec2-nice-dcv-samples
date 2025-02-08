@@ -1,15 +1,16 @@
-## Notice
-Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life *are not supported* by DCV and *may not work*. Refer to [DCV documentation](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
-
-
 ## About CloudFormation templates
+
+### Notice
+Operating systems such as AlmaLinux, Debian, Kali Linux, and those that have reached end of life *are not supported* by DCV and *may not work*. 
+
+Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for list of supported operating systems.
 
 ### Requirements
 - EC2 instances must be provisioned in a subnet with IPv4 internet connectivity. 
-- Ensure that the instance type you specify matches your selected processor architecture (x86_64 and arm64).
+- Ensure that the instance type you specify matches the selected processor architecture (x86_64/arm64).
 
 ### Availability
-- Verify [availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html) of the instance type that you specify. Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error) for more information. 
+- Verify [Region and AZ availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html) of the instance type that you specify. Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error) for more information. 
 - When using a MarketPlace AMI (such as [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d), [AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4) or [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350)), subscribe before using. Marketplace AMIs may only support specific instance types, visit the corresponding Marketplace page to view available options.
 - Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html#on-demand-instance-quotas) value of your desired instance type and request quota increase where necessary.  
 
