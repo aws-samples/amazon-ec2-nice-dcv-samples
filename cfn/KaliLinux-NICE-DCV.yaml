@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-# Description: Kali Linux with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Kali)
+Description: Kali Linux with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Kali)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
