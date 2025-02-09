@@ -7,7 +7,7 @@
 <img alternate="DCV web browser client" src="images/nice-dcv-Ubuntu.png">
 
 
-DCV client do not require a license while DCV server requires [licensing](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html). A license is not required for DCV server on Amazon EC2 if they can access Amazon S3 endpoint for [license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2).
+DCV clients do not require a license while DCV server requires [licensing](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html). A license is not required for DCV server on Amazon EC2 if they can access Amazon S3 endpoint for [license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2).
 
 
 The CloudFormation templates provision EC2 instances running DCV server with the following features:
@@ -15,7 +15,7 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 - [Amazon DCV](https://aws.amazon.com/hpc/dcv/) server
   - [HTML 5 web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) 
   - [Adaptable display resolution](https://docs.aws.amazon.com/dcv/latest/userguide/changing-resolution.html)
-  - [Multiple monitors](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html)
+  - [Multiple monitors](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html) support
   - [Session collaboration](https://docs.aws.amazon.com/dcv/latest/userguide/managing-sessions-session-collaboration.html)
   - [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html)
   - [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html)
@@ -34,7 +34,6 @@ The CloudFormation templates provision EC2 instances running DCV server with the
   - [Fleet Manager Remote Desktop](https://docs.aws.amazon.com/systems-manager/latest/userguide/fleet-rdp.html) browser-based RDP (Windows)
   - [EC2 IAM role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) for [DCV license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2), [Systems Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-instance-permissions.html), [CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/create-iam-roles-for-cloudwatch-agent.html#create-iam-roles-for-cloudwatch-agent-roles), and [AWS X-Ray](https://docs.aws.amazon.com/xray/latest/devguide/security_iam_service-with-iam.html#xray-permissions-aws)
   - [Elastic IP](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-eips.html) (optional)
-  - [gp3 or gp2](https://aws.amazon.com/ebs/general-purpose/) EBS volume type
   - [AWS Backup](https://aws.amazon.com/backup/) data protection (optional)
 - Installed applications
   - [AWS CLI v2](https://aws.amazon.com/cli/) with [partial mode](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html#cli-usage-auto-prompt-modes) [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html) 
