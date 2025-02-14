@@ -1837,6 +1837,7 @@ Resources:
                 apt-get autoremove -q -y
                 # Disable upgrade prompt: https://help.ubuntu.com/community/Upgrades#Upgrade_policy
                 sed -i "s/Prompt=lts/Prompt=never/g" /etc/update-manager/release-upgrades
+                chown -R ubuntu:ubuntu /home/ubuntu/.config
 
                 rm -f ${!0}
               mode: "000740"
