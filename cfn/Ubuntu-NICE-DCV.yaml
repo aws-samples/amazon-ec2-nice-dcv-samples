@@ -1835,6 +1835,8 @@ Resources:
                 sed -i "s/enabled=1/enable=0/g" /etc/default/apport
                 apt-get remove -q -y ubuntu-report whoopsie apport
                 apt-get autoremove -q -y
+                # Disable upgrade prompt: https://help.ubuntu.com/community/Upgrades#Upgrade_policy
+                sed -i "s/Prompt=lts/Prompt=never/g" /etc/update-manager/release-upgrades
 
                 rm -f ${!0}
               mode: "000740"
@@ -1846,6 +1848,12 @@ Resources:
                 export GNOME_SHELL_SESSION_MODE=ubuntu
                 export XDG_DATA_DIRS=/usr/share/gnome:/usr/local/share:/usr/share:/var/lib/snapd/desktop
               mode: "000644"
+              owner: "ubuntu"
+              group: "ubuntu"
+            "/home/ubuntu/.config/gnome-initial-setup-done":
+              content: |
+                yes
+              mode: "000664"
               owner: "ubuntu"
               group: "ubuntu"
           commands:
