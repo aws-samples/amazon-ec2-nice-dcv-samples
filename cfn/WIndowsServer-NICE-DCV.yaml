@@ -43,7 +43,7 @@ Metadata:
           - displayPublicIP
           - assignStaticIP
       - Label:
-          default: Allowed source IP and ports
+          default: Remote access
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -76,34 +76,94 @@ Metadata:
           - installDocker
           - r53ZoneID
 
+    ParameterLabels:
+      ec2Name:
+        default: "EC2 instance name"
+      imageId:
+        default: "AMI ID"
+      instanceType:
+        default: "Instance type (x86_64)"
+      ec2TerminationProtection:
+        default: "Enable EC2 termination protection to prevent accidental deletion"
+
+      driverType:
+        default: "Graphics driver to install"
+      teslaDriverVersion:
+        default: "[*-NVIDIA_runfile_Driver] Tesla driver version"
+      listenPort:
+        default: "TCP/UDP listen port"
+
+      vpcID:
+        default: "VPC with internet connectivity"
+      subnetID:
+        default: "Subnet with internet connectivity"
+      displayPublicIP:
+        default: "Display EC2 public IP in CloudFormation Outputs"
+      assignStaticIP:
+        default: "[Elastic IP] Associate static public IPv4 address"
+
+      ingressIPv4:
+        default: "Allowed source prefix (IPv4)"
+      ingressIPv6:
+        default: "Allowed source prefix (IPv6)"
+      allowRDPport:
+        default: "Allow remote desktop inbound"
+
+      enableCloudFront:
+        default: "Create Amazon CloudFront distribution"
+      originType:
+        default: "CloudFront origin type"
+      allowWebServerPorts:
+        default: "Allow HTTP/HTTPS inbound to EC2 instance"
+
+      volumeSize:
+        default: "Volume size (GiB)"
+      volumeType:
+        default: "Volume type"
+
+      enableBackup:
+        default: "Backup EC2 instance"
+      scheduleExpression:
+        default: "CRON expression specifying when AWS Backup initiates a backup job"
+      scheduleExpressionTimezone:
+        default: "Timezone to set backup schedule"
+      deleteAfterDays:
+        default: "Number of days after creation that a recovery point (backup) is deleted"
+
+      enableAGA:
+        default: "Deploy AWS Global Accelerator"
+
+      installDocker:
+        default: "Install Docker Engine aka Docker CE"
+      r53ZoneID:
+        default: "Route 53 Zone ID access for Certbot Route 53 DNS plugin"
+
 Parameters:
   imageId:
-    Description: AMI ID ( aws ssm get-parameters-by-path --path
-      /aws/service/ami-windows-latest --query "Parameters[].Name" )
+    Description: aws ssm get-parameters-by-path --path  /aws/service/ami-windows-latest --query "Parameters[].Name"
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-windows-latest/Windows_Server-2022-English-Full-Base
 
   ec2Name:
     Type: String
-    Description: EC2 instance name
+    #Description: EC2 instance name
     Default: Windows Server
   instanceType:
-    Description: Instance type ( https://console.aws.amazon.com/ec2/#InstanceTypes )
     Type: String
+    Description: https://console.aws.amazon.com/ec2/#InstanceTypes
     AllowedPattern: ^[a-z\-\d\.]+$
     ConstraintDescription: Specify valid EC2 instance type
     Default: t3.medium
-
   ec2TerminationProtection:
     Type: String
-    Description: Enable EC2 termination protection to prevent accidental deletion
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html
     Default: "Yes"
     AllowedValues:
       - "Yes"
       - "No"
 
   driverType:
-    Description: Graphics driver to install
+    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
     Type: String
     AllowedValues:
       - AMD
@@ -116,41 +176,37 @@ Parameters:
     Default: DCV-IDD
   teslaDriverVersion:
     Type: String
-    Description: "[NVIDIA-Tesla] Driver version (
-      https://www.nvidia.com/Download/Find.aspx : Product Type = Data
-      Center/Tesla )"
+    Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
     Default: 538.78
   listenPort:
     Type: Number
-    Description: DCV server TCP/UDP port
+    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
 
   vpcID:
     Type: AWS::EC2::VPC::Id
-    Description: "VPC with internet connectivity (
-      https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
+    Description: "https://console.aws.amazon.com/vpcconsole/home#vpcs:"
     AllowedPattern: .+
     ConstraintDescription: Select a VPC
   subnetID:
     Type: AWS::EC2::Subnet::Id
-    Description: "Subnet with internet connectivity (
-      https://console.aws.amazon.com/vpcconsole/home#subnets: )"
+    Description: "https://console.aws.amazon.com/vpcconsole/home#subnets:"
     AllowedPattern: .+
     ConstraintDescription: Select a Subnet
   displayPublicIP:
     Type: String
-    Description: Display EC2 public IP in CloudFormation Outputs (select No if EC2 has no public IP)
+    Description: Select No if EC2 has no public IP
     AllowedValues:
       - "Yes"
       - "No"
     Default: "Yes"
   assignStaticIP:
     Type: String
-    Description: Associate static public IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
     AllowedValues:
       - "Yes"
       - "No"
@@ -158,19 +214,19 @@ Parameters:
 
   ingressIPv4:
     Type: String
-    Description: Allowed source prefix (IPv4) ( e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com )
+    Description: e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com
     AllowedPattern: "^\\d+\\.\\d+\\.\\d+\\.\\d+\\/\\d+$"
     ConstraintDescription: Specify valid IPv4 prefix
     Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
-    Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/working-with-ipv6-addresses.html
     AllowedPattern: .+
     ConstraintDescription: Specify valid IPv6 prefix
     Default: ::/0
   allowRDPport:
     Type: String
-    Description: Allow remote desktop inbound
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-rdp.html
     AllowedValues:
       - "Yes"
       - "No"
@@ -178,21 +234,21 @@ Parameters:
 
   enableCloudFront:
     Type: String
-    Description: Create Amazon CloudFront distribution
+    Description: https://docs.aws.amazon.com/cloudfront/
     AllowedValues:
       - "Yes"
       - "No"
     Default: "No"
   originType:
     Type: String
-    Description: CloudFront origin type
+    Description: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html
     AllowedValues:
       - "EC2"
       - "VPC Origin"
     Default: "EC2"
   allowWebServerPorts:
     Type: String
-    Description: Allow HTTP/HTTPS inbound to EC2 instance
+    # Description: Allow HTTP/HTTPS inbound to EC2 instance
     AllowedValues:
       - "No"
       - HTTP-and-HTTPS
@@ -202,13 +258,13 @@ Parameters:
 
   volumeSize:
     Type: Number
-    Description: Volume size in GiB
+    Description: https://docs.aws.amazon.com/ebs/latest/userguide/volume_constraints.html
     MinValue: 30
     MaxValue: 16384
     Default: 50
   volumeType:
     Type: String
-    Description: EBS volume type
+    Description: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
     AllowedValues:
       - gp3
       - gp2
@@ -216,19 +272,19 @@ Parameters:
 
   enableBackup:
     Type: String
-    Description: Backup EC2 instance
+    Description: https://docs.aws.amazon.com/aws-backup/
     AllowedValues:
       - "Yes"
       - "No"
     Default: "No"
   scheduleExpression:
     Type: String
-    Description: CRON expression specifying when AWS Backup initiates a backup job
+    Description: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-scheduled-rule-pattern.html
     AllowedPattern: .+
     Default: "cron(0 1 ? * * *)"
   scheduleExpressionTimezone: # https://nodatime.org/TimeZones?version=2024a&format=json
     Type: String
-    Description: Timezone to set backup schedule
+    Description: https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html#time-zones
     AllowedValues:
       - Africa/Abidjan
       - Africa/Algiers
@@ -584,12 +640,12 @@ Parameters:
     Default: Etc/UTC
   deleteAfterDays:
     Type: Number
-    Description: Number of days after creation that a recovery point (backup) is deleted
+    # Description: Number of days after creation that a recovery point (backup) is deleted
     Default: 35
 
   enableAGA:
     Type: String
-    Description: Deploy Global Accelerator
+    Description: https://docs.aws.amazon.com/global-accelerator/
     AllowedValues:
       - "Yes"
       - "No"
@@ -597,14 +653,14 @@ Parameters:
 
   installDocker:
     Type: String
-    Description: Install Docker Engine aka Docker CE ( https://docs.docker.com/engine/ )
+    Description: https://docs.docker.com/engine/
     AllowedValues:
       - "Yes"
       - "No"
     Default: "No"
   r53ZoneID:
     Type: String
-    Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
+    Description: https://console.aws.amazon.com/route53/hostedzones https://certbot-dns-route53.readthedocs.io/
     Default: ""
 
 Conditions:
@@ -1634,7 +1690,7 @@ Resources:
 
                 powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"           
                 ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-docker-install.txt
-                
+
                 exit
             c:\\windows\\temp\\install-docker-ce.ps1:
               content: |

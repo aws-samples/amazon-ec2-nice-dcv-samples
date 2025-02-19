@@ -21,7 +21,13 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 
 
 ## Deploying from CloudFormation console
-Download `<OS>-NICE-DCV.yaml` CloudFormation file where `<OS>` is the desired operating system, and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). Start the [Create Stack wizard](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html#cfn-using-console-initiating-stack-creation) by choosing **Create Stack**. [Select stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html) by selecting **Upload a template file**, **Choose File**, select your `.yaml` file and click **Next**. Enter a **Stack name** and specify parameters values. 
+Download `<OS>-NICE-DCV.yaml` CloudFormation file where `<OS>` is the desired operating system, and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). 
+
+
+Start the [Create Stack wizard](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html#cfn-using-console-initiating-stack-creation) by choosing **Create Stack**. [Select stack template](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-template.html) by selecting **Upload a template file**, **Choose File**, select your `.yaml` file and click **Next**. Enter a **Stack name** and specify parameters values. 
+
+
+
 
 ### CloudFormation Parameters
 In most cases, the default values are sufficient. You will need to specify values for `vpcID`, `subnetID` and `ec2KeyPair` (Linux). For security reasons, configure `ingressIPv4` and `ingressIPv6` to your IP address.
@@ -90,7 +96,7 @@ Network
 - `displayPublicIP` : set this to `No` for EC2 instance in a subnet that will not receive [public IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#concepts-public-addresses). EC2 private IP will be displayed in CloudFormation Outputs section instead. Default is `Yes`
 - `assignStaticIP` : associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) to prevent assigned IPv4 address from changing every time EC2 instance is stopped and started. There is a hourly charge when instance is stopped as listed on [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing page](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addressesv). Default is `Yes`
 
-Allowed IP prefix and ports
+Remote Access
 - `ingressIPv4` : allowed IPv4 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports, e.g. `1.2.3.4/32`. Get your source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
 - `ingressIPv6` : allowed IPv6 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
 - `allowRDPport` (Windows) : allow inbound RDP. Option is not related to [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) access. Default is `No`
@@ -196,6 +202,12 @@ Template configures a default Windows screen resolution of 1920 by 1080. If you 
 To update DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
 
+## About DLAMI template
+[`DLAMI-NICE-DCV.yaml`](DLAMI-NICE-DCV.yaml) uses [AWS Deep Learning AMI (DLAMI)](https://aws.amazon.com/ai/machine-learning/amis/) with Ubuntu OS. There are two major types
+- DLAMIs: preconfigured with NVIDIA CUDA and NVIDIA cuDNN and popular deep learning frameworks. Refer to [Release notes for DLAMIs](https://docs.amazonaws.cn/en_us/dlami/latest/devguide/appendix-ami-release-notes.html) for more information.
+- Neuron DLAMIs: preconfigured with Neuron SDK and Neuron framework/libraries, and support [AWS Tranium](https://aws.amazon.com/ai/machine-learning/trainium/) and [AWS Inferentia](https://aws.amazon.com/ai/machine-learning/inferentia/) instance types. Refer to [Neuron DLAMI User Guide](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/dlami/index.html) for more information.
+
+
 ## About Linux templates
 The login user name depends on Linux distributions as follows:
 - [AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml), [CentOS Stream 9](CentOSstream9-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [SLES](SLES-NICE-DCV.yaml) : ec2-user
@@ -205,6 +217,7 @@ The login user name depends on Linux distributions as follows:
 - [Kali Linux](KaliLinux-NICE-DCV.yaml) : kali
 - [Rocky Linux](RockyLinux-NICE-DCV.yaml) : rocky
 - [Ubuntu, Ubuntu Pro](Ubuntu-NICE-DCV.yaml) : ubuntu
+
 
 ### Console and virtual sessions
 DCV offers [console and virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html) on Linux OS.
@@ -226,7 +239,7 @@ There are limits to display resolution and multi-screen support per GPU for cons
 
 You can use virtual session option (`virtual-with-NVIDIA-*`) when using GPU primarily for compute workloads. The CloudFormation templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` session, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types.
 
-### Installing NVIDIA CUDA Toolkit
+### Installing NVIDIA CUDA Toolkit 
 The templates [install and configure](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) if `installDocker` is enabled for `*-NVIDIA-*` session type options. [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may subsequently be installed on [supported](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#system-requirements) GPU EC2 instances for the following `sessionType` options: 
 
 - `*-NVIDIA_repo_*` : `sudo <packmgr_cli> install -y cuda-toolkit` 

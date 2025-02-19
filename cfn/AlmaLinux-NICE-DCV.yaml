@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description:  AlmaLinux with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:AlmaLinux)
+Description: AlmaLinux with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:AlmaLinux)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -46,7 +46,7 @@ Metadata:
           - displayPublicIP
           - assignStaticIP
       - Label:
-          default: Allowed source IP and ports
+          default: Remote access
         Parameters:
           - ingressIPv4
           - ingressIPv6
@@ -87,10 +87,76 @@ Metadata:
           - installDocker
           - r53ZoneID
 
+    ParameterLabels:
+      ec2Name:
+        default: "EC2 instance name"
+      ec2KeyPair:
+        default: "Key pair"
+      osVersion:
+        default: "OS version and processor architecture"
+      instanceType:
+        default: "Instance type (x86_64 or arm64)"
+      ec2TerminationProtection:
+        default: "Enable EC2 termination protection to prevent accidental deletion"
+
+      sessionType:
+        default: "DCV session type and GPU driver"
+      teslaDriverVersion:
+        default: "[*-NVIDIA_runfile_Driver] Tesla driver version"
+      listenPort:
+        default: "TCP/UDP listen port"
+
+      vpcID:
+        default: "VPC with internet connectivity"
+      subnetID:
+        default: "Subnet with internet connectivity"
+      displayPublicIP:
+        default: "Display EC2 public IP in CloudFormation Outputs"
+      assignStaticIP:
+        default: "[Elastic IP] Associate static public IPv4 address"
+
+      ingressIPv4:
+        default: "Allowed source prefix (IPv4)"
+      ingressIPv6:
+        default: "Allowed source prefix (IPv6)"
+      allowSSHport:
+        default: "Allow SSH from network"
+      installWebmin:
+        default: "Install Webmin"
+
+      enableCloudFront:
+        default: "Create Amazon CloudFront distribution"
+      originType:
+        default: "CloudFront origin type"
+      allowWebServerPorts:
+        default: "Allow HTTP/HTTPS inbound to EC2 instance"
+
+      volumeSize:
+        default: "Volume size (GiB)"
+      volumeType:
+        default: "Volume type"
+
+      enableBackup:
+        default: "Backup EC2 instance"
+      scheduleExpression:
+        default: "CRON expression specifying when AWS Backup initiates a backup job"
+      scheduleExpressionTimezone:
+        default: "Timezone to set backup schedule"
+      deleteAfterDays:
+        default: "Number of days after creation that a recovery point (backup) is deleted"
+
+      enableAGA:
+        default: "Deploy AWS Global Accelerator"
+
+      installDocker:
+        default: "Install Docker Engine aka Docker CE"
+      r53ZoneID:
+        default: "Route 53 Zone ID access for Certbot Route 53 DNS plugin"
+
 Parameters:
   osVersion:
     Type: String
-    Description: Version and processor architecture
+    #Description: Version and processor architecture
     AllowedValues:
       - AlmaLinux OS 9 (arm64)
       - AlmaLinux OS 9 (x86_64)
@@ -100,22 +166,22 @@ Parameters:
 
   ec2Name:
     Type: String
-    Description: EC2 instance name
+    #Description: EC2 instance name
     Default: AlmaLinux OS
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
-    Description: Key Pair ( https://console.aws.amazon.com/ec2/#KeyPairs )
+    Description: https://console.aws.amazon.com/ec2/#KeyPairs
     AllowedPattern: .+
     ConstraintDescription: Select a key pair
   instanceType:
     Type: String
-    Description: Instance type (x86_64 or arm64) ( https://console.aws.amazon.com/ec2/#InstanceTypes )
+    Description: https://console.aws.amazon.com/ec2/#InstanceTypes
     AllowedPattern: "^[a-z\\-\\d\\.]+$"
     ConstraintDescription: Specify valid EC2 instance type
     Default: t4g.medium
   ec2TerminationProtection:
     Type: String
-    Description: Enable EC2 termination protection to prevent accidental deletion
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html
     Default: "Yes"
     AllowedValues:
       - "Yes"
@@ -123,7 +189,7 @@ Parameters:
 
   sessionType:
     Type: String
-    Description: Session type and GPU driver ( https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro )
+    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
     AllowedValues:
       - "virtual"
       - "console-with-NVIDIA_GRID_Driver"
@@ -138,37 +204,37 @@ Parameters:
     Default: "virtual"
   teslaDriverVersion:
     Type: String
-    Description: "[*-NVIDIA_runfile_Driver] Driver version ( https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla )"
-    AllowedPattern: "^[\\d\\.]+$"
+    Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
+    AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
     Default: 535.230.02
   listenPort:
     Type: Number
-    Description: DCV server TCP/UDP port
+    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
 
   vpcID:
     Type: AWS::EC2::VPC::Id
-    Description: "VPC with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#vpcs: )"
+    Description: "https://console.aws.amazon.com/vpcconsole/home#vpcs:"
     AllowedPattern: .+
     ConstraintDescription: Select a VPC
   subnetID:
     Type: AWS::EC2::Subnet::Id
-    Description: "Subnet with internet connectivity ( https://console.aws.amazon.com/vpcconsole/home#subnets: )"
+    Description: "https://console.aws.amazon.com/vpcconsole/home#subnets:"
     AllowedPattern: .+
     ConstraintDescription: Select a Subnet
   displayPublicIP:
     Type: String
-    Description: Display EC2 public IP in CloudFormation Outputs (select No if EC2 has no public IP)
+    Description: Select No if EC2 has no public IP
     AllowedValues:
       - "Yes"
       - "No"
     Default: "Yes"
   assignStaticIP:
     Type: String
-    Description: Associate static public IPv4 address ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html )
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
     AllowedValues:
       - "Yes"
       - "No"
@@ -176,19 +242,19 @@ Parameters:
 
   ingressIPv4:
     Type: String
-    Description: Allowed source prefix (IPv4) ( e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com )
+    Description: e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com
     AllowedPattern: "^\\d+\\.\\d+\\.\\d+\\.\\d+\\/\\d+$"
     ConstraintDescription: Specify valid IPv4 prefix
     Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
-    Description: Allowed source prefix (IPv6) ( https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#ipv6-addressing )
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/working-with-ipv6-addresses.html
     AllowedPattern: .+
     ConstraintDescription: Specify valid IPv6 prefix
     Default: ::/0
   allowSSHport:
     Type: String
-    Description: Allow SSH inbound
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-ssh.html
     AllowedValues:
       - "Yes"
       - "No"
@@ -203,21 +269,21 @@ Parameters:
 
   enableCloudFront:
     Type: String
-    Description: Create Amazon CloudFront distribution
+    Description: https://docs.aws.amazon.com/cloudfront/
     AllowedValues:
       - "Yes"
       - "No"
     Default: "No"
   originType:
     Type: String
-    Description: CloudFront origin type
+    Description: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html
     AllowedValues:
       - "EC2"
       - "VPC Origin"
     Default: "EC2"
   allowWebServerPorts:
     Type: String
-    Description: Allow HTTP/HTTPS inbound to EC2 instance
+    # Description: Allow HTTP/HTTPS inbound to EC2 instance
     AllowedValues:
       - "No"
       - HTTP-and-HTTPS
@@ -227,13 +293,13 @@ Parameters:
 
   volumeSize:
     Type: Number
-    Description: Volume size in GiB
+    Description: https://docs.aws.amazon.com/ebs/latest/userguide/volume_constraints.html
     MinValue: 10
     MaxValue: 16384
     Default: 25
   volumeType:
     Type: String
-    Description: EBS volume type
+    Description: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
     AllowedValues:
       - gp3
       - gp2
@@ -258,19 +324,19 @@ Parameters:
 
   enableBackup:
     Type: String
-    Description: Backup EC2 instance
+    Description: https://docs.aws.amazon.com/aws-backup/
     AllowedValues:
       - "Yes"
       - "No"
     Default: "No"
   scheduleExpression:
     Type: String
-    Description: CRON expression specifying when AWS Backup initiates a backup job
+    Description: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-scheduled-rule-pattern.html
     AllowedPattern: .+
     Default: "cron(0 1 ? * * *)"
   scheduleExpressionTimezone: # https://nodatime.org/TimeZones?version=2024a&format=json
     Type: String
-    Description: Timezone to set backup schedule
+    Description: https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html#time-zones
     AllowedValues:
       - Africa/Abidjan
       - Africa/Algiers
@@ -626,12 +692,12 @@ Parameters:
     Default: Etc/UTC
   deleteAfterDays:
     Type: Number
-    Description: Number of days after creation that a recovery point (backup) is deleted
+    # Description: Number of days after creation that a recovery point (backup) is deleted
     Default: 35
 
   enableAGA:
     Type: String
-    Description: Deploy Global Accelerator
+    Description: https://docs.aws.amazon.com/global-accelerator/
     AllowedValues:
       - "Yes"
       - "No"
@@ -639,14 +705,14 @@ Parameters:
 
   installDocker:
     Type: String
-    Description: Install Docker Engine aka Docker CE ( https://docs.docker.com/engine/ )
+    Description: https://docs.docker.com/engine/
     AllowedValues:
       - "Yes"
       - "No"
     Default: "No"
   r53ZoneID:
     Type: String
-    Description: (Optional) Route 53 zone ID access for certbot ( https://console.aws.amazon.com/route53/hostedzones )
+    Description: https://console.aws.amazon.com/route53/hostedzones https://certbot-dns-route53.readthedocs.io/
     Default: ""
 
 Conditions:
@@ -1633,6 +1699,15 @@ Resources:
                   fi
                 fi
 
+                # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Solution-NVIDIA-GPU-On-EC2.html
+                if ( echo "${sessionType}" | grep -q NVIDIA ); then
+                  systemctl stop amazon-cloudwatch-agent
+                  /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json -s
+                  systemctl restart amazon-cloudwatch-agent
+                else
+                  rm -f /opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json
+                fi
+
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
                 systemctl daemon-reload
@@ -1655,6 +1730,38 @@ Resources:
                             "mem": {
                                 "measurement": [
                                     "used_percent"
+                                ]
+                            }
+                        }
+                    }
+                }
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json":
+              content: |
+                {
+                    "agent": {
+                        "metrics_collection_interval": 60,
+                        "run_as_user": "root"
+                    },
+                    "metrics": {
+                        "namespace": "CWAgent",
+                        "append_dimensions": {
+                            "InstanceId": "${aws:InstanceId}"
+                        },
+                        "metrics_collected": {
+                            "mem": {
+                                "measurement": [
+                                    "used_percent"
+                                ]
+                            },
+                            "nvidia_gpu": {
+                                "measurement": [
+                                    "utilization_gpu",
+                                    "memory_total",
+                                    "memory_used",
+                                    "memory_free"
                                 ]
                             }
                         }
@@ -1895,13 +2002,13 @@ Resources:
                   *NVIDIA*) # install GPU driver after reboot
                     dnf install -q -y unzip gcc make
                     dnf install -q -y vulkan-devel libglvnd-devel elfutils-libelf-devel
-      
+
                     # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#rhel                          
                     # https://access.redhat.com/solutions/41278             
                     modprobe -r nouveau
                     echo "blacklist nouveau" > /etc/modprobe.d/denylist_nouveau.conf
                     echo "install nouveau /bin/false" >> /etc/modprobe.d/denylist_nouveau.conf
-      
+
                     dracut --omit-drivers nouveau -f
                     MODNAME="nouveau"; echo "omit_dracutmodules+=\" $MODNAME \"" >> /etc/dracut.conf.d/omit-$MODNAME.conf
                     grubby --args  "nouveau.blacklist=1 rd.driver.blacklist=nouveau" --update-kernel ALL
