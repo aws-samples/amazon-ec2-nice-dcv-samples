@@ -15,10 +15,10 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 - Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html#on-demand-instance-quotas) value of your desired instance type and request quota increase where necessary.  
 
 ### License Agreement
-- Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. 
 - NVIDIA [GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver), NVIDIA [Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) drivers are for AWS customers only. You are bound by their respective End User License Agreements upon installation of software.
 - Templates may offer the option to install [Webmin](https://github.com/webmin/webmin) and/or [Docker Engine](https://docs.docker.com/engine/), which are released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) and [Apache License, Version 2.0](https://github.com/moby/moby/blob/master/LICENSE) respectively.
-
+- The DLAMI template installs [Visual Studio Code](https://github.com/microsoft/vscode) which is released under [MIT-0](https://github.com/microsoft/vscode/blob/main/LICENSE.txt) license and includes [AWS Toolkit for Visual Code](https://aws.amazon.com/visualstudiocode/) and other useful extensions
+- Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. 
 
 ## Deploying from CloudFormation console
 Download `<OS>-NICE-DCV.yaml` CloudFormation file where `<OS>` is the desired operating system, and login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). 
@@ -145,10 +145,11 @@ It may take more than 15 minutes to provision the EC2 instance. After your stack
 
 ## CloudFormation Outputs and Exports
 The following URLs are available in **Outputs** section 
-- `SSMsessionManager`* : [SSM Session Manager](https://aws.amazon.com/blogs/aws/new-session-manager/) URL link. Use this to set a strong DCV login user password. Password change command is in *Description* field.
-- `DCVwebConsole` : DCV web browser console URL link. Login as user specified in *Description* field. 
-- `EC2console` : EC2 console URL link to manage EC2 instance.
-- `EC2instanceConnect`* (if available, Linux) : [in-browser SSH](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html).
+- `SSMsessionManager`* : [SSM Session Manager](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-systems-manager-session-manager.html) URL link. Use this to set a strong DCV login user password. Password change command is in *Description* field.
+- `DCVwebConsole` : [DCV web browser console](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-browser-connect.html) URL link. Login as user specified in *Description* field. 
+- `EC2console` : [EC2 Serial Console](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-serial-console.html) URL link to manage EC2 instance.
+- `EC2iamRole` : [IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html) URL link to manage permissions
+- `EC2instanceConnect`* (if available, Linux) : [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html).
 - `EC2serialConsole` (Linux): [EC2 Serial Console](https://aws.amazon.com/blogs/aws/troubleshoot-boot-and-networking-issues-with-new-ec2-serial-console/) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-serial-console-prerequisites.html).
 - `RDPconnect` (Windows) : in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update DCV server.
 - `WebminUrl` (if available, Linux) : [Webmin](https://webmin.com/) URL link. Set the root password by running `sudo passwd root` from `EC2instanceConnect`, `SSMsessionManager` or SSH session, and login as `root`.
@@ -203,10 +204,16 @@ To update DCV Server, connect via Fleet Manager Remote Desktop console using `RD
 
 
 ## About DLAMI template
-[`DLAMI-NICE-DCV.yaml`](DLAMI-NICE-DCV.yaml) uses [AWS Deep Learning AMI (DLAMI)](https://aws.amazon.com/ai/machine-learning/amis/) with Ubuntu OS. There are two major types
-- DLAMIs: preconfigured with NVIDIA CUDA and NVIDIA cuDNN and popular deep learning frameworks. Refer to [Release notes for DLAMIs](https://docs.amazonaws.cn/en_us/dlami/latest/devguide/appendix-ami-release-notes.html) for more information.
+[`DLAMI-NICE-DCV.yaml`](DLAMI-NICE-DCV.yaml) uses [AWS Deep Learning AMI (DLAMI)](https://aws.amazon.com/ai/machine-learning/amis/) with Ubuntu OS to help machine learning practitioners and researchers build a deep learning desktop on AWS. 
+
+<img alternate="DLAMI" src="../images/DLAMI-DCV.png">
+
+
+Template offers two AMI options:
+- DLAMIs: preconfigured with NVIDIA CUDA, NVIDIA cuDNN, and popular deep learning frameworks. Refer to [Release notes for DLAMIs](https://docs.amazonaws.cn/en_us/dlami/latest/devguide/appendix-ami-release-notes.html) for more information.
 - Neuron DLAMIs: preconfigured with Neuron SDK and Neuron framework/libraries, and support [AWS Tranium](https://aws.amazon.com/ai/machine-learning/trainium/) and [AWS Inferentia](https://aws.amazon.com/ai/machine-learning/inferentia/) instance types. Refer to [Neuron DLAMI User Guide](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/dlami/index.html) for more information.
 
+Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devguide/using.html) for usage guidance.
 
 ## About Linux templates
 The login user name depends on Linux distributions as follows:

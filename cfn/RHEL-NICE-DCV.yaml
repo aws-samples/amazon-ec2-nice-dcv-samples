@@ -2542,6 +2542,12 @@ Outputs:
     Description: EC2 Serial Console
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
 
+  EC2iamRole:
+    Description: EC2 IAM role
+    Value: !Sub
+      - "https://console.aws.amazon.com/iam/home#/roles/details/${role}"
+      - role: !Select [1, !Split ["/", !GetAtt instanceIamRole.Arn]]
+
   SSMsessionManager:
     Description: SSM Session Manager ("sudo passwd ec2-user" to change password)
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"

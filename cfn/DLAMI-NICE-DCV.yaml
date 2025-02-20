@@ -1,10 +1,10 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Deep Learning Desktop (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/)  (uksb-632il17651) (tag:DLAMI)
+Description: Deep Learning AMI with DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/)  (uksb-632il17651) (tag:DLAMI)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
   License:
-    Description: >
+    Description: |
       Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
       SPDX-License-Identifier: MIT-0
 
@@ -86,7 +86,7 @@ Metadata:
       imageId:
         default: "Deep Learning AMI"
       instanceType:
-        default: "Instance type"
+        default: "Instance type (x86_64 or arm64)"
       ec2TerminationProtection:
         default: "Enable EC2 termination protection to prevent accidental deletion"
 
@@ -176,7 +176,7 @@ Parameters:
   ec2Name:
     Type: String
     Description: EC2 instance name
-    Default: Deep Learning Desktop
+    Default: Deep Learning AMI
 
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName

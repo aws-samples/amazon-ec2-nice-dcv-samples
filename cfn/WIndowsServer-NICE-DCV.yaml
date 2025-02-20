@@ -2064,6 +2064,12 @@ Outputs:
     Description: EC2 console
     Value: !Sub https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}
 
+  EC2iamRole:
+    Description: EC2 IAM role
+    Value: !Sub
+      - "https://console.aws.amazon.com/iam/home#/roles/details/${role}"
+      - role: !Select [1, !Split ["/", !GetAtt instanceIamRole.Arn]]
+
   SSMsessionManager:
     Description: SSM Session Manager ("net user administrator MyStr@ngAdminPassw0rd" to change password. Use a strong password)
     Value: !Sub https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}
