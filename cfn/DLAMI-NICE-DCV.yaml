@@ -1818,6 +1818,16 @@ Resources:
                   apt-get install -q -y ./nice-dcv-gltest_*.deb
                 fi
 
+                # /etc/profile.d: https://wiki.gnome.org/Apps/Terminal/FAQ
+                systemctl isolate graphical.target && sleep 3
+                GNOMEUID=$(sudo -u ubuntu gsettings get org.gnome.Terminal.ProfilesList list | cut -d"'" -f2)
+                DEFAULTUID=$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d \')
+                sudo -u ubuntu gsettings get "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$GNOMEUID/" login-shell
+                sudo -u ubuntu dbus-run-session gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$GNOMEUID/" login-shell true
+                sudo -u ubuntu dbus-run-session gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$DEFAULTUID/" login-shell true
+                sudo -u ubuntu gsettings get "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$GNOMEUID/" login-shell
+                systemctl isolate multi-user.target
+
                 # GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 if [ "${sessionType}" = "virtual" ]; then
                   if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then
