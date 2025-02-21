@@ -1873,6 +1873,16 @@ Resources:
                 sed -i "s/Prompt=lts/Prompt=never/g" /etc/update-manager/release-upgrades
                 chown -R ubuntu:ubuntu /home/ubuntu/.config
 
+                # Match kernel GCC version
+                if (which nvidia-smi); then
+                  if (lsb_release -r -s | grep -q 22); then
+                    if (cat /proc/version | grep -q gcc-12); then                    
+                      cd /usr/src/nvidia-*
+                      sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
+                    fi
+                  fi
+                fi
+
                 rm -f ${!0}
               mode: "000740"
               owner: "root"
