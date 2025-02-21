@@ -209,11 +209,13 @@ To update DCV Server, connect via Fleet Manager Remote Desktop console using `RD
 <img alternate="DLAMI" src="../images/DLAMI-DCV.png">
 
 
-Template offers two AMI options:
+Template offers two main AMI options:
 - DLAMIs: preconfigured with  NVIDIA GPU driver, NVIDIA CUDA, NVIDIA cuDNN, AWS OFI NCCL plugin, Docker with NVIDIA Container Toolkit, and popular deep learning frameworks such as PyTorch and TensorFlow. Refer to [Release notes for DLAMIs](https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html) for more information.
 - Neuron DLAMIs: preconfigured with Neuron SDK and Neuron framework/libraries, and support [AWS Tranium](https://aws.amazon.com/ai/machine-learning/trainium/) and [AWS Inferentia](https://aws.amazon.com/ai/machine-learning/inferentia/) instance types. Refer to [Neuron DLAMI User Guide](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/dlami/index.html) for more information.
 
 Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devguide/using.html) for usage guidance.
+
+For fully managed experience, do consider [Amazon SageMaker](https://aws.amazon.com/sagemaker/)
 
 ## About Linux templates
 The login user name depends on Linux distributions as follows:
