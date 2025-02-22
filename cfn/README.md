@@ -7,7 +7,7 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 
 ### Requirements
 - EC2 instances must be provisioned in a subnet with IPv4 internet connectivity. 
-- Ensure that the instance type you specify matches the selected processor architecture (x86_64/arm64).
+- Ensure that the [instance type](https://aws.amazon.com/ec2/instance-types/) you specify matches the selected processor architecture (x86_64/arm64).
 
 ### Availability
 - Verify [Region and AZ availablity](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/instance-discovery.html) of the instance type that you specify. Refer to [Why am I receiving the error "Your requested instance type is not supported in your requested Availability Zone" when launching an EC2 instance?](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error) for more information. 
@@ -17,7 +17,7 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 ### License Agreement
 - NVIDIA [GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver), NVIDIA [Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) drivers are for AWS customers only. You are bound by their respective End User License Agreements upon installation of software.
 - Templates may offer the option to install [Webmin](https://github.com/webmin/webmin) and/or [Docker Engine](https://docs.docker.com/engine/), which are released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) and [Apache License, Version 2.0](https://github.com/moby/moby/blob/master/LICENSE) respectively.
-- The DLAMI template installs [Visual Studio Code](https://github.com/microsoft/vscode) which is released under [MIT-0](https://github.com/microsoft/vscode/blob/main/LICENSE.txt) license and includes [AWS Toolkit for Visual Code](https://aws.amazon.com/visualstudiocode/) and other useful extensions
+- The DLAMI template installs [Visual Studio Code](https://github.com/microsoft/vscode) which is released under [MIT-0](https://github.com/microsoft/vscode/blob/main/LICENSE.txt) license and includes [AWS Toolkit for Visual Code](https://aws.amazon.com/visualstudiocode/) and other useful extensions.
 - Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance. 
 
 ## Deploying from CloudFormation console
@@ -186,7 +186,7 @@ On Linux instances, the web browser client can be disabled by removing `nice-dcv
 DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html), allowing use of specialized USB devices, such as 3D pointing devices and two-factor authentication USB dongles, on Windows and Linux OSs. To use feature on a supported Linux server OS, run the command `sudo dcvusbdriverinstaller` and restart EC2 instance. Feature is for [installable Windows clients](https://docs.aws.amazon.com/dcv/latest/userguide/using-usb.html) only.
 
 ### Secure centralized access
-If you have a fleet of Amazon DCV servers, you can use [Amazon DCV Connection Gateway](https://docs.aws.amazon.com/dcv/latest/gw-admin/what-is-gw.html) to centralize access. Refer to blog [Getting started with managing NICE DCV sessions secured behind a NICE DCV Connection Gateway](https://aws.amazon.com/blogs/desktop-and-application-streaming/getting-started-with-managing-nice-dcv-sessions-secured-behind-a-nice-dcv-connection-gateway/) and [dcv-samples](https://github.com/aws-samples/dcv-samples) for more information. 
+If you have a fleet of Amazon DCV servers, you can use [Amazon DCV Connection Gateway](https://docs.aws.amazon.com/dcv/latest/gw-admin/what-is-gw.html) to centralize access. Refer to blog [Getting started with managing NICE DCV sessions secured behind a NICE DCV Connection Gateway](https://aws.amazon.com/blogs/desktop-and-application-streaming/getting-started-with-managing-nice-dcv-sessions-secured-behind-a-nice-dcv-connection-gateway/) and [dcv-samples](https://github.com/aws-samples/dcv-samples) for more information. Consider [Amazon WorkSpaces Family](https://aws.amazon.com/workspaces-family/) if you are looking for a fully managed VDI (virtual desktop infrastructure) service.
 
 ## About Windows template
 Default Windows AMI is now Windows Server 2022 English-Full-Base. You can retrieve SSM paths to other AMIs from [Parameter Store console](https://docs.aws.amazon.com/systems-manager/latest/userguide/parameter-store-finding-public-parameters.html#paramstore-discover-public-console), [AWS CloudShell](https://aws.amazon.com/cloudshell/) or [AWS CLI](https://aws.amazon.com/cli/). Refer to [Query for the Latest Windows AMI Using Systems Manager Parameter Store](https://aws.amazon.com/blogs/mt/query-for-the-latest-windows-ami-using-systems-manager-parameter-store/) blog for more information.
@@ -215,7 +215,7 @@ Template offers two main AMI options:
 
 Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devguide/using.html) for usage guidance.
 
-For fully managed experience, do consider [Amazon SageMaker](https://aws.amazon.com/sagemaker/)
+Consider [Amazon SageMaker](https://aws.amazon.com/sagemaker/) if you are looking for a fully managed experience.
 
 ## About Linux templates
 The login user name depends on Linux distributions as follows:
@@ -261,13 +261,15 @@ The templates [install and configure](https://docs.nvidia.com/datacenter/cloud-n
 
 - `*-Ubuntu_repo_*` :  `sudo apt install -y nvidia-cuda-toolkit`
 
-
 #### Driver and Toolkit installation scripts 
 NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit, and Docker installation/configuration scripts are available from the following [re:Post](https://repost.aws/) community articles:
 - [How do I install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Amazon Linux 2 (AL2)?](https://repost.aws/articles/ARR29omO1-S5OfOPQKD904Jg/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-amazon-linux-2-al2)
 - [How do I install NVIDIA GPU driver, CUDA toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Amazon Linux 2023 (AL2023)?](https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-amazon-linux-2023-al2023)
 - [How do I install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running RHEL/Rocky Linux 8/9?](https://repost.aws/articles/ARpmJcNiCtST2A3hrrM_4R4A/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9)
 - [How do I install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Ubuntu Linux?](https://repost.aws/articles/ARWGxLArMBQ4y1MKoSHTq3gQ/how-do-i-install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-ubuntu-linux)
+
+Depending on use case, [DLAMI template](#about-dlami-template) may be a more better option. 
+
 
 ### Updating DCV server on Linux
 Use */home/{user name}/update-dcv* script to update DCV server. 
