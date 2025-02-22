@@ -1545,15 +1545,15 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 python2 /usr/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 yum update -q -y
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
@@ -1723,8 +1723,8 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 yum install -q -y gcc make
                 yum install -q -y kernel-devel-$(uname -r)
@@ -1740,8 +1740,8 @@ Resources:
                 cd amdgpu-pro*
                 ./amdgpu-pro-install -y --opencl=pal,legacy
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 sed -i "/^#target-fps/a target-fps=60" /etc/dcv/dcv.conf
 
@@ -1914,8 +1914,8 @@ Resources:
           cd /tmp/cfn
 
           # disable IPv6 during setup
-          sysctl -w net.ipv6.conf.all.disable_ipv6=1
-          sysctl -w net.ipv6.conf.default.disable_ipv6=1
+          #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+          #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
           # Switch to CentOS Vault
           sed -i "s/^mirrorlist=/#mirrorlist=/g" /etc/yum.repos.d/CentOS*.repo
@@ -1990,8 +1990,8 @@ Resources:
           systemctl enable dcv-gpu-install
 
           # enable back IPv6
-          sysctl -w net.ipv6.conf.all.disable_ipv6=0
-          sysctl -w net.ipv6.conf.default.disable_ipv6=0
+          #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+          #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
           sleep 1 && reboot
       Tags:

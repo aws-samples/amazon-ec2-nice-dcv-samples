@@ -1622,15 +1622,15 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 dnf update -q -y
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
@@ -2030,8 +2030,8 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2043,8 +2043,8 @@ Resources:
                 if [ $? -eq 1 ]; then
                   curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-17.4/NVIDIA-Linux-x86_64-550.90.10-grid-aws.run
                 fi
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 chmod +x NVIDIA-Linux-x86_64*.run
                 ./NVIDIA-Linux-x86_64*.run -s
@@ -2066,8 +2066,8 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2080,8 +2080,8 @@ Resources:
                   curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/550.73-Apr2024-Cloud_Gaming-Linux-Guest-Drivers.zip
                 fi
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
@@ -2111,8 +2111,8 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 DISTRO=$(. /etc/os-release;echo rhel$VERSION_ID | sed -e 's/\..*//g')
                 if (arch | grep -q x86); then
@@ -2130,8 +2130,8 @@ Resources:
                 # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
                 #dnf install -q -y cudnn
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2147,15 +2147,15 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 DRIVER_VERSION="${teslaDriverVersion}"
                 ARCH=$( /bin/arch )
                 curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 chmod +x ./NVIDIA-Linux-*.run
                 ./NVIDIA-Linux-*.run -s
@@ -2216,8 +2216,8 @@ Resources:
           cd /tmp/cfn
 
           # disable IPv6 during setup
-          sysctl -w net.ipv6.conf.all.disable_ipv6=1
-          sysctl -w net.ipv6.conf.default.disable_ipv6=1
+          #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+          #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
           dnf clean all
           dnf install -q -y wget tmux unzip tar curl sed
@@ -2282,8 +2282,8 @@ Resources:
           esac
 
           # enable back IPv6
-          sysctl -w net.ipv6.conf.all.disable_ipv6=0
-          sysctl -w net.ipv6.conf.default.disable_ipv6=0
+          #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+          #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
           sleep 1 && reboot
       Tags:

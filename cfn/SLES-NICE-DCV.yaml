@@ -1499,8 +1499,8 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 if (cat /etc/os-release | grep -q 15.); then
                   export CFN_SIGNAL="python3 /usr/bin/cfn-signal"                   
@@ -1508,8 +1508,8 @@ Resources:
                   export CFN_SIGNAL="python2 /usr/local/bin/cfn-signal"
                 fi
                 $CFN_SIGNAL -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
@@ -1844,8 +1844,8 @@ Resources:
           cd /tmp/cfn
 
           # disable IPv6 during setup
-          sysctl -w net.ipv6.conf.all.disable_ipv6=1
-          sysctl -w net.ipv6.conf.default.disable_ipv6=1
+          #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+          #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
           # Packge Hub: https://packagehub.suse.com/how-to-use/
           # SUSEConnect --list-extensions
@@ -1898,8 +1898,8 @@ Resources:
           systemctl enable dcv-post-reboot
 
           # enable back IPv6
-          sysctl -w net.ipv6.conf.all.disable_ipv6=0
-          sysctl -w net.ipv6.conf.default.disable_ipv6=0
+          #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+          #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
           sleep 1 && reboot
       Tags:

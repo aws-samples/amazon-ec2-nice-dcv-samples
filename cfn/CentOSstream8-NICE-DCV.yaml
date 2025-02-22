@@ -1544,15 +1544,15 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 dnf update -q -y
 
-                sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                sysctl -w net.ipv6.conf.default.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
@@ -1858,8 +1858,8 @@ Resources:
           cd /tmp/cfn
 
           # disable IPv6 during setup
-          sysctl -w net.ipv6.conf.all.disable_ipv6=1
-          sysctl -w net.ipv6.conf.default.disable_ipv6=1
+          #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+          #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
           # Switch to CentOS Vault
           sed -i "s/^mirrorlist=/#mirrorlist=/g" /etc/yum.repos.d/CentOS-Stream*.repo
@@ -1910,8 +1910,8 @@ Resources:
           systemctl enable dcv-post-reboot
 
           # enable back IPv6
-          sysctl -w net.ipv6.conf.all.disable_ipv6=0
-          sysctl -w net.ipv6.conf.default.disable_ipv6=0
+          #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+          #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
           sleep 1 && reboot
       Tags:
