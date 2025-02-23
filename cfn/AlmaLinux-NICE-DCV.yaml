@@ -1552,7 +1552,7 @@ Resources:
                 if (arch | grep -q x86); then
                   sudo dnf install -y ./nice-dcv-gltest-*.rpm
                 fi
-                if (dnf info nice-dcv-gl | grep -qi Installed); then
+                if (dnf info nice-dcv-gl | grep -iq installed); then
                   sudo dnf install -y ./nice-dcv-gl-*.rpm
                 fi
                 sudo systemctl daemon-reload
