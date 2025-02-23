@@ -1773,7 +1773,7 @@ Resources:
 
                 [Service]
                 ExecStart=
-                ExecStart=/lib/systemd/systemd-networkd-wait-online --timeout=3
+                ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --timeout=3
 
               mode: "000644"
               owner: "root"
