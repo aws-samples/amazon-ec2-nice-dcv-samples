@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-# Description: Ubuntu with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Ubuntu)
+Description: Ubuntu with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Ubuntu)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -249,13 +249,13 @@ Parameters:
     Description: e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com
     AllowedPattern: "^\\d+\\.\\d+\\.\\d+\\.\\d+\\/\\d+$"
     ConstraintDescription: Specify valid IPv4 prefix
-    Default: 58.96.231.216/32
+    Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
     Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/working-with-ipv6-addresses.html
     AllowedPattern: .+
     ConstraintDescription: Specify valid IPv6 prefix
-    Default: 2406:3003:2001:135c::/64
+    Default: ::/0
   allowSSHport:
     Type: String
     Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-ssh.html
