@@ -148,7 +148,7 @@ The following URLs are available in **Outputs** section
 \* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to DCV server using [native clients](#dcv-clients).*
 
 The following is available if `installWebmin` is `Yes`
-- `WebminUrl` (if available, Linux) : [Webmin](https://webmin.com/) URL link. Set the root password by running `sudo passwd root` from `EC2instanceConnect`, `SSMsessionManager` or SSH session, and login as `root`.
+- `WebminUrl` : [Webmin](https://webmin.com/) URL link. Set the root password by running `sudo passwd root` from `EC2instanceConnect`, `SSMsessionManager` or SSH session, and login as `root`.
 
 The following are available if `enableAGA` is `Yes`
 - `DCVwebConsoleAGA` : DCV web browser console URL link through AGA
