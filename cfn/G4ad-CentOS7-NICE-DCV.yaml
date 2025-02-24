@@ -1677,7 +1677,7 @@ Resources:
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                dnf remove -q -y awscli
+                yum remove -q -y awscli
                 sudo snap install aws-cli --classic
                 if [ -e /snap/bin/aws ]; then
                   rm -f /home/centos/update-awscli
@@ -1688,9 +1688,13 @@ Resources:
 
                 # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
                 sudo snap install certbot --classic
-                ln -s /snap/bin/certbot /usr/bin/certbot
-                sudo snap set certbot trust-plugin-with-root=ok
-                sudo snap install certbot-dns-route53
+                if [ -e /snap/bin/certbot ]; then
+                  ln -s /snap/bin/certbot /usr/bin/certbot
+                  sudo snap set certbot trust-plugin-with-root=ok
+                  sudo snap install certbot-dns-route53
+                else
+                  yum install -q -y python3-certbot python3-certbot-apache python3-certbot-nginx python3-certbot-dns-route53
+                fi
 
                 rm -f ${!0}
               mode: "000740"
