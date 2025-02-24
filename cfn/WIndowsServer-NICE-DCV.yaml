@@ -214,13 +214,13 @@ Parameters:
 
   ingressIPv4:
     Type: String
-    Description: e.g. 1.2.3.4/32, get your source IP from https://checkip.amazonaws.com
+    Description: e.g. 1.2.3.4/32, get your internet IPv4 address from https://checkip.amazonaws.com
     AllowedPattern: "^\\d+\\.\\d+\\.\\d+\\.\\d+\\/\\d+$"
     ConstraintDescription: Specify valid IPv4 prefix
     Default: 0.0.0.0/0
   ingressIPv6:
     Type: String
-    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/working-with-ipv6-addresses.html
+    Description: e.g. 1:2:3:4::/64, get your internet IPv6 address (if any) with tools such as https://ifconfig.co
     AllowedPattern: .+
     ConstraintDescription: Specify valid IPv6 prefix
     Default: ::/0
