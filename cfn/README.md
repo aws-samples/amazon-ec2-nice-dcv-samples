@@ -142,8 +142,8 @@ It may take more than 15 minutes to provision the EC2 instance. After your stack
 The following URLs are available in **Outputs** section 
 - `SSMsessionManager`* : [SSM Session Manager](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-systems-manager-session-manager.html) URL link. Use this to set a strong DCV login user password. Password change command is in *Description* field.
 - `DCVwebConsole` : [DCV web browser console](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-browser-connect.html) URL link. Login as user specified in *Description* field. 
-- `EC2console` : [EC2 Serial Console](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-serial-console.html) URL link to manage EC2 instance.
-- `EC2iamRole` : [IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html) URL link to manage permissions
+- `EC2console` : EC2 Console URL link to manage EC2 instance.
+- `EC2iamRole` : EC2 [IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html) URL link to manage permission.
 - `EC2instanceConnect`* (if available, Linux) : [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html).
 - `EC2serialConsole` (Linux): [EC2 Serial Console](https://aws.amazon.com/blogs/aws/troubleshoot-boot-and-networking-issues-with-new-ec2-serial-console/) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-serial-console-prerequisites.html).
 - `RDPconnect` (Windows) : in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update DCV server.
