@@ -915,6 +915,14 @@ Mappings:
     us-west-2:
       PrefixList: pl-82a045eb
 
+  ConsoleUrl:
+    aws:
+      url: console.aws.amazon.com
+    aws-cn:
+      url: console.amazonaws.cn
+    aws-gov:
+      url: console.amazonaws-us-gov.com
+
 Resources:
   instanceIamRole:
     Type: AWS::IAM::Role
@@ -2256,7 +2264,7 @@ Resources:
             - "HEAD"
             - "GET"
           Compress: true
-          CachePolicyId: "83da9c7e-98b4-4e11-a168-04f0df8e2c65"
+          CachePolicyId: "4cc15a8a-d715-48a4-82b8-cc0b614638fe"
           OriginRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3"
           ResponseHeadersPolicyId: "67f7725c-6f97-4210-82d7-5512b31e9d03"
           TargetOriginId: !Ref ec2Instance
@@ -2272,26 +2280,67 @@ Resources:
 Outputs:
   EC2console:
     Description: EC2 console
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+    Value: !Sub
+      - "https://${AWS::Region}.${url}/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
 
   EC2instanceConnect:
     Condition: createSgEIC
     Description: EC2 Instance Connect
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=kali&sshPort=22#/"
+    Value: !Sub
+      - "https://${AWS::Region}.${url}/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=kali&sshPort=22#/"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
 
   EC2serialConsole:
     Description: EC2 Serial Console
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
+    Value: !Sub
+      - "https://${AWS::Region}.${url}/ec2-instance-connect/ssh?connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
 
   EC2iamRole:
     Description: EC2 IAM role
     Value: !Sub
-      - "https://console.aws.amazon.com/iam/home#/roles/details/${role}"
-      - role: !Select [1, !Split ["/", !GetAtt instanceIamRole.Arn]]
+      - "https://${url}/iam/home#/roles/details/${role}"
+      - {
+          role: !Select [1, !Split ["/", !GetAtt instanceIamRole.Arn]],
+          url:
+            !FindInMap [
+              ConsoleUrl,
+              !Ref "AWS::Partition",
+              url,
+              DefaultValue: "console.aws.amazon.com",
+            ],
+        }
 
   SSMsessionManager:
     Description: SSM Session Manager ("sudo passwd kali" to change password)
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/systems-manager/session-manager/${ec2Instance}"
+    Value: !Sub
+      - "https://${AWS::Region}.${url}/systems-manager/session-manager/${ec2Instance}"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
 
   DCVwebConsole:
     Description: DCV web browser client (login as kali)
@@ -2340,7 +2389,15 @@ Outputs:
   AGAconsole:
     Condition: createAGA
     Description: Global Accelerator console
-    Value: !Sub https://us-west-2.console.aws.amazon.com/globalaccelerator/home#AcceleratorDetails:AcceleratorArn=${aga}
+    Value: !Sub
+      - https://${url}/globalaccelerator/home#AcceleratorDetails:AcceleratorArn=${aga}
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
 
   AGAipv4Addresses:
     Condition: createAGA
@@ -2350,7 +2407,15 @@ Outputs:
   CloudFrontConsole:
     Condition: createCloudFront
     Description: CloudFront console
-    Value: !Sub "https://console.aws.amazon.com/cloudfront/home#/distributions/${cfDistribution.Id}"
+    Value: !Sub
+      - "https://${url}/cloudfront/home#/distributions/${cfDistribution.Id}"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
 
   CloudFrontURL:
     Condition: createCloudFront
