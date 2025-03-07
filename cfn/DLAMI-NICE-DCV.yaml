@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Deep Learning AMI with DCV (https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/)  (uksb-632il17651) (tag:DLAMI)
+Description: Deep Learning AMI with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/ ) (uksb-632il17651) (tag:DLAMI)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -141,10 +141,12 @@ Metadata:
         default: "Optional: Route 53 Zone ID for DNS record"
 
 Parameters:
-  imageId: # aws ssm get-parameters-by-path --recursive --path /aws/service/neuron/dlami | jq -r  ".Parameters[].Name"
+  imageId:
     Type: String
     Description: https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html
-    AllowedValues: #  aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami | jq -r  ".Parameters[].Name"
+    AllowedValues:
+      # aws ssm get-parameters-by-path --recursive --path /aws/service/neuron/dlami | jq -r  ".Parameters[].Name"
+      # aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami | jq -r  ".Parameters[].Name"
       - Ubuntu 22.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-22.04/latest/image_id
       - Ubuntu 20.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-20.04/latest/image_id
       - Ubuntu 22.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-22.04/latest/image_id
@@ -160,13 +162,14 @@ Parameters:
       - Ubuntu 22.04 (TensorFlow 2.18) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.18-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (TensorFlow 2.17) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.17-ubuntu-22.04/latest/ami-id
       - Ubuntu 20.04 (TensorFlow 2.16) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.16-ubuntu-20.04/latest/ami-id
-      - Ubuntu 20.04 (TensorFlow 2.15) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.15-ubuntu-20.04/latest/ami-id
-      - Ubuntu 20.04 (TensorFlow 2.16) |/aws/service/deeplearning/ami/x86_64/proprietary-nvidia-driver-gpu-tensorflow-2.16-ubuntu-20.04/latest/ami-id
+      - Ubuntu 20.04 (TensorFlow 2.16 proprietary) |/aws/service/deeplearning/ami/x86_64/proprietary-nvidia-driver-gpu-tensorflow-2.16-ubuntu-20.04/latest/ami-id
 
+      - Ubuntu 22.04 (PyTorch 2.6) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.5) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.5-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.4) | /aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.4-ubuntu-22.04/latest/ami-id
+      - Ubuntu 22.04 (PyTorch 2.4) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.4-ubuntu-22.04/latest/ami-id
       - Ubuntu 20.04 (PyTorch 2.3) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.3-ubuntu-20.04/latest/ami-id
 
+      - Ubuntu 22.04 (PyTorch 2.6) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.5) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.5-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.4) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.4-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.3) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.3-ubuntu-22.04/latest/ami-id
@@ -1715,7 +1718,6 @@ Resources:
                     apt-get install -q -y webmin --install-recommends
                     ;;
                 esac
-
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
                 echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ubuntu/.bashrc
