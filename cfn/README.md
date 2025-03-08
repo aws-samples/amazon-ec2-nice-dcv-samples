@@ -30,7 +30,7 @@ To [create CloudFormation stack](https://docs.aws.amazon.com/AWSCloudFormation/l
 Choose **Upload a template file**, click **Choose File** to select your downloaded `.yaml` file, and click **Next**. 
 Enter a **Stack name** and specify parameters values. 
 
-<video src='https://raw.githubusercontent.com/aws-samples/amazon-ec2-nice-dcv-samples/refs/heads/main/images/Create-Stack.mp4' width=1436>></video>
+<video src='https://raw.githubusercontent.com/aws-samples/amazon-ec2-nice-dcv-samples/refs/heads/main/images/Create-Stack.mp4' width=1436></video>
 
 
 ### CloudFormation Parameters
