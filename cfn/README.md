@@ -30,7 +30,8 @@ To [create CloudFormation stack](https://docs.aws.amazon.com/AWSCloudFormation/l
 Choose **Upload a template file**, click **Choose File** to select your downloaded `.yaml` file, and click **Next**. 
 Enter a **Stack name** and specify parameters values. 
 
-https://raw.githubusercontent.com/aws-samples/amazon-ec2-nice-dcv-samples/refs/heads/main/images/Create-Stack.mp4
+<video src='https://raw.githubusercontent.com/aws-samples/amazon-ec2-nice-dcv-samples/refs/heads/main/images/Create-Stack.mp4' width=1436/>
+
 
 ### CloudFormation Parameters
 In most cases, the default values are sufficient. You will need to specify values for `vpcID`, `subnetID` and `ec2KeyPair` (Linux). For security reasons, configure `ingressIPv4` and `ingressIPv6` to your IP address.
