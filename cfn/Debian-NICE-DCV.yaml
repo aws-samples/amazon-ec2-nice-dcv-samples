@@ -863,6 +863,8 @@ Mappings:
       PrefixList: pl-0fb7e7cfe038ae0e9
     ap-southeast-5:
       PrefixList: pl-09076f83e90b139d0
+    ap-southeast-7:
+      PrefixList: pl-0857de2e2b1c7f2a2
     ca-central-1:
       PrefixList: pl-38a64351
     ca-west-1:
