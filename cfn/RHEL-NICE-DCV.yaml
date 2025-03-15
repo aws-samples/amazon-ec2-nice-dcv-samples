@@ -62,7 +62,7 @@ Metadata:
           - volumeSize
           - volumeType
       - Label:
-          default: Backup
+          default: AWS Backup
         Parameters:
           - enableBackup
           - scheduleExpression
@@ -98,13 +98,13 @@ Metadata:
         default: "TCP/UDP listen port"
 
       vpcID:
-        default: "VPC with internet connectivity"
+        default: "VPC with outbound internet connectivity"
       subnetID:
-        default: "Subnet with internet connectivity"
+        default: "Subnet with outbound internet connectivity"
       displayPublicIP:
-        default: "Display EC2 public IP in CloudFormation Outputs"
+        default: "EC2 in public subnet with public IP assigned?"
       assignStaticIP:
-        default: "[Elastic IP] Associate static public IPv4 address"
+        default: "Elastic IP: assign static public internet IPv4 address"
 
       ingressIPv4:
         default: "Allowed source prefix (IPv4)"
@@ -690,11 +690,13 @@ Parameters:
     Default: ""
 
 Conditions:
-  useElasticIP: !Equals [!Ref assignStaticIP, "Yes"]
   useRhel8x86: !Equals [!Ref osVersion, "Red Hat Enterprise Linux 8 (x86_64)"]
   useRhel8arm64: !Equals [!Ref osVersion, "Red Hat Enterprise Linux 8 (arm64)"]
   useRhel9x86: !Equals [!Ref osVersion, "Red Hat Enterprise Linux 9 (x86_64)"]
+
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
+  useElasticIP:
+    !And [!Condition displayPublicIP, !Equals [!Ref assignStaticIP, "Yes"]]
   enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
   isGPUinstall:
     !Not [
