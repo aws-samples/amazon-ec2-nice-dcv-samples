@@ -188,77 +188,77 @@ Parameters:
     ConstraintDescription: Select a key pair
   instanceType:
     Type: String
-    Description: https://console.aws.amazon.com/ec2/#InstanceTypes
+    Description: https://console.aws.amazon.com/ec2/#InstanceTypes https://aws.amazon.com/ec2/instance-types/#Accelerated_Computing
     AllowedValues:
-      - g4dn.xlarge
-      - g4dn.2xlarge
-      - g4dn.4xlarge
-      - g4dn.8xlarge
-      - g4dn.16xlarge
-      - g4dn.12xlarge
-      - g4dn.metal
+      - g4dn.xlarge (16 GB GPU memory)
+      - g4dn.2xlarge (16 GB GPU memory)
+      - g4dn.4xlarge (16 GB GPU memory)
+      - g4dn.8xlarge (16 GB GPU memory)
+      - g4dn.16xlarge (16 GB GPU memory)
+      - g4dn.12xlarge (4 x 16 GB GPU memory)
+      - g4dn.metal (8 x 16 GB GPU memory)
 
-      - g5.xlarge
-      - g5.2xlarge
-      - g5.4xlarge
-      - g5.8xlarge
-      - g5.16xlarge
-      - g5.12xlarge
-      - g5.24xlarge
-      - g5.48xlarge
+      - g5.xlarge (24 GB GPU memory)
+      - g5.2xlarge (24 GB GPU memory)
+      - g5.4xlarge (24 GB GPU memory)
+      - g5.8xlarge (24 GB GPU memory)
+      - g5.16xlarge (24 GB GPU memory)
+      - g5.12xlarge (4 x 24 GB GPU memory)
+      - g5.24xlarge (4 x 24 GB GPU memory)
+      - g5.48xlarge (8 x 24 GB GPU memory)
 
-      - g6.xlarge
-      - g6.2xlarge
-      - g6.4xlarge
-      - g6.8xlarge
-      - g6.16xlarge
-      - g6.12xlarge
-      - g6.24xlarge
-      - g6.48xlarge
+      - g6.xlarge (24 GB GPU memory)
+      - g6.2xlarge (24 GB GPU memory)
+      - g6.4xlarge (24 GB GPU memory)
+      - g6.8xlarge (24 GB GPU memory)
+      - g6.16xlarge (24 GB GPU memory)
+      - g6.12xlarge (4 x 24 GB GPU memory)
+      - g6.24xlarge (4 x 24 GB GPU memory)
+      - g6.48xlarge (8 x 24 GB GPU memory)
 
-      - gr6.4xlarge
-      - gr6.8xlarge
-      - g6e.xlarge
+      - gr6.4xlarge (24 GB GPU memory)
+      - gr6.8xlarge (24 GB GPU memory)
 
-      - g6e.2xlarge
-      - g6e.4xlarge
-      - g6e.8xlarge
-      - g6e.16xlarge
-      - g6e.12xlarge
-      - g6e.24xlarge
-      - g6e.48xlarge
+      - g6e.xlarge (48 GB GPU memory)
+      - g6e.2xlarge (48 GB GPU memory)
+      - g6e.4xlarge (48 GB GPU memory)
+      - g6e.8xlarge (48 GB GPU memory)
+      - g6e.16xlarge (48 GB GPU memory)
+      - g6e.12xlarge (4 x 48 GB GPU memory)
+      - g6e.24xlarge (4 x 48 GB GPU memory)
+      - g6e.48xlarge (8 x 48 GB GPU memory)
 
-      - inf1.xlarge
-      - inf1.2xlarge
-      - inf1.6xlarge
-      - inf1.24xlarge
+      - inf1.xlarge (Inferentia)
+      - inf1.2xlarge (Inferentia)
+      - inf1.6xlarge (4 x Inferentia)
+      - inf1.24xlarge (16 x Inferentia)
 
-      - inf2.xlarge
-      - inf2.8xlarge
-      - inf2.24xlarge
-      - inf2.48xlarge
+      - inf2.xlarge (Inferentia2)
+      - inf2.8xlarge (Inferentia2)
+      - inf2.24xlarge (6 x Inferentia2)
+      - inf2.48xlarge (12 x Inferentia2)
 
-      - trn1.2xlarge
-      - trn1.32xlarge
-      - trn1n.32xlarge
+      - trn1.2xlarge (Trainium)
+      - trn1.32xlarge (16 x Trainium)
+      - trn1n.32xlarge (16 x Trainium)
 
-      - trn2.48xlarge
-      - trn2u.48xlarge
+      - trn2.48xlarge (16 x Trainium2)
+      - trn2u.48xlarge (16 x Trainium2)
 
-      - p4d.24xlarge
-      - p4de.24xlarge
-      - p5.48xlarge
-      - p5e.48xlarge
-      - p5en.48xlarge
+      - p4d.24xlarge (8 x 40 GB GPU memory)
+      - p4de.24xlarge (8 x 40 GB GPU memory)
 
-      - g5g.xlarge
-      - g5g.2xlarge
-      - g5g.4xlarge
-      - g5g.8xlarge
-      - g5g.16xlarge
-      - g5g.metal
+      - p5.48xlarge (8 x 80 GB GPU memory)
+      - p5e.48xlarge (8 x 141 GB GPU memory)
+      - p5en.48xlarge (8 x 141 GB GPU memory)
 
-    Default: g4dn.xlarge
+      - g5g.2xlarge (16 GB GPU memory)
+      - g5g.4xlarge (16 GB GPU memory)
+      - g5g.8xlarge (16 GB GPU memory)
+      - g5g.16xlarge (2 x 16 GB GPU memory)
+      - g5g.metal (2 x 16 GB GPU memory)
+
+    Default: g4dn.xlarge (16 GB GPU memory)
   ec2TerminationProtection:
     Type: String
     Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html
@@ -1975,7 +1975,7 @@ Resources:
       ImageId: !Sub
         - "{{resolve:ssm:${amiID}}}"
         - amiID: !Select [1, !Split ["|", !Ref imageId]]
-      InstanceType: !Ref instanceType
+      InstanceType: !Select [0, !Split [" ", !Ref instanceType]]
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair
       SubnetId: !Ref subnetID
