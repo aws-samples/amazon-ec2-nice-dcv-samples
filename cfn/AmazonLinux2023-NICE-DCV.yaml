@@ -1789,9 +1789,13 @@ Resources:
                 dnf install -q -y dkms
                 systemctl enable dkms
 
-                # Kernel headers for GPU and USB remotization
-                dnf install -q -y kernel-devel
-                dnf install -q -y kernel-modules-extra
+                # Kernel headers for GPU and USB remotization  
+                dnf install -q -y kernel-devel-$(uname -r)
+                if (uname -r | grep -q ^6.12.); then
+                  dnf install -q -y kernel6.12-modules-extra
+                else
+                  dnf install -q -y kernel-modules-extra
+                fi 
 
                 # Docker:
                 if [ "${installDocker}" = "Yes" ]; then
@@ -2103,8 +2107,8 @@ Resources:
       ImageId:
         !If [
           useAl2023x86,
-          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}",
-          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64}}",
+          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-x86_64}}",
+          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-arm64}}",
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
