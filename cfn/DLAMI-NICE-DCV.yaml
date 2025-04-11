@@ -143,31 +143,27 @@ Metadata:
 Parameters:
   imageId:
     Type: String
-    Description: https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html
+    Description: https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html https://aws.amazon.com/releasenotes/dlami-support-policy/
     AllowedValues:
       # aws ssm get-parameters-by-path --recursive --path /aws/service/neuron/dlami | jq -r  ".Parameters[].Name"
       # aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami | jq -r  ".Parameters[].Name"
       - Ubuntu 22.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-22.04/latest/image_id
-      - Ubuntu 20.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-20.04/latest/image_id
       - Ubuntu 22.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-22.04/latest/image_id
 
+      - Ubuntu 22.04 (Neuron PyTorch 2.5) |/aws/service/neuron/dlami/pytorch-2.5/ubuntu-22.04/latest/image_id
+
       - Ubuntu 22.04 (Neuron TensorFlow 2.10) |/aws/service/neuron/dlami/tensorflow-2.10/ubuntu-22.04/latest/image_id
-      - Ubuntu 20.04 (Neuron TensorFlow 2.10) |/aws/service/neuron/dlami/tensorflow-2.10/ubuntu-20.04/latest/image_id
 
       - Ubuntu 22.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
-      - Ubuntu 20.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-20.04/latest/ami-id
-      - Ubuntu 20.04 (Base proprietary) |/aws/service/deeplearning/ami/x86_64/base-proprietary-nvidia-driver-gpu-ubuntu-20.04/latest/ami-id
-      - Ubuntu 22.04 (Base) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
-
-      - Ubuntu 22.04 (TensorFlow 2.18) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.18-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (TensorFlow 2.17) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.17-ubuntu-22.04/latest/ami-id
-      - Ubuntu 20.04 (TensorFlow 2.16) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.16-ubuntu-20.04/latest/ami-id
-      - Ubuntu 20.04 (TensorFlow 2.16 proprietary) |/aws/service/deeplearning/ami/x86_64/proprietary-nvidia-driver-gpu-tensorflow-2.16-ubuntu-20.04/latest/ami-id
 
       - Ubuntu 22.04 (PyTorch 2.6) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.5) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.5-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.4) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.4-ubuntu-22.04/latest/ami-id
-      - Ubuntu 20.04 (PyTorch 2.3) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.3-ubuntu-20.04/latest/ami-id
+
+      - Ubuntu 22.04 (TensorFlow 2.18) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.18-ubuntu-22.04/latest/ami-id
+      - Ubuntu 22.04 (TensorFlow 2.17) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.17-ubuntu-22.04/latest/ami-id
+
+      - Ubuntu 22.04 (Base) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
 
       - Ubuntu 22.04 (PyTorch 2.6) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.5) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.5-ubuntu-22.04/latest/ami-id
@@ -190,75 +186,75 @@ Parameters:
     Type: String
     Description: https://console.aws.amazon.com/ec2/#InstanceTypes https://aws.amazon.com/ec2/instance-types/#Accelerated_Computing
     AllowedValues:
-      - g4dn.xlarge (16 GB GPU memory)
-      - g4dn.2xlarge (16 GB GPU memory)
-      - g4dn.4xlarge (16 GB GPU memory)
-      - g4dn.8xlarge (16 GB GPU memory)
-      - g4dn.16xlarge (16 GB GPU memory)
-      - g4dn.12xlarge (4 x 16 GB GPU memory)
-      - g4dn.metal (8 x 16 GB GPU memory)
+      - g4dn.xlarge (T4 - 16 GB GPU memory)
+      - g4dn.2xlarge (T4 - 16 GB GPU memory)
+      - g4dn.4xlarge (T4 - 16 GB GPU memory)
+      - g4dn.8xlarge (T4 - 16 GB GPU memory)
+      - g4dn.16xlarge (T4 - 16 GB GPU memory)
+      - g4dn.12xlarge (T4 - 4 x 16 GB GPU memory)
+      - g4dn.metal (T4 - 8 x 16 GB GPU memory)
 
-      - g5.xlarge (24 GB GPU memory)
-      - g5.2xlarge (24 GB GPU memory)
-      - g5.4xlarge (24 GB GPU memory)
-      - g5.8xlarge (24 GB GPU memory)
-      - g5.16xlarge (24 GB GPU memory)
-      - g5.12xlarge (4 x 24 GB GPU memory)
-      - g5.24xlarge (4 x 24 GB GPU memory)
-      - g5.48xlarge (8 x 24 GB GPU memory)
+      - g5.xlarge (A10G - 24 GB GPU memory)
+      - g5.2xlarge (A10G - 24 GB GPU memory)
+      - g5.4xlarge (A10G - 24 GB GPU memory)
+      - g5.8xlarge (A10G - 24 GB GPU memory)
+      - g5.16xlarge (A10G - 24 GB GPU memory)
+      - g5.12xlarge (A10G - 4 x 24 GB GPU memory)
+      - g5.24xlarge (A10G - 4 x 24 GB GPU memory)
+      - g5.48xlarge (A10G - 8 x 24 GB GPU memory)
 
-      - g6.xlarge (24 GB GPU memory)
-      - g6.2xlarge (24 GB GPU memory)
-      - g6.4xlarge (24 GB GPU memory)
-      - g6.8xlarge (24 GB GPU memory)
-      - g6.16xlarge (24 GB GPU memory)
-      - g6.12xlarge (4 x 24 GB GPU memory)
-      - g6.24xlarge (4 x 24 GB GPU memory)
-      - g6.48xlarge (8 x 24 GB GPU memory)
+      - g6.xlarge (L4 - 24 GB GPU memory)
+      - g6.2xlarge (L4 - 24 GB GPU memory)
+      - g6.4xlarge (L4 - 24 GB GPU memory)
+      - g6.8xlarge (L4 - 24 GB GPU memory)
+      - g6.16xlarge (L4 - 24 GB GPU memory)
+      - g6.12xlarge (L4 - 4 x 24 GB GPU memory)
+      - g6.24xlarge (L4 - 4 x 24 GB GPU memory)
+      - g6.48xlarge (L4 - 8 x 24 GB GPU memory)
 
-      - gr6.4xlarge (24 GB GPU memory)
-      - gr6.8xlarge (24 GB GPU memory)
+      - gr6.4xlarge (L4 - 24 GB GPU memory)
+      - gr6.8xlarge (L4 - 24 GB GPU memory)
 
-      - g6e.xlarge (48 GB GPU memory)
-      - g6e.2xlarge (48 GB GPU memory)
-      - g6e.4xlarge (48 GB GPU memory)
-      - g6e.8xlarge (48 GB GPU memory)
-      - g6e.16xlarge (48 GB GPU memory)
-      - g6e.12xlarge (4 x 48 GB GPU memory)
-      - g6e.24xlarge (4 x 48 GB GPU memory)
-      - g6e.48xlarge (8 x 48 GB GPU memory)
+      - g6e.xlarge (L40S - 48 GB GPU memory)
+      - g6e.2xlarge (L40S - 48 GB GPU memory)
+      - g6e.4xlarge (L40S - 48 GB GPU memory)
+      - g6e.8xlarge (L40S - 48 GB GPU memory)
+      - g6e.16xlarge (L40S - 48 GB GPU memory)
+      - g6e.12xlarge (L40S - 4 x 48 GB GPU memory)
+      - g6e.24xlarge (L40S - 4 x 48 GB GPU memory)
+      - g6e.48xlarge (L40S - 8 x 48 GB GPU memory)
 
       - inf1.xlarge (Inferentia)
       - inf1.2xlarge (Inferentia)
-      - inf1.6xlarge (4 x Inferentia)
-      - inf1.24xlarge (16 x Inferentia)
+      - inf1.6xlarge (Inferentia x 4)
+      - inf1.24xlarge (Inferentia x 16)
 
       - inf2.xlarge (Inferentia2)
       - inf2.8xlarge (Inferentia2)
-      - inf2.24xlarge (6 x Inferentia2)
-      - inf2.48xlarge (12 x Inferentia2)
+      - inf2.24xlarge (Inferentia2 x 6)
+      - inf2.48xlarge (Inferentia2 x 6)
 
       - trn1.2xlarge (Trainium)
-      - trn1.32xlarge (16 x Trainium)
-      - trn1n.32xlarge (16 x Trainium)
+      - trn1.32xlarge (Trainium x 16)
+      - trn1n.32xlarge (Trainium x 16)
 
-      - trn2.48xlarge (16 x Trainium2)
-      - trn2u.48xlarge (16 x Trainium2)
+      - trn2.48xlarge (Trainium2 x 16)
+      - trn2u.48xlarge (Trainium2 x 16)
 
-      - p4d.24xlarge (8 x 40 GB GPU memory)
-      - p4de.24xlarge (8 x 40 GB GPU memory)
+      - p4d.24xlarge (A100 - 8 x 40 GB GPU memory)
+      - p4de.24xlarge (A100 - 8 x 40 GB GPU memory)
 
-      - p5.48xlarge (8 x 80 GB GPU memory)
-      - p5e.48xlarge (8 x 141 GB GPU memory)
-      - p5en.48xlarge (8 x 141 GB GPU memory)
+      - p5.48xlarge (H100 - 8 x 80 GB GPU memory)
+      - p5e.48xlarge (H200 - 8 x 141 GB GPU memory)
+      - p5en.48xlarge (H200 - 8 x 141 GB GPU memory)
 
-      - g5g.2xlarge (16 GB GPU memory)
-      - g5g.4xlarge (16 GB GPU memory)
-      - g5g.8xlarge (16 GB GPU memory)
-      - g5g.16xlarge (2 x 16 GB GPU memory)
-      - g5g.metal (2 x 16 GB GPU memory)
+      - g5g.2xlarge (T4G - 16 GB GPU memory)
+      - g5g.4xlarge (T4G - 16 GB GPU memory)
+      - g5g.8xlarge (T4G - 16 GB GPU memory)
+      - g5g.16xlarge (T4G - 2 x 16 GB GPU memory)
+      - g5g.metal (T4G - 2 x 16 GB GPU memory)
 
-    Default: g4dn.xlarge (16 GB GPU memory)
+    Default: g4dn.xlarge (T4 - 16 GB GPU memory)
   ec2TerminationProtection:
     Type: String
     Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html
