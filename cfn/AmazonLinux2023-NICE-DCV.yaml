@@ -185,6 +185,7 @@ Parameters:
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_runfile_Driver"
       - "console"
+      - "virtual-with-AL2023_repo_Driver"
       - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
       - "virtual-with-NVIDIA_GRID_Driver-GPU_sharing"
@@ -1519,6 +1520,8 @@ Resources:
             - 06_gpu_nvidia_runfile_install
           virtual-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
+          virtual-with-AL2023_repo_Driver:
+            - 07_gpu_al2023_repo_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/ec2-user/update-dcv":
@@ -1664,7 +1667,7 @@ Resources:
                 systemctl enable dcvserver && systemctl restart dcvserver
 
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
-                if ( echo "${sessionType}" | grep -q NVIDIA ); then
+                if (which nvidia-smi); then
                   if [ "${installDocker}" = "Yes" ]; then                 
                     if (! dnf search nvidia | grep -q nvidia-container-toolkit); then
                       dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
@@ -1676,7 +1679,7 @@ Resources:
                 fi
 
                 # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Solution-NVIDIA-GPU-On-EC2.html
-                if ( echo "${sessionType}" | grep -q NVIDIA ); then
+                if (which nvidia-smi); then
                   systemctl stop amazon-cloudwatch-agent
                   /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json -s
                   systemctl restart amazon-cloudwatch-agent
@@ -1758,10 +1761,11 @@ Resources:
                 sleep 10
                 pkill "^dnf$"
 
-                # dnf-cron
-                dnf install -q -y dnf-cron
-                sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/dnf-cron.conf
-                systemctl enable dnf-cron
+                # dnf-automatic: https://dnf.readthedocs.io/en/latest/automatic.html
+                dnf install -q -y dnf-automatic
+                sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
+                sed -i 's/emit_via = stdio/emit_via = motd/g' /etc/dnf/automatic.conf
+                systemctl enable dnf-automatic-install.timer
 
                 # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
                 if (arch | grep -q x86); then
@@ -1805,6 +1809,11 @@ Resources:
                   dnf install -q -y docker
                   systemctl enable docker
                   usermod -aG docker ec2-user
+
+                  # AL2023: docker-compose
+                  mkdir -p /usr/local/lib/docker/cli-plugins
+                  curl -s -L https://github.com/docker/compose/releases/latest/download/docker-compose-linux-"$(arch)" -o /usr/local/lib/docker/cli-plugins/docker-compose
+                  chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
@@ -2106,6 +2115,31 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
+        07_gpu_al2023_repo_install:
+          files:
+            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#runfile
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
+
+                dnf install -q -y kernel-devel-$(uname -r) kernel6.12-modules-extra
+
+                dnf install -q -y nvidia-release
+                dnf install -q -y nvidia-driver
+
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${!0}
+                reboot
+              mode: "000755"
+              owner: "root"
+              group: "root"
     Properties:
       ImageId:
         !If [
@@ -2172,6 +2206,14 @@ Resources:
 
           export SESSION="${sessionType}"
           case $SESSION in
+            *AL2023*) # install from AL2023 repo
+              systemctl disable dcv-post-reboot
+
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              systemctl daemon-reload
+              systemctl enable dcv-gpu-install
+              ;;
             *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
 

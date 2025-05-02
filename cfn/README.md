@@ -55,7 +55,6 @@ DCV
     - [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
     - `none` : do not install any driver
 
-
 *IDD, DCV and NVIDIA GRID driver [supports](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) custom display resolution, up to four monitors and 4K resolution.*
 
 *NVIDIA Tesla driver operates in headless TCC (Tesla Compute Cluster) [mode](https://docs.nvidia.com/nsight-visual-studio-edition/reference/index.html#setting-tcc-mode-for-tesla-products), and only support compute workloads. NVIDIA GRID and Gaming drivers operate in WDDM (Windows Display Driver Model) mode, and support both compute and graphics workloads.*
@@ -73,7 +72,8 @@ DCV
        - Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
    - `virtual-with-NVIDIA_GRID_Driver-GPU_Sharing` ([G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [Gr6](https://aws.amazon.com/ec2/instance-types/g6/#Product_details) instance) :   install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) drivers ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode) with [GPU sharing](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html) enabled
    - `virtual-with-NVIDIA_repo_Driver-GPU_Sharing` ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) x86_64 instance) : install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) driver from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation) with [GPU sharing](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html) enabled
-    - `console-with-Ubuntu_repo_Driver` (Ubuntu) : install NVIDIA [Enterprise Ready Drivers (ERD)](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/) from Ubuntu repository
+   - `virtual-with-AL2023_repo_Driver` (Amazon Linux 2023 x86_64): install NVIDIA drivers from [AL2023](https://docs.aws.amazon.com/linux/al2023/release-notes/relnotes-2023.7.20250331.html) repository
+   - `console-with-Ubuntu_repo_Driver` (Ubuntu) : install NVIDIA [Enterprise Ready Drivers (ERD)](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/) from Ubuntu repository
 
 *Due to various combinations of drivers, OSs and instance types, GPU driver installation may not work. You can [troubleshoot](#troubleshooting) the installation, or select `console` or `virtual` option to install driver manually. Refer to [Prerequisites for Linux DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) for GPU driver installation and configuration guidance.*
 
@@ -199,12 +199,10 @@ Template configures a default Windows screen resolution of 1920 by 1080. If you 
 ### Updating DCV server on Windows
 To update DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
-
 ## About DLAMI template
 [`DLAMI-NICE-DCV.yaml`](DLAMI-NICE-DCV.yaml) uses [AWS Deep Learning AMI (DLAMI)](https://aws.amazon.com/ai/machine-learning/amis/) with Ubuntu OS, and can help machine learning practitioners and researchers build a deep learning desktop on AWS.
 
 <img alternate="DLAMI" src="../images/DLAMI-DCV.png">
-
 
 Template offers two main AMI options:
 - DLAMIs: preconfigured with  NVIDIA GPU driver, NVIDIA CUDA, NVIDIA cuDNN, AWS OFI NCCL plugin, Docker with NVIDIA Container Toolkit, and popular deep learning frameworks such as PyTorch and TensorFlow.
@@ -212,8 +210,6 @@ Template offers two main AMI options:
 - Neuron DLAMIs: preconfigured with Neuron SDK and Neuron framework/libraries, and support [AWS Trainium](https://aws.amazon.com/ai/machine-learning/trainium/) and [AWS Inferentia](https://aws.amazon.com/ai/machine-learning/inferentia/) instance types. Refer to [Neuron DLAMI User Guide](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/dlami/index.html) for more information.
 
 Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devguide/using.html) for usage guidance. Consider [Amazon SageMaker](https://aws.amazon.com/sagemaker/) if you are looking for a fully managed experience.
-
-
 
 ## About Linux templates
 The login user name depends on Linux distributions as follows:
