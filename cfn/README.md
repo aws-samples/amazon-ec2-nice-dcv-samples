@@ -213,7 +213,7 @@ Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devgui
 
 ## About Linux templates
 The login user name depends on Linux distributions as follows:
-- [AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml), [CentOS Stream 9](CentOSstream9-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [SLES](SLES-NICE-DCV.yaml) : ec2-user
+- [AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml),  [Amazon Linux 2023](AmazonLinux2023-NICE-DCV.yaml), [CentOS Stream 9](CentOSstream9-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [SLES](SLES-NICE-DCV.yaml) : ec2-user
 - [CentOS 7](CentOS7-NICE-DCV.yaml) : centos
 - [CentOS Stream 8](CentOSstream8-NICE-DCV.yaml) : cloud-user
 - [Debian](Debian-NICE-DCV.yaml) : admin
