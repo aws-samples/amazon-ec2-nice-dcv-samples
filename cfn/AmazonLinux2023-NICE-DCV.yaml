@@ -1874,7 +1874,7 @@ Resources:
 
                 # glxinfo : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
                 dnf install -q -y glx-utils
-                dnf install -q -y vulkan clinfo
+                dnf install -q -y vulkan-tools
 
                 # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
                 cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
