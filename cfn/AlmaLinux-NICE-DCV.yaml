@@ -189,7 +189,7 @@ Parameters:
 
   sessionType:
     Type: String
-    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
+    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
     AllowedValues:
       - "virtual"
       - "console-with-NVIDIA_GRID_Driver"
