@@ -102,7 +102,7 @@ Metadata:
       vpcID:
         default: "VPC with outbound internet connectivity"
       subnetID:
-        default: "Subnet with outbound internet connectivity"
+        default: "Subnet in selected VPC with outbound internet connectivity"
       displayPublicIP:
         default: "EC2 in public subnet with public IP assigned?"
       assignStaticIP:
@@ -211,7 +211,7 @@ Parameters:
     Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 535.230.02
+    Default: 570.133.20
   listenPort:
     Type: Number
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html

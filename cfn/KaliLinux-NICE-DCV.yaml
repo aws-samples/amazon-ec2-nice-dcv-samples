@@ -104,7 +104,7 @@ Metadata:
       vpcID:
         default: "VPC with outbound internet connectivity"
       subnetID:
-        default: "Subnet with outbound internet connectivity"
+        default: "Subnet in selected VPC with outbound internet connectivity"
       displayPublicIP:
         default: "EC2 in public subnet with public IP assigned?"
       assignStaticIP:
