@@ -2066,7 +2066,13 @@ Resources:
 
                 dnf install -q -y kernel-devel-$(uname -r)
 
-                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/x86_64/cuda-amzn2023.repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
                 dnf clean expire-cache
                 dnf module install -q -y nvidia-driver:latest-dkms
                 dnf install -q -y nvidia-settings
