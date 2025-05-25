@@ -2114,7 +2114,7 @@ Resources:
                 fi
                 dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 dnf clean all
-                dnf -q -y module install nvidia-driver:latest-dkms
+                dnf -q -y module install nvidia-driver:open-dkms
                 dnf install -q -y nvidia-settings
 
                 # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities

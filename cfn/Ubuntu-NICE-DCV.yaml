@@ -2221,7 +2221,7 @@ Resources:
                 curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
                 apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
                 apt-get update -q
-                apt-get install -q -y cuda-drivers
+                apt-get install -q -y nvidia-open
                 apt-get install -q -y nvidia-settings
 
                 # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities

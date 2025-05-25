@@ -2077,7 +2077,7 @@ Resources:
                 fi
                 dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
                 dnf clean expire-cache
-                dnf module install -q -y nvidia-driver:latest-dkms
+                dnf module install -q -y nvidia-driver:open-dkms
                 dnf install -q -y nvidia-settings
 
                 # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages
