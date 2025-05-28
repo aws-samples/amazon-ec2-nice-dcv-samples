@@ -150,6 +150,9 @@ Parameters:
       - Ubuntu 22.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-22.04/latest/image_id
       - Ubuntu 22.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-22.04/latest/image_id
 
+      - Ubuntu 22.04 (Nueron JAX 0.5) |/aws/service/neuron/dlami/jax-0.5/ubuntu-22.04/latest/image_id
+
+      - Ubuntu 22.04 (Neuron PyTorch 2.6) |/aws/service/neuron/dlami/pytorch-2.6/ubuntu-22.04/latest/image_id
       - Ubuntu 22.04 (Neuron PyTorch 2.5) |/aws/service/neuron/dlami/pytorch-2.5/ubuntu-22.04/latest/image_id
 
       - Ubuntu 22.04 (Neuron TensorFlow 2.10) |/aws/service/neuron/dlami/tensorflow-2.10/ubuntu-22.04/latest/image_id
@@ -159,19 +162,17 @@ Parameters:
 
       - Ubuntu 22.04 (PyTorch 2.6) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.5) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.5-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.4) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.4-ubuntu-22.04/latest/ami-id
 
       - Ubuntu 22.04 (TensorFlow 2.18) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.18-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (TensorFlow 2.17) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.17-ubuntu-22.04/latest/ami-id
 
       - Ubuntu 22.04 (Base) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
 
+      - Ubuntu 22.04 (PyTorch 2.7) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.7-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.6) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.5) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.5-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.4) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.4-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.3) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.3-ubuntu-22.04/latest/ami-id
 
-    Default: "Ubuntu 22.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id"
+    Default: "Ubuntu 24.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-24.04/latest/ami-id"
 
   ec2Name:
     Type: String
@@ -1714,6 +1715,12 @@ Resources:
                 apt-get autoremove -q -y
 
                 # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
+                if (arch | grep -q x86); then
+                  curl -s -L -O https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+                else
+                  curl -s -L -O https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
+                fi
+                apt-get install -q -y ./amazon-cloudwatch-agent.deb
                 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
                 systemctl enable --now amazon-cloudwatch-agent
 
