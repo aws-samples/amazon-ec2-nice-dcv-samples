@@ -152,19 +152,19 @@ Parameters:
     #Description: Version and processor architecture
     AllowedValues:
       - Ubuntu 24.04 (arm64)
-      - Ubuntu 24.04 (x86_64)
       - Ubuntu 22.04 (arm64)
+      - Ubuntu 18.04 (arm64) [EOL]
+      - Ubuntu Pro 24.04 (arm64)
+      - Ubuntu Pro 22.04 (arm64)
+      - Ubuntu Pro 18.04 (arm64)
+      - Ubuntu 24.04 (x86_64)
       - Ubuntu 22.04 (x86_64)
       - Ubuntu 20.04 (x86_64)
-      - Ubuntu Pro 24.04 (arm64)
+      - Ubuntu 18.04 (x86_64) [EOL]
       - Ubuntu Pro 24.04 (x86_64)
-      - Ubuntu Pro 22.04 (arm64)
       - Ubuntu Pro 22.04 (x86_64)
       - Ubuntu Pro 20.04 (x86_64)
-      - Ubuntu Pro 18.04 (arm64)
       - Ubuntu Pro 18.04 (x86_64)
-      - Ubuntu 18.04 (arm64) [EOL]
-      - Ubuntu 18.04 (x86_64) [EOL]
     Default: Ubuntu 24.04 (arm64)
 
   ec2Name:
@@ -2127,7 +2127,7 @@ Resources:
                   aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
                 fi
                 if [ $? -eq 1 ]; then
-                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-17.4/NVIDIA-Linux-x86_64-550.90.10-grid-aws.run
+                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.1/NVIDIA-Linux-x86_64-570.133.20-grid-aws.run
                 fi
                 #sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 #sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -2137,6 +2137,8 @@ Resources:
                   CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
+                  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
+                  update-alternatives --config gcc
                 else
                   ./NVIDIA-Linux-x86_64*.run -s
                 fi
@@ -2169,7 +2171,7 @@ Resources:
                   aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
                 fi
                 if [ $? -eq 1 ]; then
-                  curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/550.73-Apr2024-Cloud_Gaming-Linux-Guest-Drivers.zip
+                  curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/570.86.16-Jan2025-Cloud_Gaming-Linux-Guest-Drivers.zip
                 fi
 
                 #sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -2182,6 +2184,8 @@ Resources:
                   CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
+                  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
+                  update-alternatives --config gcc
                 else
                   ./NVIDIA-Linux-x86_64*.run -s
                 fi
@@ -2190,7 +2194,7 @@ Resources:
                 vGamingMarketplace=2
                 EOF
 
-                curl -L -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2023_9_22.cert"
+                curl -L -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2024_02_22.cert"
 
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
@@ -2261,6 +2265,8 @@ Resources:
                   CC=/usr/bin/gcc-12 ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
+                  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
+                  update-alternatives --config gcc
                 else
                   ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s
                 fi

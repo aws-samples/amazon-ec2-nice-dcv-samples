@@ -159,8 +159,8 @@ Parameters:
     #Description: Version and processor architecture
     AllowedValues:
       - AlmaLinux OS 9 (arm64)
-      - AlmaLinux OS 9 (x86_64)
       - AlmaLinux OS 8 (arm64)
+      - AlmaLinux OS 9 (x86_64)
       - AlmaLinux OS 8 (x86_64)
     Default: AlmaLinux OS 9 (arm64)
 
@@ -2074,7 +2074,7 @@ Resources:
                   aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
                 fi
                 if [ $? -eq 1 ]; then
-                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-17.4/NVIDIA-Linux-x86_64-550.90.10-grid-aws.run
+                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.1/NVIDIA-Linux-x86_64-570.133.20-grid-aws.run
                 fi
                 #sysctl -w net.ipv6.conf.all.disable_ipv6=0
                 #sysctl -w net.ipv6.conf.default.disable_ipv6=0
@@ -2110,7 +2110,7 @@ Resources:
                   aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
                 fi
                 if [ $? -eq 1 ]; then
-                  curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/550.73-Apr2024-Cloud_Gaming-Linux-Guest-Drivers.zip
+                  curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/570.86.16-Jan2025-Cloud_Gaming-Linux-Guest-Drivers.zip
                 fi
 
                 #sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -2125,7 +2125,7 @@ Resources:
                 vGamingMarketplace=2
                 EOF
 
-                curl -L -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2023_9_22.cert"
+                curl -L -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2024_02_22.cert"
 
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
