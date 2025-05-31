@@ -1922,6 +1922,8 @@ Resources:
                       cd /usr/src/nvidia-*
                       if (! cat dkms.conf | grep -q gcc-12); then
                         sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
+                        update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
+                        update-alternatives --config gcc
                       fi
                     fi
                   fi
