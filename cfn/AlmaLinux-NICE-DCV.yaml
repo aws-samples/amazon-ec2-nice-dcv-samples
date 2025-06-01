@@ -1856,17 +1856,6 @@ Resources:
                   usermod -aG docker ec2-user
                 fi
 
-                # Snap bug on EL 8
-                if (cat /etc/os-release | grep -q 8\.); then # https://bugs.launchpad.net/snapd/+bug/2097170
-                  dnf install -q -y policycoreutils-python-utils
-                  dnf install -q -y audit --allowerasing
-                  systemctl restart snapd
-                  ausearch -m AVC,USER_AVC -ts recent | audit2allow -M snapd_avc
-                  semodule -i snapd_avc.pp
-                  systemctl restart snapd
-                  sudo snap refresh
-                fi
-
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
                 dnf remove -q -y awscli
                 sudo snap install aws-cli --classic
