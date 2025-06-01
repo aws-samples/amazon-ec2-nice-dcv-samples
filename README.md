@@ -4,12 +4,9 @@
 ## Description
 [Amazon DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops in the cloud from any device. To use, install a [desktop environment and desktop manager](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gui) (Linux), [install DCV server software](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html), and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) (screenshot below) or [native client](https://www.amazondcv.com/latest.html). 
 
-<img alternate="DCV web browser client" src="images/nice-dcv-Ubuntu.png">
-
-
 DCV client do not require a license while DCV server requires [licensing](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html). A license is not required for DCV server on Amazon EC2 if they can access Amazon S3 endpoint for [license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2).
 
-
+### Features
 The CloudFormation templates provision EC2 instances running DCV server with the following features:
 - [GNOME](https://www.gnome.org/) desktop environment (Linux)
 - [Amazon DCV](https://aws.amazon.com/hpc/dcv/) server
@@ -42,6 +39,11 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 - Network and Content Delivery
   - [Amazon CloudFront](https://aws.amazon.com/cloudfront/) for web server (optional)
   - [AWS Global Accelerator](https://aws.amazon.com/global-accelerator/) network acceleration for DCV (optional)
+
+
+### Demo
+https://github.com/user-attachments/assets/75587eb0-a660-4595-986b-8b3c75ccb6f0
+
 
 ## Deployment
 See [cfn](cfn) section for deployment instructions.
