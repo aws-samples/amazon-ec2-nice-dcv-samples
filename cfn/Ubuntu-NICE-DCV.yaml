@@ -1027,9 +1027,8 @@ Resources:
                         [_acme-challenge.*]
           - !Ref AWS::NoValue
       ManagedPolicyArns:
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AWSXRayDaemonWriteAccess"
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName
@@ -2796,7 +2795,7 @@ Outputs:
         }
 
   SSMsessionManager:
-    Description: SSM Session Manager ("sudo passwd ubuntu" to change password)
+    Description: SSM Session Manager (" sudo passwd ubuntu " to change password)
     Value: !Sub
       - "https://${AWS::Region}.${url}/systems-manager/session-manager/${ec2Instance}"
       - url:
@@ -2810,7 +2809,7 @@ Outputs:
   DCVwebConsole:
     Description: DCV web browser client (login as ubuntu)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}"
+      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
       - IpAddress:
           !If [
             displayPublicIP,
