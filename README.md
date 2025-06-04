@@ -9,16 +9,12 @@ DCV client do not require a license while DCV server requires [licensing](https:
 ### Features
 The CloudFormation templates provision EC2 instances running DCV server with the following features:
 - [GNOME](https://www.gnome.org/) desktop environment (Linux)
-- [Amazon DCV](https://aws.amazon.com/hpc/dcv/) server
+- [Amazon DCV](https://aws.amazon.com/hpc/dcv/) server with most [features](https://docs.aws.amazon.com/dcv/latest/userguide/client-features.html) implemented including
   - [HTML 5 web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) 
-  - [Adaptable display resolution](https://docs.aws.amazon.com/dcv/latest/userguide/changing-resolution.html)
-  - [Multiple monitors](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html)
   - [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html)
   - [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html)
   - [Printing](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html)
-  - [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html) (Windows client)
-  - Virtual or console [session](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions.html#managing-sessions-intro) (Linux)
-  - Specify DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
+  - Specify DCV server TCP and UDP [listen port](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
 - GPU
   - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) driver install (optional: Windows and some Linux OSs)
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/) to run GPU-accelerated containers (optional)
