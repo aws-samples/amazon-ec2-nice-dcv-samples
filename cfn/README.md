@@ -309,7 +309,7 @@ To futher secure your EC2 instance, you may want to
 - Enable [Amazon GuardDuty](https://aws.amazon.com/guardduty/) security monitoring service with [Malware Protection for EC2](https://docs.aws.amazon.com/guardduty/latest/ug/malware-protection.html)
 
 ## Using Cloudwatch agent
-[Amazon CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html) is installed in the EC2 instance, and enables collection of [EC2 system-level metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/metrics-collected-by-CloudWatch-agent.html) and [AWS X-Ray](https://aws.amazon.com/xray/) traces. The template configures agent to collect memory utilization and some [GPU](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Solution-NVIDIA-GPU-On-EC2.html) (`*-with-NVIDIA-*`) metrics. You can configure Cloudwatch agent to collect other data as follows.
+[Amazon CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html) is installed in the EC2 instance, and enables collection of [EC2 system-level metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/metrics-collected-by-CloudWatch-agent.html) and [AWS X-Ray](https://aws.amazon.com/xray/) traces. The template configures agent to collect memory and disk utilization and some [GPU](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Solution-NVIDIA-GPU-On-EC2.html) (`*-with-NVIDIA-*`) metrics. You can configure Cloudwatch agent to collect other data as follows.
 
 ### Create agent configuration file
 [Manually create](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html) agent configuration file or use [agent configuration file wizard](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/create-cloudwatch-agent-configuration-file-wizard.html):
@@ -330,7 +330,6 @@ After `config.json` file is created, [start CloudWatch agent](https://docs.aws.a
    - `sc.exe config AmazonCloudWatchAgent start=auto`
    - `cd "C:\Program Files\Amazon\AmazonCloudWatchAgent"`
    - `.\amazon-cloudwatch-agent-ctl.ps1 -a fetch-config -m ec2 -c file:config.json`
-   - `net.exe start AmazonCloudWatchAgent`
 
 Refer to [How do I install and configure the unified CloudWatch agent to push metrics and logs from my EC2 instance to CloudWatch?](https://repost.aws/knowledge-center/cloudwatch-push-metrics-unified-agent) for details. To collect GPU metrics, refer to [How do I send NVIDIA GPU metrics from my EC2 Linux instances to CloudWatch?](https://repost.aws/knowledge-center/send-ec2-nvidia-gpu-metrics-cloudwatch) and [Collect NVIDIA GPU metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-NVIDIA-GPU.html)
 

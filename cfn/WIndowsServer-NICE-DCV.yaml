@@ -1355,7 +1355,7 @@ Resources:
               content: |
                 {
                     "agent": {
-                        "metrics_collection_interval": 60
+                        "metrics_collection_interval": 300
                     },
                     "metrics": {
                         "namespace": "CWAgent",
@@ -1366,6 +1366,14 @@ Resources:
                             "Memory": {
                                 "measurement": [
                                     "% Committed Bytes In Use"
+                                ]
+                            },
+                            "LogicalDisk": {
+                                "measurement": [
+                                    "% Free Space"
+                                ],
+                                "resources": [
+                                    "*"
                                 ]
                             }
                         }
@@ -1752,7 +1760,7 @@ Resources:
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       SubnetId: !Ref subnetID
-      Monitoring: true
+      Monitoring: false
       DisableApiTermination: !If [enableProtection, true, false]
       EbsOptimized: true
       SecurityGroupIds:

@@ -1666,8 +1666,8 @@ Resources:
                 systemctl enable dcvserver && systemctl restart dcvserver
 
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
-                if (which nvidia-smi); then
-                  if [ "${installDocker}" = "Yes" ]; then                 
+                if ( which nvidia-smi ); then
+                  if ( which docker ); then
                     if (! dnf search nvidia | grep -q nvidia-container-toolkit); then
                       dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
                     fi
@@ -1678,7 +1678,7 @@ Resources:
                 fi
 
                 # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Solution-NVIDIA-GPU-On-EC2.html
-                if (which nvidia-smi); then
+                if ( which nvidia-smi ); then
                   systemctl stop amazon-cloudwatch-agent
                   /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json -s
                   systemctl restart amazon-cloudwatch-agent
@@ -1696,7 +1696,7 @@ Resources:
               content: |
                 {
                     "agent": {
-                        "metrics_collection_interval": 60,
+                        "metrics_collection_interval": 300,
                         "run_as_user": "cwagent"
                     },
                     "metrics": {
@@ -1709,6 +1709,14 @@ Resources:
                                 "measurement": [
                                     "used_percent"
                                 ]
+                            },
+                            "disk": {
+                                "measurement": [
+                                    "used_percent"
+                                ],
+                                "resources": [
+                                    "/"
+                                ]
                             }
                         }
                     }
@@ -1720,7 +1728,7 @@ Resources:
               content: |
                 {
                     "agent": {
-                        "metrics_collection_interval": 60,
+                        "metrics_collection_interval": 300,
                         "run_as_user": "root"
                     },
                     "metrics": {
@@ -1734,12 +1742,18 @@ Resources:
                                     "used_percent"
                                 ]
                             },
+                            "disk": {
+                                "measurement": [
+                                    "used_percent"
+                                ],
+                                "resources": [
+                                    "/"
+                                ]
+                            },
                             "nvidia_gpu": {
                                 "measurement": [
                                     "utilization_gpu",
-                                    "memory_total",
-                                    "memory_used",
-                                    "memory_free"
+                                    "memory_used"
                                 ]
                             }
                         }
@@ -1801,7 +1815,7 @@ Resources:
                   dnf install -q -y kernel6.12-modules-extra
                 else
                   dnf install -q -y kernel-modules-extra
-                fi 
+                fi
 
                 # Docker:
                 if [ "${installDocker}" = "Yes" ]; then
@@ -2159,7 +2173,7 @@ Resources:
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair
       SubnetId: !Ref subnetID
-      Monitoring: true
+      Monitoring: false
       DisableApiTermination: !If [enableProtection, true, false]
       EbsOptimized: true
       SecurityGroupIds:
