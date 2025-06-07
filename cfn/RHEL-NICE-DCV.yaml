@@ -874,6 +874,8 @@ Mappings:
       PrefixList: pl-c0aa4fa9
     ap-east-1:
       PrefixList: pl-14b2577d
+    ap-east-2:
+      PrefixList: pl-0b51e244975ca1f58
     ap-northeast-1:
       PrefixList: pl-58a04531
     ap-northeast-2:
@@ -1777,6 +1779,11 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
+
+                # Change password
+                PWD=$(cat /var/lib/cloud/data/instance-id)
+                USER=ec2-user
+                echo "$USER:$PWD" | chpasswd
 
                 # EPEL: https://docs.fedoraproject.org/en-US/epel/
                 # RedHat: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/html/upgrading_from_rhel_8_to_rhel_9/appendix_rhel-9-repositories_upgrading-from-rhel-8-to-rhel-9

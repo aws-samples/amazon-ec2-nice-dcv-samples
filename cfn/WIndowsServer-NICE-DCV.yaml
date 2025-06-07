@@ -725,6 +725,8 @@ Mappings:
       PrefixList: pl-c0aa4fa9
     ap-east-1:
       PrefixList: pl-14b2577d
+    ap-east-2:
+      PrefixList: pl-0b51e244975ca1f58
     ap-northeast-1:
       PrefixList: pl-58a04531
     ap-northeast-2:
@@ -1447,6 +1449,11 @@ Resources:
                 @echo off
                 IF EXIST c:\windows\temp\dcv-sw-install.txt EXIT
                 ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-sw-install.txt
+
+                @echo ** set administrator password
+                powershell -C "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
+                set /p INSTANCEID=<c:\windows\temp\instanceid.txt
+                net user administrator %INSTANCEID%
 
                 @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-win.html
                 powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazon-ssm-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
