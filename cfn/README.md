@@ -224,11 +224,15 @@ To update DCV Server, connect via Fleet Manager Remote Desktop console using `RD
 
 [`DLAMI-NICE-DCV.yaml`](DLAMI-NICE-DCV.yaml) uses [AWS Deep Learning AMI (DLAMI)](https://aws.amazon.com/ai/machine-learning/amis/) with Ubuntu OS, and can help machine learning practitioners and researchers build a deep learning desktop on AWS.
 
-<img alternate="DLAMI" src="../images/DLAMI-DCV.png">
+### Demo
+
+https://github.com/user-attachments/assets/52918231-376e-424f-b76f-8330cc7c42a2
+
+### DLAMI options
 
 Template offers two main AMI options:
 
-- DLAMIs: preconfigured with  NVIDIA GPU driver, NVIDIA CUDA, NVIDIA cuDNN, AWS OFI NCCL plugin, Docker with NVIDIA Container Toolkit, and popular deep learning frameworks such as PyTorch and TensorFlow.
+- DLAMIs: preconfigured with  NVIDIA GPU driver, NVIDIA CUDA, Docker with NVIDIA Container Toolkit, and optionally popular deep learning frameworks such as PyTorch and TensorFlow.
   - *Go to [Release notes for DLAMIs](https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html), and view AMI specific release notes (e.g. [AWS Deep Learning Base GPU AMI (Ubuntu 22.04)](https://aws.amazon.com/releasenotes/aws-deep-learning-base-gpu-ami-ubuntu-22-04/)) for supported EC2 instance types.*
 - Neuron DLAMIs: preconfigured with Neuron SDK and Neuron framework/libraries, and support [AWS Trainium](https://aws.amazon.com/ai/machine-learning/trainium/) and [AWS Inferentia](https://aws.amazon.com/ai/machine-learning/inferentia/) instance types. Refer to [Neuron DLAMI User Guide](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/dlami/index.html) for more information.
 
