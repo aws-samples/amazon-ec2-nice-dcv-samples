@@ -38,8 +38,8 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 
 
 ### Demo
-https://github.com/user-attachments/assets/75587eb0-a660-4595-986b-8b3c75ccb6f0
 
+https://github.com/user-attachments/assets/16be5a5e-a347-40bc-85cc-22ce3f0995f8
 
 ## Deployment
 See [cfn](cfn) section for deployment instructions.
