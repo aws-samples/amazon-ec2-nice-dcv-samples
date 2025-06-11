@@ -40,6 +40,8 @@ Enter a **Stack name** and specify parameters values.
 
 In most cases, the default values are sufficient. You will need to specify values for `vpcID`, `subnetID` and `ec2KeyPair` (Linux). For security reasons, configure `ingressIPv4` and `ingressIPv6` to your IP address.
 
+*You can use [VPC-NICE-DCV.yaml](VPC-NICE-DCV.yaml) to create a dual-stack public subnet*
+
 EC2
 
 - `ec2Name` : name of EC2 instance

@@ -1,0 +1,181 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: VPC with single public dual-stack subnet ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:VPC)
+Transform: "AWS::LanguageExtensions"
+
+Metadata:
+  License:
+    Description: |
+      Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+      SPDX-License-Identifier: MIT-0
+
+      Permission is hereby granted, free of charge, to any person obtaining a copy of this
+      software and associated documentation files (the "Software"), to deal in the Software
+      without restriction, including without limitation the rights to use, copy, modify,
+      merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+      permit persons to whom the Software is furnished to do so.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+      INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+      PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+      HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+      OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+      SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Parameters:
+  vpcIPv4Cidr:
+    Type: String
+    Description: IPv4 network range for VPC in CIDR notation
+    Default: 10.0.0.0/24
+
+Mappings:
+  ConsoleUrl:
+    aws:
+      url: console.aws.amazon.com
+    aws-cn:
+      url: console.amazonaws.cn
+    aws-gov:
+      url: console.amazonaws-us-gov.com
+
+Resources:
+  vpcID:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref vpcIPv4Cidr
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      InstanceTenancy: default
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-VPC
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+
+  vpcBlockPublicAccessExclusion:
+    Type: AWS::EC2::VPCBlockPublicAccessExclusion
+    Properties:
+      InternetGatewayExclusionMode: allow-bidirectional
+      VpcId: !Ref vpcID
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+
+  ipv6CidrBlock:
+    Type: AWS::EC2::VPCCidrBlock
+    Properties:
+      VpcId: !Ref vpcID
+      AmazonProvidedIpv6CidrBlock: true
+
+  internetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Internet-Gateway
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+
+  gatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref vpcID
+      InternetGatewayId: !Ref internetGateway
+
+  routeTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref vpcID
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Route-Table
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+
+  defaultIPv4Route:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref routeTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref internetGateway
+
+  defaultIPv6Route:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref routeTable
+      DestinationIpv6CidrBlock: ::/0
+      GatewayId: !Ref internetGateway
+
+  subnetID:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref vpcID
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: !Ref vpcIPv4Cidr
+      MapPublicIpOnLaunch: true
+      AssignIpv6AddressOnCreation: true
+      Ipv6CidrBlock:
+        !Select [0, !Cidr [!Select [0, !GetAtt vpcID.Ipv6CidrBlocks], 3, 64]]
+      PrivateDnsNameOptionsOnLaunch:
+        EnableResourceNameDnsAAAARecord: true
+        EnableResourceNameDnsARecord: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-Subnet
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+
+  subnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref routeTable
+      SubnetId: !Ref subnetID
+
+Outputs:
+  vpcID:
+    Description: VPC ID
+    Value: !Ref vpcID
+    Export:
+      Name: !Sub ${AWS::StackName}-vpcID
+
+  subnetID:
+    Description: Subnet ID
+    Value: !Ref subnetID
+    Export:
+      Name: !Sub ${AWS::StackName}-subnetID
+
+  vpcConsole:
+    Description: VPC console
+    Value: !Sub
+      - "https://${url}/vpcconsole/home?region=${AWS::Region}#VpcDetails:VpcId=${vpcID}"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref AWS::Partition,
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
+    Export:
+      Name: !Sub ${AWS::StackName}-vpcConsole
+
+  subnetConsole:
+    Description: Subnet console
+    Value: !Sub
+      - "https://${url}/vpcconsole/home?region=${AWS::Region}#SubnetDetails:subnetId=${subnetID}"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref AWS::Partition,
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
+    Export:
+      Name: !Sub ${AWS::StackName}-subnetConsole
