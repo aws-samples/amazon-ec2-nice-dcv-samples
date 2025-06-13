@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: VPC with single public dual-stack subnet ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:VPC)
+#Description: VPC with single public IPv4 and IPv6 subnet ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:VPC)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -26,6 +26,18 @@ Parameters:
     Type: String
     Description: IPv4 network range for VPC in CIDR notation
     Default: 10.0.0.0/24
+
+  azNumber:
+    Type: Number
+    Description: AZ (Availability Zone) to use for VPC subnet (0 for first AZ , 1 for second AZ, etc.)
+    AllowedValues:
+      - 0
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+    Default: 0
 
 Mappings:
   ConsoleUrl:
@@ -116,7 +128,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref vpcID
-      AvailabilityZone: !Select [0, !GetAZs ""]
+      AvailabilityZone: !Select [!Ref azNumber, !GetAZs ""]
       CidrBlock: !Ref vpcIPv4Cidr
       MapPublicIpOnLaunch: true
       AssignIpv6AddressOnCreation: true
