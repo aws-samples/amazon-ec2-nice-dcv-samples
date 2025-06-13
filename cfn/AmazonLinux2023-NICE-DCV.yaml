@@ -1782,13 +1782,11 @@ Resources:
                 sed -i 's/emit_via = stdio/emit_via = motd/g' /etc/dnf/automatic.conf
                 systemctl enable dnf-automatic-install.timer
 
+                # https://docs.aws.amazon.com/linux/al2023/ug/deterministic-upgrades-usage.html#deterministic-upgrade-override-persist
+                echo latest | sudo tee /etc/dnf/vars/releasever
+
                 # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
-                if (arch | grep -q x86); then
-                  curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-                else
-                  curl -s -L -O https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/amazon_linux/arm64/latest/amazon-cloudwatch-agent.rpm
-                fi
-                dnf install -q -y ./amazon-cloudwatch-agent.rpm
+                dnf install -q -y amazon-cloudwatch-agent
                 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
                 systemctl enable --now amazon-cloudwatch-agent
 
@@ -1811,7 +1809,7 @@ Resources:
                 dnf install -q -y dkms
                 systemctl enable dkms
 
-                # Kernel headers for GPU and USB remotization  
+                # Kernel headers for GPU and USB remotization
                 dnf install -q -y kernel-devel-$(uname -r)
                 if (uname -r | grep -q ^6.12.); then
                   dnf install -q -y kernel6.12-modules-extra
@@ -1825,7 +1823,7 @@ Resources:
                   systemctl enable docker
                   usermod -aG docker ec2-user
 
-                  # AL2023: docker-compose
+                  # docker-compose: https://github.com/amazonlinux/amazon-linux-2023/issues/186
                   mkdir -p /usr/local/lib/docker/cli-plugins
                   curl -s -L https://github.com/docker/compose/releases/latest/download/docker-compose-linux-"$(arch)" -o /usr/local/lib/docker/cli-plugins/docker-compose
                   chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
@@ -1838,7 +1836,6 @@ Resources:
                 dnf install -q -y certbot python3-certbot-dns-route53
                 dnf install -q -y python3-certbot-apache
                 dnf install -q -y python3-certbot-nginx
-
                 systemctl daemon-reload
                 systemctl enable --now certbot-renew.timer
 
