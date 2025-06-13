@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-#Description: VPC with single public IPv4 and IPv6 subnet ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:VPC)
+Description: VPC with single public IPv4 and IPv6 subnet ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:VPC)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
