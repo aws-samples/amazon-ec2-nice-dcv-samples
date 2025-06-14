@@ -2436,8 +2436,9 @@ Resources:
           export DEBIAN_FRONTEND=noninteractive
 
           systemctl stop apt-daily.timer apt-daily-upgrade.timer
+          apt-get clean all
           apt-get update -q
-          sleep 10
+          sleep 20
           pkill apt
           pkill dpkg
           apt-get install -q -y wget tmux unzip tar curl sed
@@ -2766,7 +2767,7 @@ Outputs:
   EC2console:
     Description: EC2 console
     Value: !Sub
-      - "https://${AWS::Region}.${url}/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+      - "https://${AWS::Region}.${url}/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${ec2Instance}"
       - url:
           !FindInMap [
             ConsoleUrl,
@@ -2893,7 +2894,7 @@ Outputs:
     Condition: createCloudFront
     Description: CloudFront console
     Value: !Sub
-      - "https://${url}/cloudfront/home#/distributions/${cfDistribution.Id}"
+      - "https://${url}/cloudfront/home#/distributions/${cfDistribution.Id}?region=${AWS::Region}"
       - url:
           !FindInMap [
             ConsoleUrl,

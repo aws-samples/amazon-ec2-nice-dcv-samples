@@ -2549,7 +2549,7 @@ Outputs:
   EC2console:
     Description: EC2 console
     Value: !Sub
-      - "https://${AWS::Region}.${url}/ec2/home?region=${AWS::Region}#Instances:search=${ec2Instance}"
+      - "https://${AWS::Region}.${url}/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${ec2Instance}"
       - url:
           !FindInMap [
             ConsoleUrl,
@@ -2676,7 +2676,7 @@ Outputs:
     Condition: createCloudFront
     Description: CloudFront console
     Value: !Sub
-      - "https://${url}/cloudfront/home#/distributions/${cfDistribution.Id}"
+      - "https://${url}/cloudfront/home#/distributions/${cfDistribution.Id}?region=${AWS::Region}"
       - url:
           !FindInMap [
             ConsoleUrl,
