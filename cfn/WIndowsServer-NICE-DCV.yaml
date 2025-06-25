@@ -1484,12 +1484,6 @@ Resources:
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-all
                 choco install --no-progress -y vcredist140
 
-                IF ${installDocker} EQU Yes (
-                  powershell -Command "Add-WindowsFeature Containers"
-                  shutdown /r /t 1 /f
-                  powershell -Command "Start-Sleep -s 5"
-                )
-
                 exit
           commands:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
@@ -1711,10 +1705,13 @@ Resources:
                 @echo off
                 powershell -Command "Start-Sleep -s 10"
                 IF EXIST c:\windows\temp\dcv-docker-install.txt EXIT
-                IF EXIST c:\windows\System32\docker.exe EXIT
+                IF EXIST c:\windows\System32\dockerd.exe EXIT
 
                 powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"           
                 ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-docker-install.txt
+
+                shutdown /r /t 1 /f   
+                powershell -Command "Start-Sleep -s 5"
 
                 exit
             c:\\windows\\temp\\install-docker-ce.ps1:
@@ -1749,7 +1746,6 @@ Resources:
 
                 # Register docker service.
                 &c:\windows\System32\dockerd.exe --register-service --service-name docker
-                Start-Service docker
 
                 $windowsFeature = "Containers"
                 if (-not (Get-WindowsFeature $windowsFeature).Installed)
