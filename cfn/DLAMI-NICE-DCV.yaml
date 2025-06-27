@@ -150,10 +150,11 @@ Parameters:
       - Ubuntu 22.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-22.04/latest/image_id
       - Ubuntu 22.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-22.04/latest/image_id
 
+      - Ubuntu 22.04 (Neuron JAX 0.6) |/aws/service/neuron/dlami/jax-0.6/ubuntu-22.04/latest/image_id
       - Ubuntu 22.04 (Neuron JAX 0.5) |/aws/service/neuron/dlami/jax-0.5/ubuntu-22.04/latest/image_id
 
+      - Ubuntu 22.04 (Neuron PyTorch 2.7) |/aws/service/neuron/dlami/pytorch-2.7/ubuntu-22.04/latest/image_id
       - Ubuntu 22.04 (Neuron PyTorch 2.6) |/aws/service/neuron/dlami/pytorch-2.6/ubuntu-22.04/latest/image_id
-      - Ubuntu 22.04 (Neuron PyTorch 2.5) |/aws/service/neuron/dlami/pytorch-2.5/ubuntu-22.04/latest/image_id
 
       - Ubuntu 22.04 (Neuron TensorFlow 2.10) |/aws/service/neuron/dlami/tensorflow-2.10/ubuntu-22.04/latest/image_id
 
@@ -162,7 +163,6 @@ Parameters:
 
       - Ubuntu 22.04 (PyTorch 2.7) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.7-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.6) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.5) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.5-ubuntu-22.04/latest/ami-id
 
       - Ubuntu 22.04 (TensorFlow 2.18) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.18-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (TensorFlow 2.17) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.17-ubuntu-22.04/latest/ami-id
@@ -171,7 +171,6 @@ Parameters:
 
       - Ubuntu 22.04 (PyTorch 2.7) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.7-ubuntu-22.04/latest/ami-id
       - Ubuntu 22.04 (PyTorch 2.6) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.5) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.5-ubuntu-22.04/latest/ami-id
 
     Default: "Ubuntu 24.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-24.04/latest/ami-id"
 
@@ -232,17 +231,17 @@ Parameters:
       - inf1.6xlarge (Inferentia x 4)
       - inf1.24xlarge (Inferentia x 16)
 
-      - inf2.xlarge (Inferentia2)
-      - inf2.8xlarge (Inferentia2)
-      - inf2.24xlarge (Inferentia2 x 6)
-      - inf2.48xlarge (Inferentia2 x 6)
+      - inf2.xlarge (Inferentia2 - 32 GB accelerator memory)
+      - inf2.8xlarge (Inferentia2 - 32 GB accelerator memory)
+      - inf2.24xlarge (Inferentia2 - 6 x 32 GB accelerator memory)
+      - inf2.48xlarge (Inferentia2 - 12 x 32 GB accelerator memory)
 
-      - trn1.2xlarge (Trainium)
-      - trn1.32xlarge (Trainium x 16)
-      - trn1n.32xlarge (Trainium x 16)
+      - trn1.2xlarge (Trainium - 32 GB accelerator memory)
+      - trn1.32xlarge (Trainium - 16 x 32 GB accelerator memory)
+      - trn1n.32xlarge (Trainium - 16 x 32 GB accelerator memory)
 
-      - trn2.48xlarge (Trainium2 x 16)
-      - trn2u.48xlarge (Trainium2 x 16)
+      - trn2.48xlarge (Trainium2 - 16 x 96 GB accelerator memory)
+      - trn2u.48xlarge (Trainium2 - 16 x 96 GB accelerator memory)
 
       - p4d.24xlarge (A100 - 8 x 40 GB GPU memory)
       - p4de.24xlarge (A100 - 8 x 40 GB GPU memory)
