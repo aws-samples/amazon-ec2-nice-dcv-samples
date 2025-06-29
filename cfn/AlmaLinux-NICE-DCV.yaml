@@ -2166,6 +2166,7 @@ Resources:
                 dnf clean all
                 dnf -q -y module install nvidia-driver:open-dkms
                 dnf install -q -y nvidia-settings
+                dnf install -q -y nvidia-xconfig
 
                 # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities
                 #dnf install -q -y cuda-toolkit

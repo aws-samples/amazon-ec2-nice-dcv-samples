@@ -2247,6 +2247,7 @@ Resources:
                 apt-get update -q
                 apt-get install -q -y nvidia-open
                 apt-get install -q -y nvidia-settings
+                apt-get install -q -y nvidia-xconfig
 
                 # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities
                 #apt-get install -q -y cuda-toolkit

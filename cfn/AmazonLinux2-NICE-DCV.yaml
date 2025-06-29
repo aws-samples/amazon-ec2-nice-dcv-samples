@@ -2143,6 +2143,7 @@ Resources:
                 yum clean expire-cache
                 yum install -q -y nvidia-driver-latest-dkms
                 yum install -q -y nvidia-settings
+                yum install -q -y nvidia-xconfig
 
                 # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages
                 #yum install -q -y cuda-toolkit
