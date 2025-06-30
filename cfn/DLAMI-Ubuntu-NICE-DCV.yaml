@@ -1,0 +1,2505 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deep Learning AMI with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/ ) (uksb-632il17651) (tag:DLAMI-Ubuntu)
+Transform: "AWS::LanguageExtensions"
+
+Metadata:
+  License:
+    Description: |
+      Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+      SPDX-License-Identifier: MIT-0
+
+      Permission is hereby granted, free of charge, to any person obtaining a copy of this
+      software and associated documentation files (the "Software"), to deal in the Software
+      without restriction, including without limitation the rights to use, copy, modify,
+      merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+      permit persons to whom the Software is furnished to do so.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+      INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+      PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+      HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+      OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+      SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "DLAMI release notes: https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html"
+      - Label:
+          default: EC2
+        Parameters:
+          - ec2Name
+          - ec2KeyPair
+          - imageId
+          - instanceType
+          - ec2TerminationProtection
+      - Label:
+          default: DCV
+        Parameters:
+          - sessionType
+          - listenPort
+      - Label:
+          default: Network
+        Parameters:
+          - vpcID
+          - subnetID
+          - displayPublicIP
+          - assignStaticIP
+      - Label:
+          default: Remote access
+        Parameters:
+          - ingressIPv4
+          - ingressIPv6
+          - allowSSHport
+          - installWebmin
+      - Label:
+          default: Web server
+        Parameters:
+          - enableCloudFront
+          - originType
+          - allowWebServerPorts
+      - Label:
+          default: EBS volume
+        Parameters:
+          - volumeSize
+          - volumeType
+      - Label:
+          default: AWS Backup
+        Parameters:
+          - enableBackup
+          - scheduleExpression
+          - scheduleExpressionTimezone
+          - deleteAfterDays
+      - Label:
+          default: AWS Global Accelerator (AGA)
+        Parameters:
+          - enableAGA
+      - Label:
+          default: Others
+        Parameters:
+          - r53ZoneID
+
+    ParameterLabels:
+      ec2Name:
+        default: "EC2 instance name"
+      ec2KeyPair:
+        default: "Key pair"
+      imageId:
+        default: "Deep Learning AMI"
+      instanceType:
+        default: "Instance type (x86_64 or arm64)"
+      ec2TerminationProtection:
+        default: "Enable EC2 termination protection to prevent accidental deletion"
+
+      sessionType:
+        default: "DCV session type"
+      listenPort:
+        default: "TCP/UDP listen port"
+
+      vpcID:
+        default: "VPC with outbound internet connectivity"
+      subnetID:
+        default: "Subnet in selected VPC with outbound internet connectivity"
+      displayPublicIP:
+        default: "EC2 in public subnet with public IP assigned?"
+      assignStaticIP:
+        default: "Elastic IP: assign static public internet IPv4 address"
+
+      ingressIPv4:
+        default: "Allowed source prefix (IPv4)"
+      ingressIPv6:
+        default: "Allowed source prefix (IPv6)"
+      allowSSHport:
+        default: "Allow SSH from network"
+      installWebmin:
+        default: "Install Webmin"
+
+      enableCloudFront:
+        default: "Create Amazon CloudFront distribution"
+      originType:
+        default: "CloudFront origin type"
+      allowWebServerPorts:
+        default: "Allow HTTP/HTTPS inbound to EC2 instance"
+
+      volumeSize:
+        default: "Volume size (GiB)"
+      volumeType:
+        default: "Volume type"
+
+      enableBackup:
+        default: "Backup EC2 instance"
+      scheduleExpression:
+        default: "CRON expression specifying when AWS Backup initiates a backup job"
+      scheduleExpressionTimezone:
+        default: "Timezone to set backup schedule"
+      deleteAfterDays:
+        default: "Number of days after creation that a recovery point (backup) is deleted"
+
+      enableAGA:
+        default: "Deploy AWS Global Accelerator"
+
+      r53ZoneID:
+        default: "Optional: Route 53 Zone ID for DNS record"
+
+Parameters:
+  imageId:
+    Type: String
+    Description: https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html https://aws.amazon.com/releasenotes/dlami-support-policy/
+    AllowedValues:
+      # aws ssm get-parameters-by-path --recursive --path /aws/service/neuron/dlami | jq -r  ".Parameters[].Name"
+      # aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami | jq -r  ".Parameters[].Name"
+      - Ubuntu 22.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-22.04/latest/image_id
+      - Ubuntu 22.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-22.04/latest/image_id
+
+      - Ubuntu 22.04 (Neuron JAX 0.6) |/aws/service/neuron/dlami/jax-0.6/ubuntu-22.04/latest/image_id
+      - Ubuntu 22.04 (Neuron JAX 0.5) |/aws/service/neuron/dlami/jax-0.5/ubuntu-22.04/latest/image_id
+
+      - Ubuntu 22.04 (Neuron PyTorch 2.7) |/aws/service/neuron/dlami/pytorch-2.7/ubuntu-22.04/latest/image_id
+      - Ubuntu 22.04 (Neuron PyTorch 2.6) |/aws/service/neuron/dlami/pytorch-2.6/ubuntu-22.04/latest/image_id
+
+      - Ubuntu 22.04 (Neuron TensorFlow 2.10) |/aws/service/neuron/dlami/tensorflow-2.10/ubuntu-22.04/latest/image_id
+
+      - Ubuntu 24.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-24.04/latest/ami-id
+      - Ubuntu 22.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
+
+      - Ubuntu 22.04 (PyTorch 2.7) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.7-ubuntu-22.04/latest/ami-id
+      - Ubuntu 22.04 (PyTorch 2.6) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
+
+      - Ubuntu 22.04 (TensorFlow 2.18) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.18-ubuntu-22.04/latest/ami-id
+      - Ubuntu 22.04 (TensorFlow 2.17) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.17-ubuntu-22.04/latest/ami-id
+
+      - Ubuntu 22.04 (Base) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
+
+      - Ubuntu 22.04 (PyTorch 2.7) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.7-ubuntu-22.04/latest/ami-id
+      - Ubuntu 22.04 (PyTorch 2.6) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
+
+    Default: "Ubuntu 24.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-24.04/latest/ami-id"
+
+  ec2Name:
+    Type: String
+    Description: EC2 instance name
+    Default: Deep Learning AMI
+
+  ec2KeyPair:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: https://console.aws.amazon.com/ec2/#KeyPairs
+    AllowedPattern: .+
+    ConstraintDescription: Select a key pair
+  instanceType:
+    Type: String
+    Description: https://console.aws.amazon.com/ec2/#InstanceTypes https://aws.amazon.com/ec2/instance-types/#Accelerated_Computing
+    AllowedValues:
+      - g4dn.xlarge (T4 - 16 GB GPU memory)
+      - g4dn.2xlarge (T4 - 16 GB GPU memory)
+      - g4dn.4xlarge (T4 - 16 GB GPU memory)
+      - g4dn.8xlarge (T4 - 16 GB GPU memory)
+      - g4dn.16xlarge (T4 - 16 GB GPU memory)
+      - g4dn.12xlarge (T4 - 4 x 16 GB GPU memory)
+      - g4dn.metal (T4 - 8 x 16 GB GPU memory)
+
+      - g5.xlarge (A10G - 24 GB GPU memory)
+      - g5.2xlarge (A10G - 24 GB GPU memory)
+      - g5.4xlarge (A10G - 24 GB GPU memory)
+      - g5.8xlarge (A10G - 24 GB GPU memory)
+      - g5.16xlarge (A10G - 24 GB GPU memory)
+      - g5.12xlarge (A10G - 4 x 24 GB GPU memory)
+      - g5.24xlarge (A10G - 4 x 24 GB GPU memory)
+      - g5.48xlarge (A10G - 8 x 24 GB GPU memory)
+
+      - g6.xlarge (L4 - 24 GB GPU memory)
+      - g6.2xlarge (L4 - 24 GB GPU memory)
+      - g6.4xlarge (L4 - 24 GB GPU memory)
+      - g6.8xlarge (L4 - 24 GB GPU memory)
+      - g6.16xlarge (L4 - 24 GB GPU memory)
+      - g6.12xlarge (L4 - 4 x 24 GB GPU memory)
+      - g6.24xlarge (L4 - 4 x 24 GB GPU memory)
+      - g6.48xlarge (L4 - 8 x 24 GB GPU memory)
+
+      - gr6.4xlarge (L4 - 24 GB GPU memory)
+      - gr6.8xlarge (L4 - 24 GB GPU memory)
+
+      - g6e.xlarge (L40S - 48 GB GPU memory)
+      - g6e.2xlarge (L40S - 48 GB GPU memory)
+      - g6e.4xlarge (L40S - 48 GB GPU memory)
+      - g6e.8xlarge (L40S - 48 GB GPU memory)
+      - g6e.16xlarge (L40S - 48 GB GPU memory)
+      - g6e.12xlarge (L40S - 4 x 48 GB GPU memory)
+      - g6e.24xlarge (L40S - 4 x 48 GB GPU memory)
+      - g6e.48xlarge (L40S - 8 x 48 GB GPU memory)
+
+      - inf1.xlarge (Inferentia)
+      - inf1.2xlarge (Inferentia)
+      - inf1.6xlarge (Inferentia x 4)
+      - inf1.24xlarge (Inferentia x 16)
+
+      - inf2.xlarge (Inferentia2 - 32 GB accelerator memory)
+      - inf2.8xlarge (Inferentia2 - 32 GB accelerator memory)
+      - inf2.24xlarge (Inferentia2 - 6 x 32 GB accelerator memory)
+      - inf2.48xlarge (Inferentia2 - 12 x 32 GB accelerator memory)
+
+      - trn1.2xlarge (Trainium - 32 GB accelerator memory)
+      - trn1.32xlarge (Trainium - 16 x 32 GB accelerator memory)
+      - trn1n.32xlarge (Trainium - 16 x 32 GB accelerator memory)
+
+      - trn2.48xlarge (Trainium2 - 16 x 96 GB accelerator memory)
+      - trn2u.48xlarge (Trainium2 - 16 x 96 GB accelerator memory)
+
+      - p4d.24xlarge (A100 - 8 x 40 GB GPU memory)
+      - p4de.24xlarge (A100 - 8 x 40 GB GPU memory)
+
+      - p5.48xlarge (H100 - 8 x 80 GB GPU memory)
+      - p5e.48xlarge (H200 - 8 x 141 GB GPU memory)
+      - p5en.48xlarge (H200 - 8 x 141 GB GPU memory)
+
+      - p6-b200.48xlarge (B200 - 8 x 180 GB GPU memory)
+
+      - g5g.2xlarge (T4G - 16 GB GPU memory)
+      - g5g.4xlarge (T4G - 16 GB GPU memory)
+      - g5g.8xlarge (T4G - 16 GB GPU memory)
+      - g5g.16xlarge (T4G - 2 x 16 GB GPU memory)
+      - g5g.metal (T4G - 2 x 16 GB GPU memory)
+
+    Default: g4dn.xlarge (T4 - 16 GB GPU memory)
+  ec2TerminationProtection:
+    Type: String
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html
+    Default: "Yes"
+    AllowedValues:
+      - "Yes"
+      - "No"
+
+  sessionType:
+    Type: String
+    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
+    AllowedValues:
+      - "console"
+      - "virtual"
+      - "virtual-with-GPU_sharing"
+    Default: "virtual"
+  listenPort:
+    Type: Number
+    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+    MinValue: 1024
+    MaxValue: 65535
+    Default: 8443
+
+  vpcID:
+    Type: AWS::EC2::VPC::Id
+    Description: "https://console.aws.amazon.com/vpcconsole/home#vpcs:"
+    AllowedPattern: .+
+    ConstraintDescription: Select a VPC
+  subnetID:
+    Type: AWS::EC2::Subnet::Id
+    Description: "https://console.aws.amazon.com/vpcconsole/home#subnets:"
+    AllowedPattern: .+
+    ConstraintDescription: Select a Subnet
+  displayPublicIP:
+    Type: String
+    Description: Select No if EC2 has no public IP
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "Yes"
+  assignStaticIP:
+    Type: String
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "Yes"
+
+  ingressIPv4:
+    Type: String
+    Description: e.g. 1.2.3.4/32, get your internet IPv4 address from https://checkip.amazonaws.com
+    AllowedPattern: "^\\d+\\.\\d+\\.\\d+\\.\\d+\\/\\d+$"
+    ConstraintDescription: Specify valid IPv4 prefix
+    Default: 0.0.0.0/0
+  ingressIPv6:
+    Type: String
+    Description: e.g. 1:2:3:4::/64, get your internet IPv6 address (if any) with tools such as https://ifconfig.co
+    AllowedPattern: .+
+    ConstraintDescription: Specify valid IPv6 prefix
+    Default: ::/0
+  allowSSHport:
+    Type: String
+    Description: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-ssh.html
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "Yes"
+  installWebmin:
+    Type: String
+    Description: https://webmin.com/
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+
+  enableCloudFront:
+    Type: String
+    Description: https://docs.aws.amazon.com/cloudfront/
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  originType:
+    Type: String
+    Description: https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html
+    AllowedValues:
+      - "EC2"
+      - "VPC Origin"
+    Default: "EC2"
+  allowWebServerPorts:
+    Type: String
+    # Description: Allow HTTP/HTTPS inbound to EC2 instance
+    AllowedValues:
+      - "No"
+      - HTTP-and-HTTPS
+      - HTTP
+      - HTTPS
+    Default: "No"
+
+  volumeSize:
+    Type: Number
+    Description: https://docs.aws.amazon.com/ebs/latest/userguide/volume_constraints.html
+    MinValue: 50
+    MaxValue: 16384
+    Default: 100
+  volumeType:
+    Type: String
+    Description: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
+    AllowedValues:
+      - gp3
+      - gp2
+    Default: gp3
+
+  enableBackup:
+    Type: String
+    Description: https://docs.aws.amazon.com/aws-backup/
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+  scheduleExpression:
+    Type: String
+    Description: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-scheduled-rule-pattern.html
+    AllowedPattern: .+
+    Default: "cron(0 1 ? * * *)"
+  scheduleExpressionTimezone: # https://nodatime.org/TimeZones?version=2024a&format=json
+    Type: String
+    Description: https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html#time-zones
+    AllowedValues:
+      - Africa/Abidjan
+      - Africa/Algiers
+      - Africa/Bissau
+      - Africa/Cairo
+      - Africa/Casablanca
+      - Africa/Ceuta
+      - Africa/El_Aaiun
+      - Africa/Johannesburg
+      - Africa/Juba
+      - Africa/Khartoum
+      - Africa/Lagos
+      - Africa/Maputo
+      - Africa/Monrovia
+      - Africa/Nairobi
+      - Africa/Ndjamena
+      - Africa/Sao_Tome
+      - Africa/Tripoli
+      - Africa/Tunis
+      - Africa/Windhoek
+      - America/Adak
+      - America/Anchorage
+      - America/Araguaina
+      - America/Argentina/Buenos_Aires
+      - America/Argentina/Catamarca
+      - America/Argentina/Cordoba
+      - America/Argentina/Jujuy
+      - America/Argentina/La_Rioja
+      - America/Argentina/Mendoza
+      - America/Argentina/Rio_Gallegos
+      - America/Argentina/Salta
+      - America/Argentina/San_Juan
+      - America/Argentina/San_Luis
+      - America/Argentina/Tucuman
+      - America/Argentina/Ushuaia
+      - America/Asuncion
+      - America/Bahia
+      - America/Bahia_Banderas
+      - America/Barbados
+      - America/Belem
+      - America/Belize
+      - America/Boa_Vista
+      - America/Bogota
+      - America/Boise
+      - America/Cambridge_Bay
+      - America/Campo_Grande
+      - America/Cancun
+      - America/Caracas
+      - America/Cayenne
+      - America/Chicago
+      - America/Chihuahua
+      - America/Ciudad_Juarez
+      - America/Costa_Rica
+      - America/Cuiaba
+      - America/Danmarkshavn
+      - America/Dawson
+      - America/Dawson_Creek
+      - America/Denver
+      - America/Detroit
+      - America/Edmonton
+      - America/Eirunepe
+      - America/El_Salvador
+      - America/Fort_Nelson
+      - America/Fortaleza
+      - America/Glace_Bay
+      - America/Goose_Bay
+      - America/Grand_Turk
+      - America/Guatemala
+      - America/Guayaquil
+      - America/Guyana
+      - America/Halifax
+      - America/Havana
+      - America/Hermosillo
+      - America/Indiana/Indianapolis
+      - America/Indiana/Knox
+      - America/Indiana/Marengo
+      - America/Indiana/Petersburg
+      - America/Indiana/Tell_City
+      - America/Indiana/Vevay
+      - America/Indiana/Vincennes
+      - America/Indiana/Winamac
+      - America/Inuvik
+      - America/Iqaluit
+      - America/Jamaica
+      - America/Juneau
+      - America/Kentucky/Louisville
+      - America/Kentucky/Monticello
+      - America/La_Paz
+      - America/Lima
+      - America/Los_Angeles
+      - America/Maceio
+      - America/Managua
+      - America/Manaus
+      - America/Martinique
+      - America/Matamoros
+      - America/Mazatlan
+      - America/Menominee
+      - America/Merida
+      - America/Metlakatla
+      - America/Mexico_City
+      - America/Miquelon
+      - America/Moncton
+      - America/Monterrey
+      - America/Montevideo
+      - America/New_York
+      - America/Nome
+      - America/Noronha
+      - America/North_Dakota/Beulah
+      - America/North_Dakota/Center
+      - America/North_Dakota/New_Salem
+      - America/Nuuk
+      - America/Ojinaga
+      - America/Panama
+      - America/Paramaribo
+      - America/Phoenix
+      - America/Port-au-Prince
+      - America/Porto_Velho
+      - America/Puerto_Rico
+      - America/Punta_Arenas
+      - America/Rankin_Inlet
+      - America/Recife
+      - America/Regina
+      - America/Resolute
+      - America/Rio_Branco
+      - America/Santarem
+      - America/Santiago
+      - America/Santo_Domingo
+      - America/Sao_Paulo
+      - America/Scoresbysund
+      - America/Sitka
+      - America/St_Johns
+      - America/Swift_Current
+      - America/Tegucigalpa
+      - America/Thule
+      - America/Tijuana
+      - America/Toronto
+      - America/Vancouver
+      - America/Whitehorse
+      - America/Winnipeg
+      - America/Yakutat
+      - Antarctica/Casey
+      - Antarctica/Davis
+      - Antarctica/Macquarie
+      - Antarctica/Mawson
+      - Antarctica/Palmer
+      - Antarctica/Rothera
+      - Antarctica/Troll
+      - Antarctica/Vostok
+      - Asia/Almaty
+      - Asia/Amman
+      - Asia/Anadyr
+      - Asia/Aqtau
+      - Asia/Aqtobe
+      - Asia/Ashgabat
+      - Asia/Atyrau
+      - Asia/Baghdad
+      - Asia/Baku
+      - Asia/Bangkok
+      - Asia/Barnaul
+      - Asia/Beirut
+      - Asia/Bishkek
+      - Asia/Chita
+      - Asia/Choibalsan
+      - Asia/Colombo
+      - Asia/Damascus
+      - Asia/Dhaka
+      - Asia/Dili
+      - Asia/Dubai
+      - Asia/Dushanbe
+      - Asia/Famagusta
+      - Asia/Gaza
+      - Asia/Hebron
+      - Asia/Ho_Chi_Minh
+      - Asia/Hong_Kong
+      - Asia/Hovd
+      - Asia/Irkutsk
+      - Asia/Jakarta
+      - Asia/Jayapura
+      - Asia/Jerusalem
+      - Asia/Kabul
+      - Asia/Kamchatka
+      - Asia/Karachi
+      - Asia/Kathmandu
+      - Asia/Khandyga
+      - Asia/Kolkata
+      - Asia/Krasnoyarsk
+      - Asia/Kuching
+      - Asia/Macau
+      - Asia/Magadan
+      - Asia/Makassar
+      - Asia/Manila
+      - Asia/Nicosia
+      - Asia/Novokuznetsk
+      - Asia/Novosibirsk
+      - Asia/Omsk
+      - Asia/Oral
+      - Asia/Pontianak
+      - Asia/Pyongyang
+      - Asia/Qatar
+      - Asia/Qostanay
+      - Asia/Qyzylorda
+      - Asia/Riyadh
+      - Asia/Sakhalin
+      - Asia/Samarkand
+      - Asia/Seoul
+      - Asia/Shanghai
+      - Asia/Singapore
+      - Asia/Srednekolymsk
+      - Asia/Taipei
+      - Asia/Tashkent
+      - Asia/Tbilisi
+      - Asia/Tehran
+      - Asia/Thimphu
+      - Asia/Tokyo
+      - Asia/Tomsk
+      - Asia/Ulaanbaatar
+      - Asia/Urumqi
+      - Asia/Ust-Nera
+      - Asia/Vladivostok
+      - Asia/Yakutsk
+      - Asia/Yangon
+      - Asia/Yekaterinburg
+      - Asia/Yerevan
+      - Atlantic/Azores
+      - Atlantic/Bermuda
+      - Atlantic/Canary
+      - Atlantic/Cape_Verde
+      - Atlantic/Faroe
+      - Atlantic/Madeira
+      - Atlantic/South_Georgia
+      - Atlantic/Stanley
+      - Australia/Adelaide
+      - Australia/Brisbane
+      - Australia/Broken_Hill
+      - Australia/Darwin
+      - Australia/Eucla
+      - Australia/Hobart
+      - Australia/Lindeman
+      - Australia/Lord_Howe
+      - Australia/Melbourne
+      - Australia/Perth
+      - Australia/Sydney
+      - CET
+      - CST6CDT
+      - EET
+      - EST
+      - EST5EDT
+      - Etc/GMT
+      - Etc/GMT+1
+      - Etc/GMT+10
+      - Etc/GMT+11
+      - Etc/GMT+12
+      - Etc/GMT+2
+      - Etc/GMT+3
+      - Etc/GMT+4
+      - Etc/GMT+5
+      - Etc/GMT+6
+      - Etc/GMT+7
+      - Etc/GMT+8
+      - Etc/GMT+9
+      - Etc/GMT-1
+      - Etc/GMT-10
+      - Etc/GMT-11
+      - Etc/GMT-12
+      - Etc/GMT-13
+      - Etc/GMT-14
+      - Etc/GMT-2
+      - Etc/GMT-3
+      - Etc/GMT-4
+      - Etc/GMT-5
+      - Etc/GMT-6
+      - Etc/GMT-7
+      - Etc/GMT-8
+      - Etc/GMT-9
+      - Etc/UTC
+      - Europe/Andorra
+      - Europe/Astrakhan
+      - Europe/Athens
+      - Europe/Belgrade
+      - Europe/Berlin
+      - Europe/Brussels
+      - Europe/Bucharest
+      - Europe/Budapest
+      - Europe/Chisinau
+      - Europe/Dublin
+      - Europe/Gibraltar
+      - Europe/Helsinki
+      - Europe/Istanbul
+      - Europe/Kaliningrad
+      - Europe/Kirov
+      - Europe/Kyiv
+      - Europe/Lisbon
+      - Europe/London
+      - Europe/Madrid
+      - Europe/Malta
+      - Europe/Minsk
+      - Europe/Moscow
+      - Europe/Paris
+      - Europe/Prague
+      - Europe/Riga
+      - Europe/Rome
+      - Europe/Samara
+      - Europe/Saratov
+      - Europe/Simferopol
+      - Europe/Sofia
+      - Europe/Tallinn
+      - Europe/Tirane
+      - Europe/Ulyanovsk
+      - Europe/Vienna
+      - Europe/Vilnius
+      - Europe/Volgograd
+      - Europe/Warsaw
+      - Europe/Zurich
+      - HST
+      - Indian/Chagos
+      - Indian/Maldives
+      - Indian/Mauritius
+      - MET
+      - MST
+      - MST7MDT
+      - PST8PDT
+      - Pacific/Apia
+      - Pacific/Auckland
+      - Pacific/Bougainville
+      - Pacific/Chatham
+      - Pacific/Easter
+      - Pacific/Efate
+      - Pacific/Fakaofo
+      - Pacific/Fiji
+      - Pacific/Galapagos
+      - Pacific/Gambier
+      - Pacific/Guadalcanal
+      - Pacific/Guam
+      - Pacific/Honolulu
+      - Pacific/Kanton
+      - Pacific/Kiritimati
+      - Pacific/Kosrae
+      - Pacific/Kwajalein
+      - Pacific/Marquesas
+      - Pacific/Nauru
+      - Pacific/Niue
+      - Pacific/Norfolk
+      - Pacific/Noumea
+      - Pacific/Pago_Pago
+      - Pacific/Palau
+      - Pacific/Pitcairn
+      - Pacific/Port_Moresby
+      - Pacific/Rarotonga
+      - Pacific/Tahiti
+      - Pacific/Tarawa
+      - Pacific/Tongatapu
+      - WET
+    Default: Etc/UTC
+  deleteAfterDays:
+    Type: Number
+    # Description: Number of days after creation that a recovery point (backup) is deleted
+    Default: 35
+
+  enableAGA:
+    Type: String
+    Description: https://docs.aws.amazon.com/global-accelerator/
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
+
+  r53ZoneID:
+    Type: String
+    Description: https://console.aws.amazon.com/route53/hostedzones https://certbot-dns-route53.readthedocs.io/
+    Default: ""
+
+Conditions:
+  displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
+  useElasticIP:
+    !And [!Condition displayPublicIP, !Equals [!Ref assignStaticIP, "Yes"]]
+  enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
+
+  hasEIC:
+    !Not [
+      !Equals [
+        !FindInMap [
+          EICprefixMap,
+          !Ref AWS::Region,
+          IpPrefix,
+          DefaultValue: 127.0.0.1/32,
+        ],
+        127.0.0.1/32,
+      ],
+    ]
+  createSgEIC: !And [!Condition hasEIC, !Condition displayPublicIP]
+  createSgHTTP:
+    !Or [
+      !Equals [!Ref allowWebServerPorts, HTTP],
+      !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
+    ]
+  createSgHTTPS:
+    !Or [
+      !Equals [!Ref allowWebServerPorts, HTTPS],
+      !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
+    ]
+  hasCFprefix:
+    !Not [
+      !Equals [
+        !FindInMap [
+          CFprefixMap,
+          !Ref AWS::Region,
+          PrefixList,
+          DefaultValue: pl-none,
+        ],
+        pl-none,
+      ],
+    ]
+  createCFsgHTTP:
+    !And [
+      !Or [!Condition createSgHTTP, !Condition createCloudFront],
+      !Condition hasCFprefix,
+    ]
+  createCFsgHTTPS:
+    !And [
+      !Or [!Condition createSgHTTPS, !Condition createCloudFront],
+      !Condition hasCFprefix,
+    ]
+  createCloudFront: !Equals [!Ref enableCloudFront, "Yes"]
+  cfVPCOrigin:
+    !And [!Condition createCloudFront, !Equals [!Ref originType, "VPC Origin"]]
+
+  createSgSSH: !Equals [!Ref allowSSHport, "Yes"]
+  createBackup: !Equals [!Ref enableBackup, "Yes"]
+
+  installWebmin: !Equals [!Ref installWebmin, "Yes"]
+
+  hasR53Zone: !Not [!Equals [!Ref r53ZoneID, ""]]
+
+  createAGA: !Equals [!Ref enableAGA, "Yes"]
+
+Mappings:
+  EICprefixMap: # EC2 instance connect: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-prerequisites.html#ec2-instance-connect-setup-security-group
+    af-south-1:
+      IpPrefix: 13.244.121.196/30
+      Ipv6Prefix: 2406:da11:700:3b00::/56
+    ap-east-1:
+      IpPrefix: 43.198.192.104/29
+      Ipv6Prefix: 2406:da1e:da1:3c00::/56
+    ap-northeast-1:
+      IpPrefix: 3.112.23.0/29
+      Ipv6Prefix: 2406:da14:1c18:2100::/56
+    ap-northeast-2:
+      IpPrefix: 13.209.1.56/29
+      Ipv6Prefix: 2406:da12:1e1:d900::/56
+    ap-northeast-3:
+      IpPrefix: 15.168.105.160/29
+      Ipv6Prefix: 2406:da16:856:a500::/56
+    ap-south-1:
+      IpPrefix: 13.233.177.0/29
+      Ipv6Prefix: 2406:da1a:74a:4b00::/56
+    ap-south-2:
+      IpPrefix: 18.60.252.248/29
+      Ipv6Prefix: 2406:da1b:d1d:8800::/56
+    ap-southeast-1:
+      IpPrefix: 3.0.5.32/29
+      Ipv6Prefix: 2406:da18:752:6600::/56
+    ap-southeast-2:
+      IpPrefix: 13.239.158.0/29
+      Ipv6Prefix: 2406:da1c:90e:4a00::/56
+    ap-southeast-3:
+      IpPrefix: 43.218.193.64/29
+      Ipv6Prefix: 2406:da19:14b:8c00::/56
+    ap-southeast-4:
+      IpPrefix: 16.50.248.80/29
+      Ipv6Prefix: 2406:da1f:b4f:4600::/56
+    ap-southeast-5:
+      IpPrefix: 43.216.87.48/29
+      Ipv6Prefix: 2406:da10:84f9:9e00::/56
+    ca-central-1:
+      IpPrefix: 35.183.92.176/29
+      Ipv6Prefix: 2600:1f11:ae3:700::/56
+    ca-west-1:
+      IpPrefix: 40.176.213.168/29
+      Ipv6Prefix: 2600:1f1a:4ff6:d500::/56
+    cn-north-1:
+      IpPrefix: 43.196.20.40/29
+      Ipv6Prefix: 2400:7fc0:86fd:e00::/56
+    cn-northwest-1:
+      IpPrefix: 43.192.155.8/29
+      Ipv6Prefix: 2404:c2c0:87aa:4800::/56
+    eu-central-1:
+      IpPrefix: 3.120.181.40/29
+      Ipv6Prefix: 2a05:d014:17a8:8b00::/56
+    eu-central-2:
+      IpPrefix: 16.63.77.8/29
+      Ipv6Prefix: 2a05:d019:1d6:2100::/56
+    eu-north-1:
+      IpPrefix: 13.48.4.200/30
+      Ipv6Prefix: 2a05:d016:494:f00::/56
+    eu-south-1:
+      IpPrefix: 15.161.135.164/30
+      Ipv6Prefix: 2a05:d01a:c03:4a00::/56
+    eu-south-2:
+      IpPrefix: 18.101.90.48/29
+      Ipv6Prefix: 2a05:d011:cbe:f700::/56
+    eu-west-1:
+      IpPrefix: 18.202.216.48/29
+      Ipv6Prefix: 2a05:d018:403:4e00::/56
+    eu-west-2:
+      IpPrefix: 3.8.37.24/29
+      Ipv6Prefix: 2a05:d01c:4ac:3100::/56
+    eu-west-3:
+      IpPrefix: 35.180.112.80/29
+      Ipv6Prefix: 2a05:d012:c9e:d600::/56
+    il-central-1:
+      IpPrefix: 51.16.183.224/29
+      Ipv6Prefix: 2a05:d025:451:7d00::/56
+    me-central-1:
+      IpPrefix: 3.29.147.40/29
+      Ipv6Prefix: 2406:da17:1db:b00::/56
+    me-south-1:
+      IpPrefix: 16.24.46.56/29
+      Ipv6Prefix: 2a05:d01e:27f:ac00::/56
+    sa-east-1:
+      IpPrefix: 18.228.70.32/29
+      Ipv6Prefix: 2600:1f1e:d1d:e700::/56
+    us-east-1:
+      IpPrefix: 18.206.107.24/29
+      Ipv6Prefix: 2600:1f18:6fe3:8c00::/56
+    us-east-2:
+      IpPrefix: 3.16.146.0/29
+      Ipv6Prefix: 2600:1f16:138f:cf00::/56
+    us-gov-east-1:
+      IpPrefix: 18.252.4.0/30
+      Ipv6Prefix: 2600:1f15:d63:bd00::/56
+    us-gov-west-1:
+      IpPrefix: 15.200.28.80/30
+      Ipv6Prefix: 2600:1f12:fa9:5100::/56
+    us-west-1:
+      IpPrefix: 13.52.6.112/29
+      Ipv6Prefix: 2600:1f1c:12d:e900::/56
+    us-west-2:
+      IpPrefix: 18.237.140.160/29
+      Ipv6Prefix: 2600:1f13:a0d:a700::/56
+
+  CFprefixMap: # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
+    af-south-1:
+      PrefixList: pl-c0aa4fa9
+    ap-east-1:
+      PrefixList: pl-14b2577d
+    ap-east-2:
+      PrefixList: pl-0b51e244975ca1f58
+    ap-northeast-1:
+      PrefixList: pl-58a04531
+    ap-northeast-2:
+      PrefixList: pl-22a6434b
+    ap-northeast-3:
+      PrefixList: pl-31a14458
+    ap-south-1:
+      PrefixList: pl-9aa247f3
+    ap-south-2:
+      PrefixList: pl-0a25c3463226fcc61
+    ap-southeast-1:
+      PrefixList: pl-31a34658
+    ap-southeast-2:
+      PrefixList: pl-b8a742d1
+    ap-southeast-3:
+      PrefixList: pl-bca247d5
+    ap-southeast-4:
+      PrefixList: pl-0fb7e7cfe038ae0e9
+    ap-southeast-5:
+      PrefixList: pl-09076f83e90b139d0
+    ap-southeast-7:
+      PrefixList: pl-0857de2e2b1c7f2a2
+    ca-central-1:
+      PrefixList: pl-38a64351
+    ca-west-1:
+      PrefixList: pl-0530d4c590b35122b
+    eu-central-1:
+      PrefixList: pl-a3a144ca
+    eu-central-2:
+      PrefixList: pl-00b37293991dbe6a8
+    eu-north-1:
+      PrefixList: pl-fab65393
+    eu-south-1:
+      PrefixList: pl-1bbc5972
+    eu-south-2:
+      PrefixList: pl-052dcbe0f793f19da
+    eu-west-1:
+      PrefixList: pl-4fa04526
+    eu-west-2:
+      PrefixList: pl-93a247fa
+    eu-west-3:
+      PrefixList: pl-75b1541c
+    il-central-1:
+      PrefixList: pl-0dd89524416301988
+    me-central-1:
+      PrefixList: pl-05266a86378662c23
+    me-south-1:
+      PrefixList: pl-17b2577e
+    sa-east-1:
+      PrefixList: pl-5da64334
+    us-east-1:
+      PrefixList: pl-3b927c52
+    us-east-2:
+      PrefixList: pl-b6a144df
+    us-west-1:
+      PrefixList: pl-4ea04527
+    us-west-2:
+      PrefixList: pl-82a045eb
+
+  ConsoleUrl:
+    aws:
+      url: console.aws.amazon.com
+    aws-cn:
+      url: console.amazonaws.cn
+    aws-gov:
+      url: console.amazonaws-us-gov.com
+
+Resources:
+  instanceIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: [sts:AssumeRole]
+      Path: /
+      Policies:
+        - PolicyName: dcvLicensing
+          PolicyDocument: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub arn:aws:s3:::dcv-license.${AWS::Region}/*
+        - !If
+          - hasR53Zone
+          - PolicyName: Route53CertbotAccess
+            PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
+              Version: "2012-10-17"
+              Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
+                - Effect: Allow
+                  Action:
+                    - route53:ListHostedZones
+                    - route53:GetChange
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - route53:ChangeResourceRecordSets
+                  Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/${r53ZoneID}
+                  Condition:
+                    IpAddress:
+                      aws:SourceIp: 0.0.0.0/0
+                    ForAllValues:StringEquals:
+                      route53:ChangeResourceRecordSetsRecordTypes: [TXT]
+                    ForAllValues:StringLike:
+                      route53:ChangeResourceRecordSetsNormalizedRecordNames:
+                        [_acme-challenge.*]
+          - !Ref AWS::NoValue
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/CloudWatchAgentServerPolicy
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  instanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref instanceIamRole
+
+  securityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow inbound DCV and SSH
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - !If
+          - installWebmin
+          - Description: Webmin (IPv4)
+            IpProtocol: tcp
+            FromPort: 10000
+            ToPort: 10000
+            CidrIp: !Ref ingressIPv4
+          - !Ref AWS::NoValue
+        - !If
+          - installWebmin
+          - Description: Webmin (IPv6)
+            IpProtocol: tcp
+            FromPort: 10000
+            ToPort: 10000
+            CidrIpv6: !Ref ingressIPv6
+          - !Ref AWS::NoValue
+        - !If
+          - createSgSSH
+          - Description: SSH (IPv4)
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: !Ref ingressIPv4
+          - !Ref AWS::NoValue
+        - !If
+          - createSgSSH
+          - Description: SSH (IPv6)
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIpv6: !Ref ingressIPv6
+          - !Ref AWS::NoValue
+        - Description: DCV (IPv4)
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: !Ref ingressIPv4
+        - Description: DCV (IPv6)
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: !Ref ingressIPv6
+        - Description: DCV QUIC (IPv4)
+          IpProtocol: udp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: !Ref ingressIPv4
+        - Description: DCV QUIC (IPv6)
+          IpProtocol: udp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: !Ref ingressIPv6
+        - !If
+          - createSgEIC
+          - Description: SSH (EC2 Instance Connect IPv4)
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: !FindInMap [EICprefixMap, !Ref AWS::Region, IpPrefix]
+          - !Ref AWS::NoValue
+        - !If
+          - createSgEIC
+          - Description: SSH (EC2 Instance Connect IPv6)
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIpv6: !FindInMap [EICprefixMap, !Ref AWS::Region, Ipv6Prefix]
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTP
+          - Description: HTTP (IPv4)
+            IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTP
+          - Description: HTTP (IPv6)
+            IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIpv6: ::/0
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTPS
+          - Description: HTTPS (IPv4)
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIp: 0.0.0.0/0
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTPS
+          - Description: HTTPS (IPv6)
+            IpProtocol: tcp
+            FromPort: 443
+            ToPort: 443
+            CidrIpv6: ::/0
+          - !Ref AWS::NoValue
+      SecurityGroupEgress:
+        - Description: Allow all outbound traffic (IPv4)
+          IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+        - Description: Allow all outbound traffic (IPv6)
+          IpProtocol: "-1"
+          CidrIpv6: ::/0
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: Name
+          Value: !Sub
+            - "${AWS::StackName}-securityGroup-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  securityGroupForCloudFrontHTTP:
+    Type: AWS::EC2::SecurityGroup
+    Condition: createCFsgHTTP
+    Properties:
+      GroupDescription: Allow inbound HTTP from CloudFront
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - Description: HTTP (CloudFront origin IP)
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourcePrefixListId:
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+      SecurityGroupEgress:
+        - Description: Ping (CloudFront origin IP)
+          IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          DestinationPrefixListId:
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: Name
+          Value: !Sub
+            - "${AWS::StackName}-CloudFrontHTTP-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  securityGroupForCloudFrontHTTPS:
+    Type: AWS::EC2::SecurityGroup
+    Condition: createCFsgHTTPS
+    Properties:
+      GroupDescription: Allow inbound HTTPS from CloudFront
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - Description: HTTPS (CloudFront origin IP)
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourcePrefixListId:
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+      SecurityGroupEgress:
+        - Description: Ping (CloudFront origin IP)
+          IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          DestinationPrefixListId:
+            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: Name
+          Value: !Sub
+            - "${AWS::StackName}-CloudFrontHTTPS-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  securityGroupForR53HealthChecks:
+    Type: AWS::EC2::SecurityGroup
+    Condition: createAGA
+    Properties:
+      GroupDescription: Allow Route 53 Health Checks
+      VpcId: !Ref vpcID
+      SecurityGroupIngress:
+        - Description: R53 Health Checks (IPv4) 01
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 15.177.0.0/18
+        - Description: R53 Health Checks (IPv4) 02
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.80.197.0/25
+        - Description: R53 Health Checks (IPv4) 03
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.80.197.128/25
+        - Description: R53 Health Checks (IPv4) 04
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.80.198.0/25
+        - Description: R53 Health Checks (IPv4) 05
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.83.34.128/25
+        - Description: R53 Health Checks (IPv4) 06
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.83.35.0/25
+        - Description: R53 Health Checks (IPv4) 07
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 52.83.35.128/25
+        - Description: R53 Health Checks (IPv4) 08
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.183.255.128/26
+        - Description: R53 Health Checks (IPv4) 09
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.228.16.0/26
+        - Description: R53 Health Checks (IPv4) 10
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.232.40.64/26
+        - Description: R53 Health Checks (IPv4) 11
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.241.32.64/26
+        - Description: R53 Health Checks (IPv4) 12
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.243.31.192/26
+        - Description: R53 Health Checks (IPv4) 13
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.244.52.192/26
+        - Description: R53 Health Checks (IPv4) 14
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.245.168.0/26
+        - Description: R53 Health Checks (IPv4) 15
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.248.220.0/26
+        - Description: R53 Health Checks (IPv4) 16
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.250.253.192/26
+        - Description: R53 Health Checks (IPv4) 17
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.251.31.128/26
+        - Description: R53 Health Checks (IPv4) 18
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.252.79.128/26
+        - Description: R53 Health Checks (IPv4) 19
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.252.254.192/26
+        - Description: R53 Health Checks (IPv4) 20
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 54.255.254.192/26
+        - Description: R53 Health Checks (IPv4) 21
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 107.23.255.0/26
+        - Description: R53 Health Checks (IPv4) 22
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 176.34.159.192/26
+        - Description: R53 Health Checks (IPv4) 23
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIp: 177.71.207.128/26
+        - Description: R53 Health Checks (IPv6) 01
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2400:7fc0:83cc:cc00::/56
+        - Description: R53 Health Checks (IPv6) 02
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2400:7fc0:83cc:cd00::/56
+        - Description: R53 Health Checks (IPv6) 03
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2400:7fc0:83cc:ce00::/56
+        - Description: R53 Health Checks (IPv6) 04
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2404:c2c0:83cc:cc00::/56
+        - Description: R53 Health Checks (IPv6) 05
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2404:c2c0:83cc:cd00::/56
+        - Description: R53 Health Checks (IPv6) 06
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2404:c2c0:83cc:ce00::/56
+        - Description: R53 Health Checks (IPv6) 07
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da14:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 08
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da14:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 09
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da18:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 10
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da18:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 11
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da1c:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 12
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2406:da1c:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 13
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f14:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 14
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f14:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 15
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f18:3fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 16
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f18:7fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 17
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f1c:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 18
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f1c:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 19
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f1e:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 20
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:1f1e:fff:f800::/56
+        - Description: R53 Health Checks (IPv6) 21
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:f0f0:300:100::/56
+        - Description: R53 Health Checks (IPv6) 22
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:f0f0:30e::/48
+        - Description: R53 Health Checks (IPv6) 23
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2600:f0f0:30f::/48
+        - Description: R53 Health Checks (IPv6) 24
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2a05:d018:7ff:f800::/56
+        - Description: R53 Health Checks (IPv6) 25
+          IpProtocol: tcp
+          FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+          CidrIpv6: 2a05:d018:fff:f800::/56
+      SecurityGroupEgress:
+        - Description: Ping
+          IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 127.0.0.1/32
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: Name
+          Value: !Sub
+            - "${AWS::StackName}-R53HealthChecks-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  ec2Instance:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT90M
+    Metadata:
+      Comment: Install Update files
+      AWS::CloudFormation::Init:
+        configSets:
+          setup:
+            - 00_setup
+          dcv_install:
+            - 00_dcv_install
+          console:
+            - 01_console
+        00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
+          files:
+            "/home/ubuntu/update-dcv":
+              content: |
+                #!/bin/bash
+                cd /tmp
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\.//g')
+                sudo rm -f /tmp/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
+                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
+                tar -xvzf nice-dcv-ubuntu$OS_VERSION-$(arch).tgz && cd nice-dcv-*-ubuntu$OS_VERSION-$(arch)
+                sudo apt-get install -y ./nice-dcv-server_*.deb
+                sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
+                sudo apt-get install -y ./nice-xdcv_*.deb
+                if (arch | grep -q x86); then
+                  sudo apt-get install -y ./nice-dcv-gltest_*.deb
+                fi
+                if (apt info nice-dcv-gl | grep -iq installed); then
+                  sudo apt-get install -y ./nice-dcv-gl_*.deb
+                fi
+                sudo systemctl daemon-reload
+              mode: "000755"
+              owner: "ubuntu"
+              group: "ubuntu"
+            "/etc/systemd/system/dcv-virtual-session.service":
+              content: |
+                [Unit]
+                Description=Create DCV virtual session
+                After=default.target network.target
+
+                [Service]
+                ExecStart=/opt/dcv-virtual-session.sh
+
+                [Install]
+                WantedBy=default.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/opt/dcv-virtual-session.sh":
+              content: |
+                #!/bin/bash
+                dcvUsers=( "ubuntu" )
+                while true;
+                do
+                  for dcvUser in "${dcvUsers[@]}"
+                  do
+                    if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
+                      /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root %home% --type virtual
+                    fi
+                  done
+                  date
+                  /usr/bin/dcv list-sessions
+                  sleep 5
+                done
+              mode: "000744"
+              owner: "root"
+              group: "root"
+            "/etc/systemd/system/dcv-post-reboot.service":
+              content: |
+                [Unit]
+                Description=Post install tasks
+                After=default.target network.target
+
+                [Service]
+                ExecStart=/bin/sh -c "/opt/dcv-post-reboot.sh 2>&1 | tee -a /var/log/install-sw.log"
+
+                [Install]
+                WantedBy=default.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/opt/dcv-post-reboot.sh":
+              content: !Sub |
+                #!/bin/bash
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
+                export DEBIAN_FRONTEND=noninteractive
+
+                /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+
+                apt-get update
+                apt-get upgrade -q -y
+
+                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
+                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
+
+                # Add DCV ports
+                if (systemctl list-units | grep -q ufw); then
+                  ufw allow ${listenPort}/tcp
+                  ufw allow ${listenPort}/udp
+                  ufw allow https
+                  ufw allow http
+                  if [ "${installWebmin}" = "Yes" ]; then
+                    ufw allow 10000/tcp
+                  fi
+                fi
+
+                # Use NVIDIA for console and virtual (x86_64)
+                SESSION="${sessionType}"
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                case $SESSION in
+                  console*)
+                    if (which nvidia-xconfig); then
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                    fi
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  *GPU_sharing*)
+                    if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then  # GPU sharing
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                      systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    fi
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                esac
+                systemctl enable dcvserver && systemctl restart dcvserver
+
+                rm -f /etc/systemd/system/dcv-post-reboot.service
+                rm -f ${!0}
+                systemctl daemon-reload
+              mode: "000755"
+              owner: "root"
+              group: "root"
+            "/opt/aws/amazon-cloudwatch-agent/bin/config.json":
+              content: |
+                {
+                    "agent": {
+                        "metrics_collection_interval": 300,
+                        "run_as_user": "cwagent"
+                    },
+                    "metrics": {
+                        "namespace": "CWAgent",
+                        "append_dimensions": {
+                            "InstanceId": "${aws:InstanceId}"
+                        },
+                        "metrics_collected": {
+                            "mem": {
+                                "measurement": [
+                                    "used_percent"
+                                ]
+                            },
+                            "disk": {
+                                "measurement": [
+                                    "used_percent"
+                                ],
+                                "resources": [
+                                    "/"
+                                ]
+                            }
+                        }
+                    }
+                }
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf":
+              content: |
+
+                [Service]
+                ExecStart=
+                ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --timeout=3
+
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/root/install-sw.sh":
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/cfn
+                cd /tmp/cfn
+
+                # Update OS
+                apt-get update -q
+                apt-get upgrade -q -y
+                apt-get autoremove -q -y
+
+                # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
+                if (arch | grep -q x86); then
+                  curl -s -L -O https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+                else
+                  curl -s -L -O https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/arm64/latest/amazon-cloudwatch-agent.deb
+                fi
+                apt-get install -q -y ./amazon-cloudwatch-agent.deb
+                /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json -s
+                systemctl enable --now amazon-cloudwatch-agent
+
+                # GPU CloudWatch metrics: https://docs.aws.amazon.com/dlami/latest/devguide/tutorial-gpu-monitoring-gpumon.html
+                if (which nvidia-smi); then
+                  systemctl enable dlami-cloudwatch-agent@partial
+                  systemctl start dlami-cloudwatch-agent@partial
+                fi
+
+                # Webmin: https://webmin.com/download/
+                export webmin="${installWebmin}"
+                case $webmin in
+                  Yes)
+                    cd /tmp/cfn
+                    curl -s -L -O https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
+                    echo 'Y' | sh ./setup-repos.sh -f
+                    apt-get install -q -y webmin --install-recommends
+                    ;;
+                esac
+
+                # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ubuntu/.bashrc
+
+                # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
+                sudo snap install certbot --classic
+                if [ -e /snap/bin/certbot ]; then
+                  ln -s /snap/bin/certbot /usr/bin/certbot
+                  sudo snap set certbot trust-plugin-with-root=ok
+                  sudo snap install certbot-dns-route53
+                else
+                  apt-get install -q -y python3-certbot python3-certbot-apache python3-certbot-nginx python3-certbot-dns-route53
+                fi
+
+                # Ubuntu 24.04: reduce systemd-networkd-wait-online.service 2+ min timeout
+                if (lsb_release -r -s | grep -q 24); then
+                  sed -i "s/systemd-networkd-wait-online$/& --timeout=3/g" /usr/lib/systemd/system/systemd-networkd-wait-online.service
+                else
+                  rm -f /etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf
+                fi
+                systemctl daemon-reload
+
+                # VS Code: https://code.visualstudio.com/docs/setup/linux#_install-vs-code-on-linux
+                apt-get install -q -y wget gpg
+                wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg
+                install -D -o root -g root -m 644 packages.microsoft.gpg /etc/apt/keyrings/packages.microsoft.gpg
+                echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/keyrings/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" | tee /etc/apt/sources.list.d/vscode.list > /dev/null
+                rm -f packages.microsoft.gpg
+
+                # Extensions: https://code.visualstudio.com/docs/datascience/overview
+                apt-get update -q
+                apt-get install -q -y code
+                sudo -u ubuntu code --install-extension ms-python.python
+                sudo -u ubuntu code --install-extension ms-toolsai.jupyter
+                sudo -u ubuntu code --install-extension ms-vscode-remote.remote-ssh
+                sudo -u ubuntu code --install-extension ms-toolsai.datawrangler
+                sudo -u ubuntu code --install-extension amazonwebservices.aws-toolkit-vscode
+                sudo -u ubuntu code --install-extension amazonwebservices.amazon-q-vscode
+                sudo -u ubuntu code --install-extension ms-azuretools.vscode-docker
+                sudo -u ubuntu code --install-extension ms-vscode-remote.remote-containers
+                sudo -u ubuntu code --install-extension ms-toolsai.tensorboard
+                if ( which nvidia-smi ); then
+                  sudo -u ubuntu code --install-extension nvidia.nsight-vscode-edition
+                  sudo -u ubuntu code --install-extension ms-vscode.cpptools-extension-pack
+                fi
+
+                # Banner
+                DLAMI=$(grep -rl "Deep Learning" /etc/update-motd.d/*)
+                mkdir -p /home/ubuntu/Desktop
+                . $DLAMI > /home/ubuntu/Desktop/README.md
+                mkdir -p /etc/skel/Desktop
+                cp /home/ubuntu/Desktop/README.md /etc/skel/Desktop
+                chown -R ubuntu:ubuntu /home/ubuntu/Desktop
+                chmod 644 /home/ubuntu/Desktop/README.md
+
+                # Chrome and Edge browser
+                if (arch | grep -q x86); then
+                  # Google Chrome: https://www.google.com/linuxrepositories/
+                  curl -fSsL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /usr/share/keyrings/google-chrome.gpg > /dev/null
+                  echo deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main | sudo tee /etc/apt/sources.list.d/google-chrome.list
+                  apt-get update -q
+                  apt-get install -q -y google-chrome-stable
+
+                  # Microsoft Edge: https://learn.microsoft.com/en-us/linux/packages
+                  curl -fSsL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor | sudo tee /usr/share/keyrings/microsoft-edge.gpg > /dev/null
+                  echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-edge.gpg] https://packages.microsoft.com/repos/edge stable main' | sudo tee /etc/apt/sources.list.d/microsoft-edge.list
+                  apt-get update -q
+                  apt-get install -q -y microsoft-edge-stable
+                fi
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"
+          commands:
+            install:
+              command: "/root/install-sw.sh >> /var/log/install-sw.log 2>&1"
+              ignoreErrors: "true"
+        00_dcv_install:
+          files:
+            "/root/install-dcv.sh":
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/cfn
+                cd /tmp/cfn
+
+                # Change password
+                PWD=$(cat /var/lib/cloud/data/instance-id)
+                USER=ubuntu
+                echo "$USER:$PWD" | chpasswd
+
+                # Update OS
+                apt-get update -q
+                apt-get upgrade -q -y
+
+                # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
+                apt-get install -q -y ubuntu-desktop-minimal
+                apt-get install -q -y gdm3
+                apt-get install -q -y amazon-ec2-utils
+
+                # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
+                sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/custom.conf
+
+                # resolve "/var/lib/dpkg/info/nice-dcv-server.postinst: 8: dpkg-architecture: not found" when installing dcv-server
+                apt-get install -q -y dpkg-dev
+
+                # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+                apt-get install -q -y pulseaudio-utils
+                apt-get install -q -y gnome-tweaks gnome-shell-extension-ubuntu-dock
+                apt-get install -q -y gnome-shell-extension-manager
+
+                # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
+                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
+                gpg --import NICE-GPG-KEY
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\.//g')
+                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
+                tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-$(arch)
+                apt-get install -q -y ./nice-dcv-server_*.deb
+                apt-get install -q -y ./nice-dcv-web-viewer_*.deb
+                usermod -aG video dcv
+                apt-get install -q -y ./nice-xdcv_*.deb
+                if (arch | grep -q x86); then
+                  apt-get install -q -y ./nice-dcv-gltest_*.deb
+                fi
+
+                # /etc/profile.d: https://wiki.gnome.org/Apps/Terminal/FAQ
+                systemctl isolate graphical.target && sleep 3
+                GNOMEUID=$(sudo -u ubuntu gsettings get org.gnome.Terminal.ProfilesList list | cut -d"'" -f2)
+                DEFAULTUID=$(gsettings get org.gnome.Terminal.ProfilesList default | tr -d \')
+                sudo -u ubuntu gsettings get "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$GNOMEUID/" login-shell
+                sudo -u ubuntu dbus-run-session gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$GNOMEUID/" login-shell true
+                sudo -u ubuntu dbus-run-session gsettings set "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$DEFAULTUID/" login-shell true
+                sudo -u ubuntu gsettings get "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:$GNOMEUID/" login-shell
+                systemctl isolate multi-user.target
+
+                # GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
+                if  ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
+                  if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then
+                    apt-get install -q -y ./nice-dcv-gl*.deb
+                  fi
+                fi
+
+                # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
+                apt-get install -q -y cups
+                GROUP=$(cat /etc/cups/cups-files.conf | grep -oP "SystemGroup\s\K\w+")
+                usermod -a -G $GROUP dcv
+                systemctl enable cups
+
+                # glxinfo : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
+                apt-get install -q -y mesa-utils
+                apt-get install -q -y vulkan-tools clinfo
+
+                # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
+                cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
+                sed -i "s/^#enable-quic-frontend=true/enable-quic-frontend=true/g" /etc/dcv/dcv.conf
+
+                # Listen port: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+                sed -i "/^web-port=/d" /etc/dcv/dcv.conf
+                sed -i "/^quic-port=/d" /etc/dcv/dcv.conf
+                sed -i "/^\[connectivity\]/a web-port=${listenPort}" /etc/dcv/dcv.conf
+                sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
+
+                # X11 dummy driver for non GPU instance console session
+                apt-get install -q -y xserver-xorg-video-dummy
+
+                # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
+                # Console session support
+                sed -i "/^\[session-management\/automatic-console-session/a owner=\"ubuntu\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
+
+                # Disable reporting : https://wiki.ubuntu.com/Apport
+                sed -i "s/enabled=1/enable=0/g" /etc/default/apport
+                apt-get remove -q -y ubuntu-report whoopsie apport
+                apt-get autoremove -q -y
+                # Disable upgrade prompt: https://help.ubuntu.com/community/Upgrades#Upgrade_policy
+                sed -i "s/Prompt=lts/Prompt=never/g" /etc/update-manager/release-upgrades
+                chown -R ubuntu:ubuntu /home/ubuntu/.config
+
+                # Match kernel GCC version
+                if (which nvidia-smi); then
+                  if (lsb_release -r -s | grep -q 22); then
+                    if (cat /proc/version | grep -q gcc-12); then                    
+                      cd /usr/src/nvidia-*
+                      if (! cat dkms.conf | grep -q gcc-12); then
+                        sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
+                        update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
+                        update-alternatives --config gcc
+                      fi
+                    fi
+                  fi
+                fi
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"
+            "/home/ubuntu/.gnomerc":
+              content: |
+                export XDG_CURRENT_DESKTOP=ubuntu:GNOME
+                export GNOME_SHELL_SESSION_MODE=ubuntu
+                export XDG_DATA_DIRS=/usr/share/gnome:/usr/local/share:/usr/share:/var/lib/snapd/desktop
+              mode: "000644"
+              owner: "ubuntu"
+              group: "ubuntu"
+            "/etc/skel/.gnomerc":
+              content: |
+                export XDG_CURRENT_DESKTOP=ubuntu:GNOME
+                export GNOME_SHELL_SESSION_MODE=ubuntu
+                export XDG_DATA_DIRS=/usr/share/gnome:/usr/local/share:/usr/share:/var/lib/snapd/desktop
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/home/ubuntu/.config/gnome-initial-setup-done":
+              content: |
+                yes
+              mode: "000664"
+              owner: "ubuntu"
+              group: "ubuntu"
+            "/etc/skel/.config/gnome-initial-setup-done":
+              content: |
+                yes
+              mode: "000644"
+              owner: "root"
+              group: "root"
+          commands:
+            install:
+              command: "/root/install-dcv.sh > /var/log/install-dcv.log 2>&1"
+              ignoreErrors: "true"
+        01_console:
+          files:
+            "/etc/X11/xorg.conf": # Modeline generator at http://xtiming.sourceforge.net/
+              content: |
+                Section "Device"
+                    Identifier "DummyDevice"
+                    Driver "dummy"
+                    Option "UseEDID" "false"
+                    VideoRam 512000
+                EndSection
+
+                Section "Monitor"
+                    Identifier "DummyMonitor"
+                    HorizSync   5.0 - 1000.0
+                    VertRefresh 5.0 - 200.0
+                    Option "ReducedBlanking"
+                EndSection
+
+                Section "Screen"
+                    Identifier "DummyScreen"
+                    Device "DummyDevice"
+                    Monitor "DummyMonitor"
+                    DefaultDepth 24
+                    SubSection "Display"
+                        Viewport 0 0
+                        Depth 24
+                        Virtual 4096 2160
+                    EndSubSection
+                EndSection
+              mode: "000644"
+              owner: "root"
+              group: "root"
+
+    Properties:
+      ImageId: !Sub
+        - "{{resolve:ssm:${amiID}}}"
+        - amiID: !Select [1, !Split ["|", !Ref imageId]]
+      InstanceType: !Select [0, !Split [" ", !Ref instanceType]]
+      IamInstanceProfile: !Ref instanceProfile
+      KeyName: !Ref ec2KeyPair
+      SubnetId: !Ref subnetID
+      Monitoring: false
+      DisableApiTermination: !If [enableProtection, true, false]
+      EbsOptimized: true
+      SecurityGroupIds:
+        - !Ref securityGroup
+        - !If [
+            createCFsgHTTP,
+            !Ref securityGroupForCloudFrontHTTP,
+            !Ref AWS::NoValue,
+          ]
+        - !If [
+            createCFsgHTTPS,
+            !Ref securityGroupForCloudFrontHTTPS,
+            !Ref AWS::NoValue,
+          ]
+        - !If [
+            createAGA,
+            !Ref securityGroupForR53HealthChecks,
+            !Ref AWS::NoValue,
+          ]
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeType: !Ref volumeType
+            VolumeSize: !Ref volumeSize
+            DeleteOnTermination: true
+            Encrypted: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          mkdir -p /tmp/cfn
+          cd /tmp/cfn
+
+          export DEBIAN_FRONTEND=noninteractive
+
+          systemctl stop apt-daily.timer apt-daily-upgrade.timer
+          apt-get update -q
+          sleep 10
+          pkill apt
+          pkill dpkg
+
+          # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
+          if (lsb_release -r -s | grep -q 22); then # Use Python2 due to errors with Python3
+            apt-get install -q -y python2 >> /var/log/install-sw.log 2>&1
+            curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
+            tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
+            cd aws-cfn-bootstrap-1.4
+            python2 setup.py build >> /var/log/install-cfn-helper.log 2>&1
+            python2 setup.py install >> /var/log/install-cfn-helper.log 2>&1
+            curl -s -L -O https://bootstrap.pypa.io/pip/2.7/get-pip.py
+            python2 get-pip.py >> /var/log/install-cfn-helper.log 2>&1
+            sed -i "1,1s/python$/python2/g" /usr/local/bin/cfn-*
+            export CFN_INIT="python2 /usr/local/bin/cfn-init"
+          else
+            apt-get install -q -y python3 python3-pip python3-setuptools python3-docutils python3-daemon >> /var/log/install-sw.log 2>&1
+            curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+            tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
+            cd aws-cfn-bootstrap-2.0
+            python3 setup.py build >> /var/log/install-cfn-helper.log 2>&1
+            python3 setup.py install >> /var/log/install-cfn-helper.log 2>&1
+            export CFN_INIT="python3 /usr/local/bin/cfn-init"
+          fi
+
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_install
+
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+
+          #
+          systemctl set-default multi-user.target
+          systemctl daemon-reload
+          systemctl enable dcv-post-reboot
+
+          sleep 1 && reboot
+      Tags:
+        - Key: Name
+          Value: !Ref ec2Name
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  elasticIP:
+    Condition: useElasticIP
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      NetworkBorderGroup: !Ref AWS::Region
+      InstanceId: !Ref ec2Instance
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: Name
+          Value: !Sub
+            - "${AWS::StackName}-elasticIP-${UID}"
+            - UID:
+                !Select [
+                  3,
+                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                ]
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  backupPlan:
+    Type: AWS::Backup::BackupPlan
+    Condition: createBackup
+    Properties:
+      BackupPlan:
+        BackupPlanName: !Sub
+          - "${AWS::StackName}-backupPlan-${UID}"
+          - UID:
+              !Select [
+                3,
+                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+              ]
+        BackupPlanRule:
+          - RuleName: !Sub
+              - "${AWS::StackName}-backupRule-${UID}"
+              - UID:
+                  !Select [
+                    3,
+                    !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+                  ]
+            TargetBackupVault: !Ref backupVault
+            ScheduleExpression: !Ref scheduleExpression
+            ScheduleExpressionTimezone: !Ref scheduleExpressionTimezone
+            Lifecycle:
+              DeleteAfterDays: !Ref deleteAfterDays
+      BackupPlanTags:
+        {
+          "StackName": !Ref AWS::StackName,
+          "StackId": !Ref AWS::StackId,
+          "GitHub": "https://github.com/aws-samples/amazon-ec2-nice-dcv-samples",
+        }
+
+  backupVault:
+    Type: AWS::Backup::BackupVault
+    Condition: createBackup
+    UpdateReplacePolicy: Delete
+    Properties:
+      BackupVaultName: !Sub
+        - "${AWS::StackName}-backupVault-${UID}"
+        - UID:
+            !Select [
+              3,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ]
+      BackupVaultTags:
+        {
+          "StackName": !Ref AWS::StackName,
+          "StackId": !Ref AWS::StackId,
+          "GitHub": "https://github.com/aws-samples/amazon-ec2-nice-dcv-samples",
+        }
+
+  backupSelection:
+    Type: AWS::Backup::BackupSelection
+    Condition: createBackup
+    Properties:
+      BackupPlanId: !Ref backupPlan
+      BackupSelection:
+        IamRoleArn: !GetAtt backupRestoreRole.Arn
+        Resources:
+          - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
+        SelectionName: !Sub
+          - "${AWS::StackName}-backupSelection-${UID}"
+          - UID:
+              !Select [
+                3,
+                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+              ]
+
+  backupRestoreRole:
+    Type: AWS::IAM::Role
+    Condition: createBackup
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: backup.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: restore-EC2-instance-profile
+          PolicyDocument: # https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-ec2.html
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iam:PassRole
+                Resource: !GetAtt instanceIamRole.Arn
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  aga:
+    Type: AWS::GlobalAccelerator::Accelerator
+    Condition: createAGA
+    Properties:
+      Name: !Sub
+        - "${AWS::StackName}-AGA-${UID}"
+        - UID:
+            !Select [
+              3,
+              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
+            ]
+      IpAddressType: IPV4
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  agaListener1:
+    Type: AWS::GlobalAccelerator::Listener
+    Condition: createAGA
+    Properties:
+      AcceleratorArn: !Ref aga
+      ClientAffinity: SOURCE_IP
+      Protocol: TCP
+      PortRanges:
+        - FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+        - !If
+          - createSgSSH
+          - FromPort: 22
+            ToPort: 22
+          - !Ref AWS::NoValue
+        - !If
+          - installWebmin
+          - FromPort: 10000
+            ToPort: 10000
+          - !Ref AWS::NoValue
+
+  agaListener2:
+    Type: AWS::GlobalAccelerator::Listener
+    Condition: createAGA
+    Properties:
+      AcceleratorArn: !Ref aga
+      ClientAffinity: SOURCE_IP
+      Protocol: UDP
+      PortRanges:
+        - FromPort: !Ref listenPort
+          ToPort: !Ref listenPort
+
+  agaEndpointGroup1:
+    Type: AWS::GlobalAccelerator::EndpointGroup
+    Condition: createAGA
+    Properties:
+      ListenerArn: !GetAtt agaListener1.ListenerArn
+      EndpointGroupRegion: !Ref AWS::Region
+      HealthCheckPort: !Ref listenPort
+      HealthCheckProtocol: TCP
+      ThresholdCount: 1
+      EndpointConfigurations:
+        - EndpointId: !Ref ec2Instance
+
+  agaEndpointGroup2:
+    Type: AWS::GlobalAccelerator::EndpointGroup
+    Condition: createAGA
+    Properties:
+      ListenerArn: !GetAtt agaListener2.ListenerArn
+      EndpointGroupRegion: !Ref AWS::Region
+      HealthCheckPort: !Ref listenPort
+      HealthCheckProtocol: TCP
+      ThresholdCount: 1
+      EndpointConfigurations:
+        - EndpointId: !Ref ec2Instance
+
+  cfVpcOrigin:
+    Type: AWS::CloudFront::VpcOrigin
+    Condition: cfVPCOrigin
+    Properties:
+      VpcOriginEndpointConfig:
+        Arn: !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
+        Name: !Sub ${AWS::StackName}-${ec2Instance}
+        OriginProtocolPolicy: http-only
+        OriginSSLProtocols:
+          - TLSv1.2
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+  cfDistribution:
+    Type: AWS::CloudFront::Distribution
+    Condition: createCloudFront
+    Properties:
+      DistributionConfig:
+        Origins:
+          - !If
+            - cfVPCOrigin
+            - DomainName: !GetAtt ec2Instance.PrivateDnsName
+              Id: !Ref ec2Instance
+              VpcOriginConfig:
+                VpcOriginId: !GetAtt cfVpcOrigin.Id
+            - DomainName: !GetAtt ec2Instance.PublicDnsName
+              Id: !Ref ec2Instance
+              CustomOriginConfig:
+                OriginProtocolPolicy: http-only
+                OriginSSLProtocols:
+                  - TLSv1.2
+        Enabled: true
+        Comment: !Sub "${AWS::StackName}-CloudFront"
+        HttpVersion: http2and3
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+          MinimumProtocolVersion: TLSv1.2_2021
+        DefaultCacheBehavior:
+          AllowedMethods: !Split [",", "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE"]
+          CachedMethods:
+            - "HEAD"
+            - "GET"
+          Compress: true
+          CachePolicyId: "4cc15a8a-d715-48a4-82b8-cc0b614638fe"
+          OriginRequestPolicyId: "216adef6-5c7f-47e4-b989-5492eafa07d3"
+          ResponseHeadersPolicyId: "67f7725c-6f97-4210-82d7-5512b31e9d03"
+          TargetOriginId: !Ref ec2Instance
+          ViewerProtocolPolicy: "redirect-to-https"
+      Tags:
+        - Key: StackName
+          Value: !Ref AWS::StackName
+        - Key: StackId
+          Value: !Ref AWS::StackId
+        - Key: GitHub
+          Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
+
+Outputs:
+  EC2console:
+    Description: EC2 console
+    Value: !Sub
+      - "https://${AWS::Region}.${url}/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${ec2Instance}"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
+
+  EC2instanceConnect:
+    Condition: createSgEIC
+    Description: EC2 Instance Connect
+    Value: !Sub
+      - "https://${AWS::Region}.${url}/ec2-instance-connect/ssh?connType=standard&instanceId=${ec2Instance}&osUser=ubuntu&sshPort=22#/"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
+
+  EC2serialConsole:
+    Condition: createSgEIC
+    Description: EC2 Serial Console
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
+
+  EC2iamRole:
+    Description: EC2 IAM role
+    Value: !Sub
+      - "https://${url}/iam/home#/roles/details/${role}"
+      - {
+          role: !Select [1, !Split ["/", !GetAtt instanceIamRole.Arn]],
+          url:
+            !FindInMap [
+              ConsoleUrl,
+              !Ref "AWS::Partition",
+              url,
+              DefaultValue: "console.aws.amazon.com",
+            ],
+        }
+
+  SSMsessionManager:
+    Description: SSM Session Manager (" sudo passwd ubuntu " to change password)
+    Value: !Sub
+      - "https://${AWS::Region}.${url}/systems-manager/session-manager/${ec2Instance}"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
+
+  DCVwebConsole:
+    Description: DCV web browser client (login as ubuntu)
+    Value: !Sub
+      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
+      - IpAddress:
+          !If [
+            displayPublicIP,
+            !GetAtt ec2Instance.PublicIp,
+            !GetAtt ec2Instance.PrivateIp,
+          ]
+
+  DCVwebConsoleAGA:
+    Condition: createAGA
+    Description: DCV web browser client through AGA (login as ubuntu)
+    Value: !Sub https://${aga.DnsName}:${listenPort}
+
+  SecurityGroup:
+    Description: Security Group
+    Value: !Ref securityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-SecurityGroup
+
+  InstanceID:
+    Description: Instance ID
+    Value: !Ref ec2Instance
+    Export:
+      Name: !Sub ${AWS::StackName}-InstanceID
+
+  IAMRole:
+    Description: IAM Role
+    Value: !Ref instanceIamRole
+    Export:
+      Name: !Sub ${AWS::StackName}-IAMRole
+
+  WebminUrl:
+    Condition: installWebmin
+    Description: Webmin (set root password and login as root)
+    Value:
+      !If [
+        displayPublicIP,
+        !Sub "https://${ec2Instance.PublicIp}:10000",
+        !Sub "https://${ec2Instance.PrivateIp}:10000",
+      ]
+
+  AGAconsole:
+    Condition: createAGA
+    Description: Global Accelerator console
+    Value: !Sub
+      - https://${url}/globalaccelerator/home#AcceleratorDetails:AcceleratorArn=${aga}
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
+
+  AGAipv4Addresses:
+    Condition: createAGA
+    Description: Global Accelerator IPv4 addresses
+    Value: !Join [", ", !GetAtt aga.Ipv4Addresses]
+
+  CloudFrontConsole:
+    Condition: createCloudFront
+    Description: CloudFront console
+    Value: !Sub
+      - "https://${url}/cloudfront/home#/distributions/${cfDistribution.Id}?region=${AWS::Region}"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
+
+  CloudFrontURL:
+    Condition: createCloudFront
+    Description: CloudFront distribution URL
+    Value: !Sub "https://${cfDistribution.DomainName}"
