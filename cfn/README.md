@@ -226,15 +226,15 @@ Template configures a default Windows screen resolution of 1920 by 1080. If you 
 To update DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
 ## About DLAMI template
-`DLAMI-<OS>-NICE-DCV.yaml` [Ubuntu]("DLAMI-Ubuntu-NICE-DCV.yaml") or [Amazon Linux 2023]("DLAMI-AL2023-NICE-DCV.yaml") templates uses [AWS Deep Learning AMI (DLAMI)](https://aws.amazon.com/ai/machine-learning/amis/) to build a deep learning workstation.
+`DLAMI-<OS>-NICE-DCV.yaml` [Ubuntu]("DLAMI-Ubuntu-NICE-DCV.yaml") and [Amazon Linux 2023]("DLAMI-AL2023-NICE-DCV.yaml") templates uses [AWS Deep Learning AMI (DLAMI)](https://aws.amazon.com/ai/machine-learning/amis/) to build a deep learning workstation.
 
 ### DLAMI options
 
-Template offers two main AMI options:
+There are two main AMI options:
 
 - DLAMIs: preconfigured with  NVIDIA GPU driver, CUDA Toolkit, Docker with NVIDIA Container Toolkit, NVIDIA software, and optionally PyTorch or TensorFlow
   - *Refer to [Release notes for DLAMIs](https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html) AMI specific release notes for supported EC2 instance types (e.g. [AWS Deep Learning Base GPU AMI (Ubuntu 22.04)](https://docs.aws.amazon.com/dlami/latest/devguide/aws-deep-learning-base-gpu-ami-ubuntu-22-04.html))*
-- Neuron DLAMIs: preconfigured with Neuron SDK and Neuron framework/libraries, and support [AWS Trainium](https://aws.amazon.com/ai/machine-learning/trainium/) and [AWS Inferentia](https://aws.amazon.com/ai/machine-learning/inferentia/) instance types. Refer to [Neuron DLAMI User Guide](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/dlami/index.html) for more information
+- Neuron DLAMIs: pre-installed with Neuron SDK, and support [AWS Trainium](https://aws.amazon.com/ai/machine-learning/trainium/) and [AWS Inferentia](https://aws.amazon.com/ai/machine-learning/inferentia/) instance types. Refer to [Neuron DLAMI User Guide](https://awsdocs-neuron.readthedocs-hosted.com/en/latest/dlami/index.html) for more information
 
 Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devguide/using.html) for usage guidance. Consider [Amazon SageMaker](https://aws.amazon.com/sagemaker/) if you are looking for a fully managed experience.
 
