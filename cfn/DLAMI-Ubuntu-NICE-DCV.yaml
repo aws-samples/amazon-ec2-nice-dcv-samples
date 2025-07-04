@@ -2058,6 +2058,7 @@ Resources:
           export DEBIAN_FRONTEND=noninteractive
 
           systemctl stop apt-daily.timer apt-daily-upgrade.timer
+          apt-mark hold linux-modules-extra-aws
           apt-get update -q
           sleep 10
           pkill apt
