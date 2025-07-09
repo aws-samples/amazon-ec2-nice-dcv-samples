@@ -52,12 +52,20 @@ To include DCV in your [EC2 Image Builder pipeline](https://docs.aws.amazon.com/
 
 For manual installation instructions, refer to [Amazon DCV Administrator Guide](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html).
 
+### re:Post articles
+
 DCV installation scripts are available from the following [re:Post](https://repost.aws/) community articles:
+
 - [Install GUI (graphical desktop) on Amazon EC2 instances running Amazon Linux 2023 (AL2023)](https://repost.aws/articles/ARq0LbVvRwTRukVpS6Zt1uZw/install-gui-graphical-desktop-on-amazon-ec2-instances-running-amazon-linux-2023-al2023)
 - [Install GUI (graphical desktop) on Amazon EC2 instances running Amazon Linux 2 (AL2)](https://repost.aws/articles/ARuqicSphdQ8-GiwZC2-QOXg/install-gui-graphical-desktop-on-amazon-ec2-instances-running-amazon-linux-2-al2)
 - [Install GUI (graphical desktop) on Amazon EC2 instances running RHEL/Rocky Linux 8/9](https://repost.aws/articles/AR4Nbl3SxTSIW3WpFSUJhzXg/install-gui-graphical-desktop-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9)
 - [Install GUI (graphical desktop) on Amazon EC2 instances running SUSE Linux Enterprise Server 15 (SLES 15)](https://repost.aws/articles/ARGF6bVA19QC6IVcaUy-69Ag/install-gui-graphical-desktop-on-amazon-ec2-instances-running-suse-linux-enterprise-server-15-sles-15)
 - [Install GUI (graphical desktop) on Amazon EC2 instances running Ubuntu Linux](https://repost.aws/articles/ARJtZxRiOURwWI2qSWjl4AaQ/install-gui-graphical-desktop-on-amazon-ec2-instances-running-ubuntu-linux)
+
+To build a Deep Learning Desktop with [AWS Deep Learning AMI](https://aws.amazon.com/ai/machine-learning/amis/)
+
+- [Deep Learning graphical desktop on Amazon Linux 2023 (AL2023) with AWS Deep Learning AMI (DLAMI)](https://repost.aws/articles/ARpObQqWDSTFaHjaBIhddL2Q/deep-learning-graphical-desktop-on-amazon-linux-2023-al2023-with-aws-deep-learning-ami-dlami)
+- [Deep Learning graphical desktop on Ubuntu Linux with AWS Deep Learning AMI (DLAMI)](https://repost.aws/articles/AR6RrDeUL1Tq6R8TgDs59iEA/deep-learning-graphical-desktop-on-ubuntu-linux-with-aws-deep-learning-ami-dlami)
 
 ## Security
 
