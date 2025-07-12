@@ -159,7 +159,7 @@ Parameters:
       - Ubuntu Pro 18.04 (arm64)
       - Ubuntu 24.04 (x86_64)
       - Ubuntu 22.04 (x86_64)
-      - Ubuntu 20.04 (x86_64)
+      - Ubuntu 20.04 (x86_64) [EOL]
       - Ubuntu 18.04 (x86_64) [EOL]
       - Ubuntu Pro 24.04 (x86_64)
       - Ubuntu Pro 22.04 (x86_64)
@@ -707,7 +707,7 @@ Conditions:
   useUbuntu2404arm64: !Equals [!Ref osVersion, "Ubuntu 24.04 (arm64)"]
   useUbuntu2204x86: !Equals [!Ref osVersion, "Ubuntu 22.04 (x86_64)"]
   useUbuntu2204arm64: !Equals [!Ref osVersion, "Ubuntu 22.04 (arm64)"]
-  useUbuntu2004x86: !Equals [!Ref osVersion, "Ubuntu 20.04 (x86_64)"]
+  useUbuntu2004x86: !Equals [!Ref osVersion, "UUbuntu 20.04 (x86_64) [EOL]"]
   useUbuntu1804x86: !Equals [!Ref osVersion, "Ubuntu 18.04 (x86_64) [EOL]"]
   useUbuntu1804arm64: !Equals [!Ref osVersion, "Ubuntu 18.04 (arm64) [EOL]"]
   useUbuntuPro2404x86: !Equals [!Ref osVersion, "Ubuntu Pro 24.04 (x86_64)"]
