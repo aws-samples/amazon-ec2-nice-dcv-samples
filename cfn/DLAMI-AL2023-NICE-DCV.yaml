@@ -859,6 +859,9 @@ Mappings:
     ap-southeast-5:
       IpPrefix: 43.216.87.48/29
       Ipv6Prefix: 2406:da10:84f9:9e00::/56
+    ap-southeast-7:
+      IpPrefix: 43.209.155.96/29
+      Ipv6Prefix: 2406:da14:85c5:5b00::/56
     ca-central-1:
       IpPrefix: 35.183.92.176/29
       Ipv6Prefix: 2600:1f11:ae3:700::/56
