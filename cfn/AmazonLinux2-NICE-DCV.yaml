@@ -846,6 +846,9 @@ Mappings:
     me-south-1:
       IpPrefix: 16.24.46.56/29
       Ipv6Prefix: 2a05:d01e:27f:ac00::/56
+    mx-central-1:
+      IpPrefix: 78.12.207.8/29
+      Ipv6Prefix: 22600:1f17:4ee0:b800::/56
     sa-east-1:
       IpPrefix: 18.228.70.32/29
       Ipv6Prefix: 2600:1f1e:d1d:e700::/56
