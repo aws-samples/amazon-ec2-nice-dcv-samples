@@ -1815,12 +1815,15 @@ Resources:
                 dnf install -q -y dkms
                 systemctl enable dkms
 
+                # block kernel 6.1 packages on kernel 6.12
+                dnf remove -q -y kernel-6.1.*
+                sed -i '$aexclude=kernel-6.1.* kernel-headers-6.1.* kernel-devel-6.1.* kernel-modules-extra-common-6.1.* kernel-modules-extra-6.1.*' /etc/dnf/dnf.conf
+
                 # Kernel headers for GPU and USB remotization
-                dnf install -q -y kernel-devel-$(uname -r)
-                if (uname -r | grep -q ^6.12.); then
-                  dnf install -q -y kernel6.12-modules-extra
+                if ( dnf search kernel6.12-headers | grep -q kernel ); then
+                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
                 else
-                  dnf install -q -y kernel-modules-extra
+                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
                 fi
 
                 # Docker:
@@ -1987,6 +1990,9 @@ Resources:
                     ;;
                 esac
 
+                # https://docs.aws.amazon.com/linux/al2023/ug/deterministic-upgrades-usage.html
+                dnf upgrade --releasever=latest -y
+
                 rm -f ${!0}
               mode: "000740"
               owner: "root"
@@ -2005,7 +2011,11 @@ Resources:
                 #sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                dnf install -q -y kernel-devel-$(uname -r)
+                if ( dnf search kernel6.12-headers | grep -q kernel ); then
+                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
+                else
+                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
+                fi
 
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2043,7 +2053,11 @@ Resources:
                 #sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                dnf install -q -y kernel-devel-$(uname -r)
+                if ( dnf search kernel6.12-headers | grep -q kernel ); then
+                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
+                else
+                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
+                fi
 
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2090,7 +2104,11 @@ Resources:
                 #sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                dnf install -q -y kernel-devel-$(uname -r)
+                if ( dnf search kernel6.12-headers | grep -q kernel ); then
+                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
+                else  
+                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
+                fi
 
                 DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
                 if (arch | grep -q x86); then
@@ -2100,7 +2118,8 @@ Resources:
                 fi
                 dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
                 dnf clean expire-cache
-                dnf module install -q -y nvidia-driver:open-dkms
+                dnf module enable -y nvidia-driver:open-dkms
+                dnf module install -q -y nvidia-open
                 dnf install -q -y nvidia-settings
 
                 # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages
@@ -2128,7 +2147,11 @@ Resources:
                 #sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                dnf install -q -y kernel-devel-$(uname -r)
+                if ( dnf search kernel6.12-headers | grep -q kernel ); then
+                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
+                else  
+                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
+                fi
 
                 DRIVER_VERSION="${teslaDriverVersion}"
                 ARCH=$( /bin/arch )
@@ -2157,7 +2180,11 @@ Resources:
                 #sysctl -w net.ipv6.conf.all.disable_ipv6=1
                 #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-                dnf install -q -y kernel-devel-$(uname -r) kernel6.12-modules-extra
+                if ( dnf search kernel6.12-headers | grep -q kernel ); then
+                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
+                else
+                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
+                fi
 
                 dnf install -q -y nvidia-release
                 dnf install -q -y nvidia-driver
