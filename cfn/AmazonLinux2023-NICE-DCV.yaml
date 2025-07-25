@@ -1816,7 +1816,6 @@ Resources:
                 systemctl enable dkms
 
                 # block kernel 6.1 packages on kernel 6.12
-                dnf remove -q -y kernel-6.1.*
                 sed -i '$aexclude=kernel-6.1.* kernel-headers-6.1.* kernel-devel-6.1.* kernel-modules-extra-common-6.1.* kernel-modules-extra-6.1.*' /etc/dnf/dnf.conf
 
                 # Kernel headers for GPU and USB remotization
