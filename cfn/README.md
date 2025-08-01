@@ -8,7 +8,7 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 
 ### Requirements
 
-- EC2 instances *must* be provisioned in a subnet with outbound IPv4 internet connectivity
+- EC2 instances *must* be provisioned in a subnet with *outbound IPv4 internet connectivity*
 - To use [Amazon CloudFront](https://aws.amazon.com/cloudfront/), the following must be enabled
   - [VPC DNS](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html#vpc-dns-support) attribute `enableDnsSupport` and `enableDnsHostnames`
   - [Resource-based name (RBN)](https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html#subnet-settings) attribute `Enable resource name DNS A record on launch`
