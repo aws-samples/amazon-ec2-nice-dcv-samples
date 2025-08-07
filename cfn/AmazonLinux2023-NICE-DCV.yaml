@@ -195,7 +195,7 @@ Parameters:
     Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 570.148.08
+    Default: 570.172.08
   listenPort:
     Type: Number
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
@@ -680,7 +680,7 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
-    Default: "No"
+    Default: "Yes"
   r53ZoneID:
     Type: String
     Description: https://console.aws.amazon.com/route53/hostedzones https://certbot-dns-route53.readthedocs.io/
@@ -1601,9 +1601,6 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
                 /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 dnf update -q -y
@@ -1614,9 +1611,6 @@ Resources:
                 chmod +x /etc/smart-restart-conf.d/0-pre-restart
                 touch /etc/smart-restart-conf.d/0-post-restart
                 chmod +x /etc/smart-restart-conf.d/0-post-restart
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
@@ -1676,7 +1670,7 @@ Resources:
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
                 if ( which nvidia-smi ); then
                   if ( which docker ); then
-                    if (! dnf search nvidia | grep -q nvidia-container-toolkit); then
+                    if (! dnf search nvidia-container-toolkit | grep -q nvidia-container-toolkit); then
                       dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
                     fi
                     dnf install -q -y nvidia-container-toolkit
@@ -1776,6 +1770,11 @@ Resources:
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
 
+                # Change password
+                PWD=$(cat /var/lib/cloud/data/instance-id)
+                USER=ec2-user
+                echo "$USER:$PWD" | chpasswd
+
                 # Update OS
                 dnf clean all
                 dnf update -q -y
@@ -1862,11 +1861,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
-
-                # Change password
-                PWD=$(cat /var/lib/cloud/data/instance-id)
-                USER=ec2-user
-                echo "$USER:$PWD" | chpasswd
 
                 # Update OS
                 dnf update -q -y
@@ -2007,8 +2001,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 if ( dnf search kernel6.12-headers | grep -q kernel ); then
                   dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
@@ -2026,14 +2018,21 @@ Resources:
                 if [ $? -eq 1 ]; then
                   curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.1/NVIDIA-Linux-x86_64-570.133.20-grid-aws.run
                 fi
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 chmod +x NVIDIA-Linux-x86_64*.run
                 ./NVIDIA-Linux-x86_64*.run -s
 
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
+
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2049,8 +2048,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 if ( dnf search kernel6.12-headers | grep -q kernel ); then
                   dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
@@ -2069,9 +2066,6 @@ Resources:
                   curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/570.86.16-Jan2025-Cloud_Gaming-Linux-Guest-Drivers.zip
                 fi
 
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
                 cd nvidia-drivers/
@@ -2085,6 +2079,15 @@ Resources:
 
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
+
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2100,8 +2103,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 if ( dnf search kernel6.12-headers | grep -q kernel ); then
                   dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
@@ -2121,14 +2122,6 @@ Resources:
                 dnf module install -q -y nvidia-open
                 dnf install -q -y nvidia-settings
 
-                # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages
-                #dnf install -q -y cuda-toolkit
-                # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
-                #dnf install -q -y cudnn
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
                 rm -f ${0}
@@ -2143,8 +2136,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 if ( dnf search kernel6.12-headers | grep -q kernel ); then
                   dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
@@ -2156,11 +2147,17 @@ Resources:
                 ARCH=$( /bin/arch )
                 curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
 
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
-
                 chmod +x ./NVIDIA-Linux-*.run
                 ./NVIDIA-Linux-*.run -s
+
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2176,8 +2173,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 if ( dnf search kernel6.12-headers | grep -q kernel ); then
                   dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
@@ -2187,9 +2182,6 @@ Resources:
 
                 dnf install -q -y nvidia-release
                 dnf install -q -y nvidia-driver
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service

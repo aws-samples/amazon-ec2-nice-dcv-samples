@@ -663,7 +663,7 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
-    Default: "No"
+    Default: "Yes"
   r53ZoneID:
     Type: String
     Description: https://console.aws.amazon.com/route53/hostedzones https://certbot-dns-route53.readthedocs.io/
@@ -1547,15 +1547,9 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
                 python2 /usr/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 yum update -q -y
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then

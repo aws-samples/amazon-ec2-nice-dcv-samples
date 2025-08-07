@@ -183,20 +183,17 @@ Parameters:
       - "virtual"
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_Gaming_Driver"
-      - "console-with-NVIDIA_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
       - "console"
-      - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
       - "virtual-with-NVIDIA_GRID_Driver-GPU_sharing"
-      - "virtual-with-NVIDIA_repo_Driver-GPU_sharing"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
     Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 535.247.01
+    Default: 570.172.08
   listenPort:
     Type: Number
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
@@ -681,7 +678,7 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
-    Default: "No"
+    Default: "Yes"
   r53ZoneID:
     Type: String
     Description: https://console.aws.amazon.com/route53/hostedzones https://certbot-dns-route53.readthedocs.io/
@@ -1613,15 +1610,9 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
                 /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 yum update -q -y
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
@@ -1681,7 +1672,7 @@ Resources:
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
                 if ( which nvidia-smi ); then
                   if ( which docker ); then
-                    if (! yum search nvidia | grep -q nvidia-container-toolkit); then
+                    if (! yum search nvidia-container-toolkit | grep -q nvidia-container-toolkit); then
                       yum-config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
                     fi
                     yum install -q -y nvidia-container-toolkit
@@ -2046,8 +2037,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2059,8 +2048,6 @@ Resources:
                 if [ $? -eq 1 ]; then
                   curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.1/NVIDIA-Linux-x86_64-570.133.20-grid-aws.run
                 fi
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 chmod +x NVIDIA-Linux-x86_64*.run
                 CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-x86_64*.run -s
@@ -2071,6 +2058,12 @@ Resources:
 
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
+
+                # Add access to NVIDIA repo
+                DISTRO=rhel7
+                if (arch | grep -q x86); then
+                  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
+                fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2086,8 +2079,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2099,9 +2090,6 @@ Resources:
                 if [ $? -eq 1 ]; then
                   curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/570.86.16-Jan2025-Cloud_Gaming-Linux-Guest-Drivers.zip
                 fi
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
@@ -2121,6 +2109,12 @@ Resources:
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
 
+                # Add access to NVIDIA repo
+                DISTRO=rhel7
+                if (arch | grep -q x86); then
+                  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
+                fi
+
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
                 rm -f ${0}
@@ -2135,33 +2129,20 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 yum install -q -y tar bzip2 make automake gcc gcc-c++ pciutils elfutils-libelf-devel libglvnd-devel iptables vim bind-utils wget
                 DISTRO=rhel7
                 if (arch | grep -q x86); then
-                  ARCH=x86_64
-                else
-                  ARCH=sbsa
+                  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
                 fi
-                yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 yum clean expire-cache
                 yum install -q -y nvidia-driver-latest-dkms
                 yum install -q -y nvidia-settings
                 yum install -q -y nvidia-xconfig
 
-                # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#meta-packages
-                #yum install -q -y cuda-toolkit
-                # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
-                #yum install -q -y cudnn
-
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
                 cd /usr/src/nvidia-*
                 sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc10-gcc IGNORE_CC_MISMATCH=1/" dkms.conf
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2177,15 +2158,10 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 DRIVER_VERSION="${teslaDriverVersion}"
                 ARCH=$( /bin/arch )
                 curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 chmod +x ./NVIDIA-Linux-*.run
                 CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-*.run -s
@@ -2193,6 +2169,12 @@ Resources:
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
                 cd /usr/src/nvidia-*
                 sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc10-gcc IGNORE_CC_MISMATCH=1/" dkms.conf
+
+                # Add access to NVIDIA repo
+                DISTRO=rhel7
+                if (arch | grep -q x86); then
+                  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
+                fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service

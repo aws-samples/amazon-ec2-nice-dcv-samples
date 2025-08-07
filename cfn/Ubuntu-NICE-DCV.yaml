@@ -211,7 +211,7 @@ Parameters:
     Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 570.148.08
+    Default: 570.172.08
   listenPort:
     Type: Number
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
@@ -696,7 +696,7 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
-    Default: "No"
+    Default: "Yes"
   r53ZoneID:
     Type: String
     Description: https://console.aws.amazon.com/route53/hostedzones https://certbot-dns-route53.readthedocs.io/
@@ -1643,17 +1643,12 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
                 export DEBIAN_FRONTEND=noninteractive
 
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 apt-get update
                 apt-get upgrade -q -y
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 # Add DCV ports
                 if (systemctl list-units | grep -q ufw); then
@@ -2142,8 +2137,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2155,8 +2148,6 @@ Resources:
                 if [ $? -eq 1 ]; then
                   curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.1/NVIDIA-Linux-x86_64-570.133.20-grid-aws.run
                 fi
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 chmod +x NVIDIA-Linux-x86_64*.run
                 if (lsb_release -r -s | grep -q 22); then
@@ -2172,6 +2163,16 @@ Resources:
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
 
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
+                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
+
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
                 rm -f ${0}
@@ -2186,8 +2187,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2199,9 +2198,6 @@ Resources:
                 if [ $? -eq 1 ]; then
                   curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/570.86.16-Jan2025-Cloud_Gaming-Linux-Guest-Drivers.zip
                 fi
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
@@ -2225,6 +2221,16 @@ Resources:
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
 
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
+                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
+
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
                 rm -f ${0}
@@ -2239,8 +2245,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
                 if (arch | grep -q x86); then
@@ -2254,14 +2258,6 @@ Resources:
                 apt-get install -q -y nvidia-open
                 apt-get install -q -y nvidia-settings
                 apt-get install -q -y nvidia-xconfig
-
-                # CUDA toolkit: https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#additional-package-manager-capabilities
-                #apt-get install -q -y cuda-toolkit
-                # cuDNN: https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#additional-package-manager-capabilities
-                #apt-get install -q -y cudnn
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2277,15 +2273,10 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 DRIVER_VERSION="${teslaDriverVersion}"
                 ARCH=$( /bin/arch )
                 curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 chmod +x ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
                 if (lsb_release -r -s | grep -q 22); then
@@ -2297,6 +2288,16 @@ Resources:
                 else
                   ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s
                 fi
+
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
+                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2312,8 +2313,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
                 export DEBIAN_FRONTEND=noninteractive
                 apt-get install -q -y ubuntu-drivers-common
@@ -2327,14 +2326,6 @@ Resources:
                 fi
                 apt-get install -q -y nvidia-driver-$VERSION-server nvidia-utils-$VERSION-server
                 apt-get install -q -y nvidia-settings
-
-                # CUDA toolkit
-                #apt-get install -q -y nvidia-cuda-toolkit
-                # cuDNN
-                #apt-get install -q -y nvidia-cudnn
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2914,4 +2905,3 @@ Outputs:
     Condition: createCloudFront
     Description: CloudFront distribution URL
     Value: !Sub "https://${cfDistribution.DomainName}"
-

@@ -1625,9 +1625,6 @@ Resources:
             "/opt/dcv-post-reboot.sh":
               content: !Sub |
                 #!/bin/bash
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=1
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=1
-
                 /opt/aws/bin/cfn-signal  -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 dnf update -q -y
@@ -1638,9 +1635,6 @@ Resources:
                 chmod +x /etc/smart-restart-conf.d/0-pre-restart
                 touch /etc/smart-restart-conf.d/0-post-restart
                 chmod +x /etc/smart-restart-conf.d/0-post-restart
-
-                #sysctl -w net.ipv6.conf.all.disable_ipv6=0
-                #sysctl -w net.ipv6.conf.default.disable_ipv6=0
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
