@@ -138,7 +138,7 @@ AWS Global Accelerator (AGA)
 
 Others
 
-- `installDocker` : install [Docker Engine](https://docs.docker.com/engine/) (also known as Docker CE) from [Docker repository](https://download.docker.com/) or Linux OS package repository. On Linux, [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) will be installed and configured if NVIDIA driver install option is selected. On [Windows](https://docs.docker.com/engine/install/binaries/#install-server-and-client-binaries-on-windows), you can run Windows containers in [process isolation](https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/hyperv-container#process-isolation) mode. Default is `No`
+- `installDocker` : install [Docker Engine](https://docs.docker.com/engine/) (also known as Docker CE) from [Docker repository](https://download.docker.com/) or Linux OS package repository. On Linux, [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) will be installed and configured if NVIDIA driver install option is selected. On [Windows](https://docs.docker.com/engine/install/binaries/#install-server-and-client-binaries-on-windows), you can run Windows containers in [process isolation](https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/hyperv-container#process-isolation) mode. Default is `Yes` for Linux OSs
 
 *Docker Engine is not [Docker Desktop](https://docs.docker.com/desktop/). Docker on Linux will use `172.17.0.0/16` subnet.*
 
@@ -384,3 +384,4 @@ To remove created resources,
 - [Disable](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html) EC2 instance termination protection (if enabled)
 - [Delete](https://docs.aws.amazon.com/aws-backup/latest/devguide/deleting-backups.html) any recovery points in created backup vault
 - [Delete](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html) CloudFormation stack
+
