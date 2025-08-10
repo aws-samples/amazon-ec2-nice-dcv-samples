@@ -41,9 +41,7 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 
 https://github.com/user-attachments/assets/16be5a5e-a347-40bc-85cc-22ce3f0995f8
 
-
-https://github.com/user-attachments/assets/7314faf6-a267-4d1f-ad58-1814a605f355
-
+https://github.com/user-attachments/assets/1383609c-cebc-4548-a248-d046a272a903
 
 
 ## Deployment
