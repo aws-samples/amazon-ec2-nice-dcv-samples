@@ -55,7 +55,7 @@ To include DCV in your [EC2 Image Builder pipeline](https://docs.aws.amazon.com/
 
 For manual installation instructions, refer to [Amazon DCV Administrator Guide](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html).
 
-### re:Post articles
+### Articles
 
 DCV installation scripts are available from the following [re:Post](https://repost.aws/) community articles:
 
@@ -69,6 +69,12 @@ To build a Deep Learning Desktop with [AWS Deep Learning AMI](https://aws.amazon
 
 - [Deep Learning graphical desktop on Amazon Linux 2023 (AL2023) with AWS Deep Learning AMI (DLAMI)](https://repost.aws/articles/ARpObQqWDSTFaHjaBIhddL2Q/deep-learning-graphical-desktop-on-amazon-linux-2023-al2023-with-aws-deep-learning-ami-dlami)
 - [Deep Learning graphical desktop on Ubuntu Linux with AWS Deep Learning AMI (DLAMI)](https://repost.aws/articles/AR6RrDeUL1Tq6R8TgDs59iEA/deep-learning-graphical-desktop-on-ubuntu-linux-with-aws-deep-learning-ami-dlami)
+
+To install NVIDIA GRID (aka  NVIDIA RTX Virtual Workstation (vWS)) driver and Amazon DCV server
+
+- [GPU-accelerated graphical desktop on Amazon Linux 2023 (AL2023) with NVIDIA GRID and Amazon DCV](https://repost.aws/articles/ARHkpw_xUVR5qVgPQIU6F7AA/gpu-accelerated-graphical-desktop-on-amazon-linux-2023-al2023-with-nvidia-grid-and-amazon-dcv)
+- [GPU-accelerated graphical desktop on Ubuntu Linux with NVIDIA GRID and Amazon DCV](https://repost.aws/articles/ARBXrCH5wuStKWCXfIDdG4Ig/gpu-accelerated-graphical-desktop-on-ubuntu-linux-with-nvidia-grid-and-amazon-dcv)
+- [Building a high-performance Windows workstation on AWS for graphics intensive applications](https://aws.amazon.com/blogs/compute/building-a-high-performance-windows-workstation-on-aws-for-graphics-intensive-applications/)
 
 ## Security
 
