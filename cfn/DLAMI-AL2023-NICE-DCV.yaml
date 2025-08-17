@@ -243,6 +243,7 @@ Parameters:
       - p4d.24xlarge (A100 - 8 x 40 GB GPU memory)
       - p4de.24xlarge (A100 - 8 x 40 GB GPU memory)
 
+      - p5.4xlarge (H100 - 80 GB GPU memory)
       - p5.48xlarge (H100 - 8 x 80 GB GPU memory)
       - p5e.48xlarge (H200 - 8 x 141 GB GPU memory)
       - p5en.48xlarge (H200 - 8 x 141 GB GPU memory)
