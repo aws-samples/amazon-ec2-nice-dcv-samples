@@ -282,7 +282,7 @@ Parameters:
     Default: 25
   volumeType:
     Type: String
-    Description: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html
+    Description: https://aws.amazon.com/ebs/general-purpose/
     AllowedValues:
       - gp3
       - gp2
@@ -870,70 +870,106 @@ Mappings:
   CFprefixMap: # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
     af-south-1:
       PrefixList: pl-c0aa4fa9
+      Ipv6PrefixList: pl-08e545c506fc11b3d
     ap-east-1:
       PrefixList: pl-14b2577d
+      Ipv6PrefixList: pl-09eb2ebd84c23b987
     ap-east-2:
       PrefixList: pl-0b51e244975ca1f58
+      Ipv6PrefixList: pl-0675c4405f2d19014
     ap-northeast-1:
       PrefixList: pl-58a04531
+      Ipv6PrefixList: pl-0f28cd4a128e7b13a
     ap-northeast-2:
       PrefixList: pl-22a6434b
+      Ipv6PrefixList: pl-07ac407da2b364d6c
     ap-northeast-3:
       PrefixList: pl-31a14458
+      Ipv6PrefixList: pl-04e68c40b871c8e6b
     ap-south-1:
       PrefixList: pl-9aa247f3
+      Ipv6PrefixList: pl-029b73ad1ccf6fe97
     ap-south-2:
       PrefixList: pl-0a25c3463226fcc61
+      Ipv6PrefixList: pl-045b5138c20f83bab
     ap-southeast-1:
       PrefixList: pl-31a34658
+      Ipv6PrefixList: pl-02d26f62e3b1ed532
     ap-southeast-2:
       PrefixList: pl-b8a742d1
+      Ipv6PrefixList: pl-033521892361c13a7
     ap-southeast-3:
       PrefixList: pl-bca247d5
+      Ipv6PrefixList: pl-0b8932aa3ef329011
     ap-southeast-4:
       PrefixList: pl-0fb7e7cfe038ae0e9
+      Ipv6PrefixList: pl-03292f9327ecaf81c
     ap-southeast-5:
       PrefixList: pl-09076f83e90b139d0
+      Ipv6PrefixList: pl-015db6a9a3f8b7f38
     ap-southeast-6:
       PrefixList: pl-04ed52d45e258dfd3
+      Ipv6PrefixList: pl-04ec346b0299ab3e3
     ap-southeast-7:
       PrefixList: pl-0857de2e2b1c7f2a2
+      Ipv6PrefixList: pl-0d394c8e84df4ca56
     ca-central-1:
       PrefixList: pl-38a64351
+      Ipv6PrefixList: pl-0c0fd74227163049a
     ca-west-1:
       PrefixList: pl-0530d4c590b35122b
+      Ipv6PrefixList: pl-0cd01c4f03b66d585
     eu-central-1:
       PrefixList: pl-a3a144ca
+      Ipv6PrefixList: pl-0624f1d638a3e93df
     eu-central-2:
       PrefixList: pl-00b37293991dbe6a8
+      Ipv6PrefixList: pl-05ff33f3c280b2eb8
     eu-north-1:
       PrefixList: pl-fab65393
+      Ipv6PrefixList: pl-05de9757262c679ba
     eu-south-1:
       PrefixList: pl-1bbc5972
+      Ipv6PrefixList: pl-07b149cb3ccb7e2da
     eu-south-2:
       PrefixList: pl-052dcbe0f793f19da
+      Ipv6PrefixList: pl-0454b1d06a3e15f2f
     eu-west-1:
       PrefixList: pl-4fa04526
+      Ipv6PrefixList: pl-010bae2278f1a872d
     eu-west-2:
       PrefixList: pl-93a247fa
+      Ipv6PrefixList: pl-0d7c235a121ad5fd1
     eu-west-3:
       PrefixList: pl-75b1541c
+      Ipv6PrefixList: pl-06d246df64d68cb0a
     il-central-1:
       PrefixList: pl-0dd89524416301988
+      Ipv6PrefixList: pl-023722c7ce8718ca2
     me-central-1:
       PrefixList: pl-05266a86378662c23
+      Ipv6PrefixList: pl-08b3f3c9dc8f45b09
     me-south-1:
       PrefixList: pl-17b2577e
+      Ipv6PrefixList: pl-04baf1fb5ff7e9290
+    mx-central-1:
+      PrefixList: pl-0246509e78ddf0729
+      Ipv6PrefixList: pl-0df0f56c679a42f28
     sa-east-1:
       PrefixList: pl-5da64334
+      Ipv6PrefixList: pl-0051b342e8bc54805
     us-east-1:
       PrefixList: pl-3b927c52
+      Ipv6PrefixList: pl-02d12e369a4312e03
     us-east-2:
       PrefixList: pl-b6a144df
+      Ipv6PrefixList: pl-079a97b94f32e4ee7
     us-west-1:
       PrefixList: pl-4ea04527
+      Ipv6PrefixList: pl-06dd7c6e345937257
     us-west-2:
       PrefixList: pl-82a045eb
+      Ipv6PrefixList: pl-07f8c64944f5dc195
 
   ConsoleUrl:
     aws:
@@ -1138,7 +1174,7 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Condition: createCFsgHTTP
     Properties:
-      GroupDescription: Allow inbound HTTP from CloudFront
+      GroupDescription: Allow inbound HTTP from CloudFront (IPv4)
       VpcId: !Ref vpcID
       SecurityGroupIngress:
         - Description: HTTP (CloudFront origin IP)
@@ -1170,19 +1206,19 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
-  securityGroupForCloudFrontHTTPS:
+  securityGroupForCloudFrontIpv6HTTP:
     Type: AWS::EC2::SecurityGroup
     Condition: createCFsgHTTPS
     Properties:
-      GroupDescription: Allow inbound HTTPS from CloudFront
+      GroupDescription: Allow inbound HTTP from CloudFront (IPv6)
       VpcId: !Ref vpcID
       SecurityGroupIngress:
-        - Description: HTTPS (CloudFront origin IP)
+        - Description: HTTP (CloudFront origin IP)
           IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
+          FromPort: 80
+          ToPort: 80
           SourcePrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+            !FindInMap [CFprefixMap, !Ref AWS::Region, Ipv6PrefixList]
       SecurityGroupEgress:
         - Description: Ping (CloudFront origin IP)
           IpProtocol: icmp
@@ -1947,7 +1983,7 @@ Resources:
           ]
         - !If [
             createCFsgHTTPS,
-            !Ref securityGroupForCloudFrontHTTPS,
+            !Ref securityGroupForCloudFrontIpv6HTTP,
             !Ref AWS::NoValue,
           ]
         - !If [
