@@ -184,13 +184,15 @@ Parameters:
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_repo_Driver"
+      - "console-with-AL2023_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
       - "console"
       - "virtual-with-NVIDIA_repo_Driver"
+      - "virtual-with-AL2023_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
       - "virtual-with-NVIDIA_GRID_Driver-GPU_sharing"
       - "virtual-with-NVIDIA_repo_Driver-GPU_sharing"
-      - "virtual-with-AL2023_repo_Driver"
+      - "virtual-with-AL2023_repo_Driver-GPU_sharing"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
@@ -1567,7 +1569,11 @@ Resources:
             - 06_gpu_nvidia_runfile_install
           virtual-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
+          console-with-AL2023_repo_Driver:
+            - 07_gpu_al2023_repo_install
           virtual-with-AL2023_repo_Driver:
+            - 07_gpu_al2023_repo_install
+          virtual-with-AL2023_repo_Driver-GPU_sharing:
             - 07_gpu_al2023_repo_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -1688,6 +1694,9 @@ Resources:
                     nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
                     ;;
                   console-with-NVIDIA*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
+                  console-with-AL2023*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
@@ -2025,6 +2034,7 @@ Resources:
                 esac
 
                 # https://docs.aws.amazon.com/linux/al2023/ug/deterministic-upgrades-usage.html
+                dnf clean all
                 dnf upgrade --releasever=latest -y
 
                 rm -f ${!0}
@@ -2223,7 +2233,8 @@ Resources:
                 fi
 
                 dnf install -q -y nvidia-release
-                dnf install -q -y nvidia-driver
+                dnf install -q -y nvidia-open
+                dnf install -q -y nvidia-xconfig
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
