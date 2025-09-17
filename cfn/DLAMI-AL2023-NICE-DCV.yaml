@@ -159,6 +159,7 @@ Parameters:
 
       - AL2023 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-amazon-linux-2023/latest/ami-id
 
+      - AL2023 (PyTorch 2.8) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.8-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.7) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.7-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.6) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.6-amazon-linux-2023/latest/ami-id
 
@@ -166,10 +167,11 @@ Parameters:
 
       - AL2023 (Base) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-amazon-linux-2023/latest/ami-id
 
+      - AL2023 (PyTorch 2.8) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.8-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.7) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.7-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.6) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.6-amazon-linux-2023/latest/ami-id
 
-    Default: "AL2023 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-amazon-linux-2023/latest/ami-id"
+    Default: "AL2023 (PyTorch 2.8) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.8-amazon-linux-2023/latest/ami-id"
 
   ec2Name:
     Type: String
