@@ -2076,15 +2076,29 @@ Resources:
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
 
-                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
-                fi
-                if [ $? -eq 1 ]; then
-                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
-                fi
-                if [ $? -eq 1 ]; then
-                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.1/NVIDIA-Linux-x86_64-570.133.20-grid-aws.run
+                # G6f and Gr6f instances do not support GRID 19.0 or later, only 18.4
+                if ( ec2-metadata -t | grep -q 6f\. ); then
+                  aws s3 cp s3://ec2-linux-nvidia-drivers/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run .
+                  if [ $? -eq 1 ]; then
+                    aws s3 cp s3://ec2-linux-nvidia-drivers/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run --region us-east-1
+                  fi
+                  if [ $? -eq 1 ]; then
+                    aws s3 cp s3://ec2-linux-nvidia-drivers/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run --no-sign-request
+                  fi
+                  if [ $? -eq 1 ]; then
+                    curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run
+                  fi
+                else
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+                  if [ $? -eq 1 ]; then
+                    aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                  fi
+                  if [ $? -eq 1 ]; then
+                    aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
+                  fi
+                  if [ $? -eq 1 ]; then
+                    curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run
+                  fi
                 fi
 
                 chmod +x NVIDIA-Linux-x86_64*.run
