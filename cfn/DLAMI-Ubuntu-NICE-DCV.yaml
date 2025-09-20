@@ -148,15 +148,14 @@ Parameters:
       # aws ssm get-parameters-by-path --recursive --path /aws/service/neuron/dlami | jq -r  ".Parameters[].Name"
       # aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami | jq -r  ".Parameters[].Name"
       - Ubuntu 22.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-22.04/latest/image_id
-      - Ubuntu 22.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-22.04/latest/image_id
 
       - Ubuntu 22.04 (Neuron JAX 0.6) |/aws/service/neuron/dlami/jax-0.6/ubuntu-22.04/latest/image_id
-      - Ubuntu 22.04 (Neuron JAX 0.5) |/aws/service/neuron/dlami/jax-0.5/ubuntu-22.04/latest/image_id
 
-      - Ubuntu 22.04 (Neuron PyTorch 2.7) |/aws/service/neuron/dlami/pytorch-2.7/ubuntu-22.04/latest/image_id
-      - Ubuntu 22.04 (Neuron PyTorch 2.6) |/aws/service/neuron/dlami/pytorch-2.6/ubuntu-22.04/latest/image_id
+      - Ubuntu 22.04 (Neuron PyTorch 2.8) |/aws/service/neuron/dlami/pytorch-2.8/ubuntu-22.04/latest/image_id
 
       - Ubuntu 22.04 (Neuron TensorFlow 2.10) |/aws/service/neuron/dlami/tensorflow-2.10/ubuntu-22.04/latest/image_id
+
+      - Ubuntu 22.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-22.04/latest/image_id
 
       - Ubuntu 24.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-24.04/latest/ami-id
       - Ubuntu 22.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id

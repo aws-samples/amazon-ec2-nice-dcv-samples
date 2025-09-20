@@ -150,10 +150,8 @@ Parameters:
       - AL2023 (Neuron Base) |/aws/service/neuron/dlami/base/amazon-linux-2023/latest/image_id
 
       - AL2023 (Neuron JAX 0.6) |/aws/service/neuron/dlami/jax-0.6/amazon-linux-2023/latest/image_id
-      - AL2023 (Neuron JAX 0.5) |/aws/service/neuron/dlami/jax-0.5/amazon-linux-2023/latest/image_id
 
-      - AL2023 (Neuron PyTorch 2.7) |/aws/service/neuron/dlami/pytorch-2.7/amazon-linux-2023/latest/image_id
-      - AL2023 (Neuron PyTorch 2.6) |/aws/service/neuron/dlami/pytorch-2.6/amazon-linux-2023/latest/image_id
+      - AL2023 (Neuron PyTorch 2.8) |/aws/service/neuron/dlami/pytorch-2.8/amazon-linux-2023/latest/image_id
 
       - AL2023 (Neuron Multi framework) |/aws/service/neuron/dlami/multi-framework/amazon-linux-2023/latest/image_id
 
