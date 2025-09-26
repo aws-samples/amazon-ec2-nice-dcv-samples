@@ -2113,12 +2113,12 @@ Resources:
 
                 # G6f and Gr6f instances do not support GRID 19.0 or later, only 18.4
                 if ( ec2-metadata -t | grep -q 6f\. ); then
-                  aws s3 cp s3://ec2-linux-nvidia-drivers/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run .
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/grid-18.4/ .
                   if [ $? -eq 1 ]; then
-                    aws s3 cp s3://ec2-linux-nvidia-drivers/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run --region us-east-1
+                    aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/grid-18.4/ . --region us-east-1
                   fi
                   if [ $? -eq 1 ]; then
-                    aws s3 cp s3://ec2-linux-nvidia-drivers/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run --no-sign-request
+                    aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/grid-18.4/ . --no-sign-request
                   fi
                   if [ $? -eq 1 ]; then
                     curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run

@@ -1610,13 +1610,31 @@ Resources:
                   del c:\Users\Administrator\download-AMD-driver.cmd
 
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver
-                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . || (
-                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
-                    ) || (
-                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --no-sign-request
-                    ) || (
-                    curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-17.4/552.96_grid_win11_win10-dch_64bit_international_whql.exe
+
+                  powershell -C "Get-EC2InstanceMetadata -Category InstanceType" > c:\windows\temp\instanceType.txt
+                  type c:\windows\temp\instanceType.txt
+                  find /c "6f." c:\windows\temp\instanceType.txt
+
+                  IF %ERRORLEVEL% EQU 1 (
+                    @echo ** not g6f or gr6f fractional GPU
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . || (
+                      "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
+                      ) || (
+                      "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --no-sign-request
+                      ) || (
+                      curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-18.4/573.48_grid_win10_win11_server2022_dch_64bit_international_aws_swl.exe
+                    )
+                  ) ELSE (
+                    @echo ** g6f or gr6f fractional GPU                    
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/grid-18.4/ . || (
+                      "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/grid-18.4/ . --region us-east-1
+                      ) || (
+                      "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/grid-18.4/ . --no-sign-request
+                      ) || (
+                      curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-18.4/573.48_grid_win10_win11_server2022_dch_64bit_international_aws_swl.exe
+                    )
                   )
+
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
                   forfiles /M *.exe /C "cmd /c 7z x @file"
                   @rem ** https://enterprise-support.nvidia.com/s/article/Silent-Install-of-GRID-VM-Driver-for-Windows
