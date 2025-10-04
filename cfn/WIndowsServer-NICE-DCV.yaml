@@ -1494,8 +1494,12 @@ Resources:
                 net user administrator %INSTANCEID%
 
                 @echo ** https://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-install-win.html
-                powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazon-ssm-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
-                c:\windows\temp\AmazonSSMAgentSetup.exe /S
+                net start | findstr "SSM"
+                IF %ERRORLEVEL% EQU 1 (
+                  powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazon-ssm-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/latest/windows_amd64/AmazonSSMAgentSetup.exe', 'AmazonSSMAgentSetup.exe')"
+                  c:\windows\temp\AmazonSSMAgentSetup.exe /S
+                  net start AmazonSSMAgent
+                )
 
                 @echo ** https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
                 powershell -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; (New-Object System.Net.WebClient).DownloadFile('https://amazoncloudwatch-agent-${AWS::Region}.s3.${AWS::Region}.amazonaws.com/windows/amd64/latest/amazon-cloudwatch-agent.msi', 'amazon-cloudwatch-agent.msi')
