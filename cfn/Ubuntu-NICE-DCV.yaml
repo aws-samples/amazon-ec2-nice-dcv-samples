@@ -213,7 +213,7 @@ Parameters:
     Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 570.172.08
+    Default: 570.195.03
   listenPort:
     Type: Number
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
@@ -2380,7 +2380,7 @@ Resources:
                   ubuntu-drivers install --gpgpu nvidia:$VERSION-server-open
                 else
                   VERSION=$(apt-cache search "nvidia-driver" | grep "^nvidia-driver-.*-server" | cut -d"-" -f3 | sort -r | head -n 1)
-                  apt-get install -q -y linux-modules-nvidia-$VERSION-server-open-aws nvidia-dkms-$VERSION-server-open
+                  apt-get install -q -y linux-modules-nvidia-$VERSION-server-open-aws
                 fi
                 apt-get install -q -y nvidia-driver-$VERSION-server-open nvidia-utils-$VERSION-server
                 apt-get install -q -y nvidia-settings
