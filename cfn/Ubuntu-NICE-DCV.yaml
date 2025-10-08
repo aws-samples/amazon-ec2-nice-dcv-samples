@@ -2367,14 +2367,14 @@ Resources:
         07_gpu_ubuntu_driver_install:
           files:
             "/opt/install-gpu-driver": # https://ubuntu.com/server/docs/nvidia-drivers-installation
-              content: !Sub |
+              content: |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
 
                 export DEBIAN_FRONTEND=noninteractive
                 apt-get install -q -y ubuntu-drivers-common
-                # Ubnutu-drivers list (x86_64 only)=> nvidia-driver-535-server, .... 
+                # Ubnutu-drivers list (x86_64 only)=> nvidia-driver-580-server-open, ....
                 if (arch | grep -q x86); then 
                   VERSION=$(ubuntu-drivers list --gpgpu | grep "-server" | cut -d"-" -f3 | sort -r | head -n 1)
                   ubuntu-drivers install --gpgpu nvidia:$VERSION-server-open
@@ -2390,8 +2390,8 @@ Resources:
                 rm -f ${!0}
                 reboot
               mode: "000755"
-              owner: "ubuntu"
-              group: "ubuntu"
+              owner: "root"
+              group: "root"
     Properties:
       ImageId: # https://ubuntu.com/server/docs/cloud-images/amazon-ec2 https://ubuntu.com/blog/ubuntu-pro-is-now-part-of-the-aws-ec2-console
         !If [
