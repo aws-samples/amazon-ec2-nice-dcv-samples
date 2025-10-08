@@ -297,7 +297,7 @@ NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit, Docker and other software
 
 - [Install NVIDIA GPU driver, CUDA toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Amazon Linux 2023 (AL2023)](https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-amazon-linux-2023-al2023)
 - [Install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Amazon Linux 2 (AL2)](https://repost.aws/articles/ARR29omO1-S5OfOPQKD904Jg/install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-amazon-linux-2-al2)
-- [Install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running RHEL/Rocky Linux 8/9](https://repost.aws/articles/ARpmJcNiCtST2A3hrrM_4R4A/install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9)
+- [Install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running RHEL/Rocky Linux 8/9/10](https://repost.aws/articles/ARpmJcNiCtST2A3hrrM_4R4A/install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9-10)
 - [Install NVIDIA GPU driver, CUDA Toolkit, NVIDIA Container Toolkit on Amazon EC2 instances running Ubuntu Linux](https://repost.aws/articles/ARWGxLArMBQ4y1MKoSHTq3gQ/install-nvidia-gpu-driver-cuda-toolkit-nvidia-container-toolkit-on-amazon-ec2-instances-running-ubuntu-linux)
 
 Depending on use case, [DLAMI template](#about-dlami-template) may be a more better option.
@@ -388,6 +388,7 @@ To remove created resources,
 - [Disable](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html) EC2 instance termination protection (if enabled)
 - [Delete](https://docs.aws.amazon.com/aws-backup/latest/devguide/deleting-backups.html) any recovery points in created backup vault
 - [Delete](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html) CloudFormation stack
+
 
 
 
