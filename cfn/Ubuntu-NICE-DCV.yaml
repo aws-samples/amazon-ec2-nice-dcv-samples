@@ -2358,17 +2358,9 @@ Resources:
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
 
-                export DEBIAN_FRONTEND=noninteractive
-                apt-get install -q -y ubuntu-drivers-common
-                # Ubnutu-drivers list (x86_64 only)=> nvidia-driver-580-server-open, ....
-                if (arch | grep -q x86); then 
-                  VERSION=$(ubuntu-drivers list --gpgpu | grep "-server" | cut -d"-" -f3 | sort -r | head -n 1)
-                  ubuntu-drivers install --gpgpu nvidia:$VERSION-server-open
-                else
-                  VERSION=$(apt-cache search "nvidia-driver" | grep "^nvidia-driver-.*-server" | cut -d"-" -f3 | sort -r | head -n 1)
-                  apt-get install -q -y linux-modules-nvidia-$VERSION-server-open-aws
-                fi
-                apt-get install -q -y nvidia-driver-$VERSION-server-open nvidia-utils-$VERSION-server
+                DEBIAN_FRONTEND=noninteractive
+                VERSION=$(apt-cache search "nvidia-driver" | grep "^nvidia-driver-.*-server-open" | cut -d"-" -f3 | sort -r | head -1)
+                apt-get install -q -y linux-modules-nvidia-$VERSION-server-open-aws nvidia-headless-no-dkms-$VERSION-server-open nvidia-driver-$VERSION-server-open nvidia-utils-$VERSION-server
                 apt-get install -q -y nvidia-settings
 
                 systemctl enable dcv-post-reboot
