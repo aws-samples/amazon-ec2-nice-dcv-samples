@@ -23,6 +23,8 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
+          default: SUSE Linux Enterprise 12 is not supported by DCV
+      - Label:
           default: EC2
         Parameters:
           - ec2Name
@@ -143,9 +145,9 @@ Parameters:
     Type: String
     #Description: Version
     AllowedValues:
-      - SUSE Linux Enterprise Server 15 SP5
+      - SUSE Linux Enterprise Server 15 SP6
       - SUSE Linux Enterprise Server 12 SP5
-    Default: SUSE Linux Enterprise Server 15 SP5
+    Default: SUSE Linux Enterprise Server 15 SP6
 
   ec2Name:
     Type: String
@@ -661,7 +663,7 @@ Parameters:
     Default: ""
 
 Conditions:
-  useSles15: !Equals [!Ref osVersion, "SUSE Linux Enterprise Server 15 SP5"]
+  useSles15: !Equals [!Ref osVersion, "SUSE Linux Enterprise Server 15 SP6"]
 
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   useElasticIP:
@@ -1648,7 +1650,7 @@ Resources:
                 # Update OS
                 zypper -n update -y
 
-                # Automatic updates : https://documentation.suse.com/sles/15-SP5/html/SLES-all/cha-onlineupdate-you.html#sec-onlineupdate-you-automatically
+                # Automatic updates : https://documentation.suse.com/sles/15-SP6/html/SLES-all/cha-onlineupdate-you.html#sec-onlineupdate-you-automatically
                 zypper -n install -y yast2-online-update-configuration
 
                 # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
@@ -1790,8 +1792,14 @@ Resources:
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles$OS_VERSION-$(arch).tgz
-                tar -xvzf nice-dcv-sles$OS_VERSION-$(arch).tgz && cd nice-dcv-*-sles$OS_VERSION-$(arch)
+                if (cat $OS_VERSION | grep -q 12); then
+                  rm /home/ec2-user/update-dcv
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/2024.0/Servers/nice-dcv-2024.0-19030-sles12-x86_64.tgz
+                  tar -xvzf nice-dcv-*-$(arch).tgz && cd nice-dcv-*-$(arch)
+                else
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles$OS_VERSION-$(arch).tgz
+                  tar -xvzf nice-dcv-sles$OS_VERSION-$(arch).tgz && cd nice-dcv-*-sles$OS_VERSION-$(arch)
+                fi
                 zypper -n install -y ./nice-dcv-server-*.rpm
                 usermod -a -G video dcv
                 zypper -n install -y ./nice-dcv-web-viewer-*.rpm
@@ -1871,7 +1879,7 @@ Resources:
       ImageId:
         !If [
           useSles15,
-          "{{resolve:ssm:/aws/service/suse/sles/15-sp5/x86_64/latest}}",
+          "{{resolve:ssm:/aws/service/suse/sles/15-sp6/x86_64/latest}}",
           "{{resolve:ssm:/aws/service/suse/sles/12-sp5/x86_64/latest}}",
         ]
       InstanceType: !Ref instanceType
