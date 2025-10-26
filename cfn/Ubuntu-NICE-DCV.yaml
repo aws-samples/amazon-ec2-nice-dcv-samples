@@ -709,7 +709,7 @@ Conditions:
   useUbuntu2404arm64: !Equals [!Ref osVersion, "Ubuntu 24.04 (arm64)"]
   useUbuntu2204x86: !Equals [!Ref osVersion, "Ubuntu 22.04 (x86_64)"]
   useUbuntu2204arm64: !Equals [!Ref osVersion, "Ubuntu 22.04 (arm64)"]
-  useUbuntu2004x86: !Equals [!Ref osVersion, "UUbuntu 20.04 (x86_64) [EOL]"]
+  useUbuntu2004x86: !Equals [!Ref osVersion, "Ubuntu 20.04 (x86_64) [EOL]"]
   useUbuntu1804x86: !Equals [!Ref osVersion, "Ubuntu 18.04 (x86_64) [EOL]"]
   useUbuntu1804arm64: !Equals [!Ref osVersion, "Ubuntu 18.04 (arm64) [EOL]"]
   useUbuntuPro2404x86: !Equals [!Ref osVersion, "Ubuntu Pro 24.04 (x86_64)"]
@@ -1858,6 +1858,7 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
+                export DEBIAN_FRONTEND=noninteractive
 
                 # Change password
                 PWD=$(cat /var/lib/cloud/data/instance-id)
@@ -1958,6 +1959,7 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
+                export DEBIAN_FRONTEND=noninteractive
 
                 # Update OS
                 apt-get update -q
@@ -1996,6 +1998,10 @@ Resources:
                   rm -f /home/ubuntu/update-dcv
                   rm -f /home/ubuntu/.gnomerc
                   curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2023.0/Servers/nice-dcv-2023.0-15487-ubuntu1804-$(arch).tgz
+                  tar -xvzf nice-dcv-*-$(arch).tgz && cd nice-dcv-*-$(arch)
+                elif (cat /etc/os-release | grep -q 20.04); then
+                  rm -f /home/ubuntu/update-dcv
+                  curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2024.0/Servers/nice-dcv-2024.0-19030-ubuntu2004-$(arch).tgz
                   tar -xvzf nice-dcv-*-$(arch).tgz && cd nice-dcv-*-$(arch)
                 else
                   curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
@@ -2141,6 +2147,7 @@ Resources:
             "/root/install-gpu-sw.sh":
               content: !Sub |
                 #!/bin/bash
+                export DEBIAN_FRONTEND=noninteractive
 
                   case $SESSION in
                     *Ubuntu*) # https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/
@@ -2181,6 +2188,7 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
+                export DEBIAN_FRONTEND=noninteractive
 
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
                 if [ $? -eq 1 ]; then
@@ -2231,6 +2239,7 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
+                export DEBIAN_FRONTEND=noninteractive
 
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2289,6 +2298,7 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
+                export DEBIAN_FRONTEND=noninteractive
 
                 DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
                 if (arch | grep -q x86); then
@@ -2317,6 +2327,7 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
+                export DEBIAN_FRONTEND=noninteractive
 
                 DRIVER_VERSION="${teslaDriverVersion}"
                 ARCH=$( /bin/arch )
@@ -2357,8 +2368,8 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
+                export DEBIAN_FRONTEND=noninteractive
 
-                DEBIAN_FRONTEND=noninteractive
                 VERSION=$(apt-cache search "nvidia-driver" | grep "^nvidia-driver-.*-server-open" | cut -d"-" -f3 | sort -r | head -1)
                 apt-get install -q -y linux-modules-nvidia-$VERSION-server-open-aws nvidia-headless-no-dkms-$VERSION-server-open nvidia-driver-$VERSION-server-open nvidia-utils-$VERSION-server
                 apt-get install -q -y nvidia-settings
@@ -2466,7 +2477,7 @@ Resources:
           #sysctl -w net.ipv6.conf.all.disable_ipv6=1
           #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-          # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
+          # https://www.cyberciti.biz/faq/explain-debian_frontend-apt-get-variable-for-ubuntu-debian/
           export DEBIAN_FRONTEND=noninteractive
 
           systemctl stop apt-daily.timer apt-daily-upgrade.timer
