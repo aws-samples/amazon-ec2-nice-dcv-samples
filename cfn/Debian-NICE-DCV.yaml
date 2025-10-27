@@ -148,9 +148,11 @@ Parameters:
     Type: String
     #Description: Version and processor architecture
     AllowedValues:
+      - Debian 13 (arm64)
       - Debian 12 (arm64)
+      - Debian 13 (x86_64)
       - Debian 12 (x86_64)
-    Default: Debian 12 (arm64)
+    Default: Debian 13 (arm64)
 
   ec2Name:
     Type: String
@@ -673,6 +675,8 @@ Parameters:
     Default: ""
 
 Conditions:
+  useDebian13x86: !Equals [!Ref osVersion, "Debian 13 (x86_64)"]
+  useDebian13arm64: !Equals [!Ref osVersion, "Debian 13 (arm64)"]
   useDebian12x86: !Equals [!Ref osVersion, "Debian 12 (x86_64)"]
 
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
@@ -1514,8 +1518,8 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp
-                sudo rm -f /tmp/nice-dcv-ubuntu2204-$(arch).tgz
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-$(arch).tgz
+                sudo rm -f /tmp/nice-dcv-ubuntu2404-$(arch).tgz
+                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2404-$(arch).tgz
                 tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-$(arch)
                 sudo apt-get install -y ./nice-dcv-server_*.deb
                 sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
@@ -1691,7 +1695,7 @@ Resources:
                 apt-get install -q -y snapd
 
                 # Update OS
-                apt-get update
+                apt-get update -q
                 apt-get upgrade -q -y
                 apt-get autoremove -q -y
 
@@ -1782,7 +1786,7 @@ Resources:
                 cd /tmp/cfn
 
                 # Update OS
-                apt-get update
+                apt-get update -q
                 apt-get upgrade -q -y
 
                 # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
@@ -1805,8 +1809,19 @@ Resources:
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
                 gpg --import NICE-GPG-KEY
-                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-$(arch).tgz
-                tar -xvzf nice-dcv-ubuntu2204-$(arch).tgz && cd nice-dcv-*-$(arch)
+
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID)
+                case $OS_VERSION in
+                  12)
+                    rm -f /home/admin/update-dcv
+                    curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2024.0/Servers/nice-dcv-2024.0-19030-ubuntu2204-$(arch).tgz
+                    tar -xvzf nice-dcv-2024.0-19030-ubuntu2204-$(arch).tgz && cd nice-dcv-*-$(arch)
+                    ;;
+                  *)
+                    curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2404-$(arch).tgz
+                    tar -xvzf nice-dcv-ubuntu2404-$(arch).tgz && cd nice-dcv-*-$(arch)
+                    ;;
+                esac
                 apt-get install -q -y ./nice-dcv-server_*.deb
                 apt-get install -q -y ./nice-dcv-web-viewer_*.deb
                 usermod -aG video dcv
@@ -1886,9 +1901,17 @@ Resources:
     Properties:
       ImageId: # https://wiki.debian.org/Cloud/AmazonEC2Image/Bookworm
         !If [
-          useDebian12x86,
-          "{{resolve:ssm:/aws/service/debian/release/12/latest/amd64}}",
-          "{{resolve:ssm:/aws/service/debian/release/12/latest/arm64}}",
+          useDebian13x86,
+          "{{resolve:ssm:/aws/service/debian/release/13/latest/amd64}}",
+          !If [
+            useDebian13arm64,
+            "{{resolve:ssm:/aws/service/debian/release/13/latest/arm64}}",
+            !If [
+              useDebian12x86,
+              "{{resolve:ssm:/aws/service/debian/release/12/latest/amd64}}",
+              "{{resolve:ssm:/aws/service/debian/release/12/latest/arm64}}",
+            ],
+          ],
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
