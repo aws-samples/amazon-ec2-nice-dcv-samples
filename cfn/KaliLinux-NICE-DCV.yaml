@@ -2405,7 +2405,7 @@ Outputs:
   DCVwebConsole:
     Description: DCV web browser client (login as kali)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
+      - "https://${IpAddress}:${listenPort}/?username=kali     ( dcv://kali:@${IpAddress}:${listenPort} )"
       - IpAddress:
           !If [
             displayPublicIP,

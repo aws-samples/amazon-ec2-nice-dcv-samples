@@ -2472,7 +2472,7 @@ Outputs:
   DCVwebConsole:
     Description: DCV web browser client (login as ubuntu)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
+      - "https://${IpAddress}:${listenPort}/?username=ubuntu     ( dcv://ubuntu:@${IpAddress}:${listenPort} )"
       - IpAddress:
           !If [
             displayPublicIP,

@@ -1612,31 +1612,15 @@ Resources:
                 IF %DRIVER_TYPE% EQU NVIDIA-GRID (
                   del c:\Users\Administrator\download-NVIDIA-Gaming-driver.cmd
                   del c:\Users\Administrator\download-AMD-driver.cmd
+                  IF NOT EXIST c:\windows\system32\curl.exe choco install --no-progress -y curl
 
-                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-GRID-driver
-
-                  powershell -C "Get-EC2InstanceMetadata -Category InstanceType" > c:\windows\temp\instanceType.txt
-                  type c:\windows\temp\instanceType.txt
-                  find /c "6f." c:\windows\temp\instanceType.txt
-
-                  IF %ERRORLEVEL% EQU 1 (
-                    @echo ** not g6f or gr6f fractional GPU
-                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . || (
-                      "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
-                      ) || (
-                      "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --no-sign-request
-                      ) || (
-                      curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-18.4/573.48_grid_win10_win11_server2022_dch_64bit_international_aws_swl.exe
-                    )
-                  ) ELSE (
-                    @echo ** g6f or gr6f fractional GPU                    
-                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/grid-18.4/ . || (
-                      "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/grid-18.4/ . --region us-east-1
-                      ) || (
-                      "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/grid-18.4/ . --no-sign-request
-                      ) || (
-                      curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-18.4/573.48_grid_win10_win11_server2022_dch_64bit_international_aws_swl.exe
-                    )
+                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html
+                  "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --region us-east-1
+                    ) || (
+                    "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --no-sign-request
+                    ) || (
+                    curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-18.4/573.48_grid_win10_win11_server2022_dch_64bit_international_aws_swl.exe
                   )
 
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
@@ -1647,8 +1631,9 @@ Resources:
                 IF %DRIVER_TYPE% EQU NVIDIA-Gaming (
                   del c:\Users\Administrator\download-NVIDIA-GRID-driver.cmd
                   del c:\Users\Administrator\download-AMD-driver.cmd
+                  IF NOT EXIST c:\windows\system32\curl.exe choco install --no-progress -y curl
 
-                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#nvidia-gaming-driver
+                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html
                   "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --region us-east-1
                     ) || (
@@ -1666,9 +1651,9 @@ Resources:
                   del c:\Users\Administrator\download-NVIDIA-GRID-driver.cmd
                   del c:\Users\Administrator\download-NVIDIA-Gaming-driver.cmd
                   del c:\Users\Administrator\download-AMD-driver.cmd
-
-                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html#public-nvidia-driver
                   IF NOT EXIST c:\windows\system32\curl.exe choco install --no-progress -y curl
+
+                  @echo ** https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/public-nvidia-driver.html
                   copy \windows\temp\install-if-available.cmd \windows\temp\driver\
                   install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2022-dch-international.exe
                   install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2019-2022-dch-international.exe
@@ -2183,7 +2168,7 @@ Outputs:
   DCVwebConsole:
     Description: DCV web browser client (login as administrator)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
+      - "https://${IpAddress}:${listenPort}/?username=administrator     ( dcv://administrator:@${IpAddress}:${listenPort} )"
       - IpAddress:
           !If [
             displayPublicIP,

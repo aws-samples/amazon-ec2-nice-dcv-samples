@@ -2308,7 +2308,7 @@ Outputs:
   DCVwebConsole:
     Description: DCV web browser client (login as centos)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
+      - "https://${IpAddress}:${listenPort}/?username=centos     ( dcv://centos:@${IpAddress}:${listenPort} )"
       - IpAddress:
           !If [
             displayPublicIP,

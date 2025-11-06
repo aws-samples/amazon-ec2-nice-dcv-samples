@@ -2106,7 +2106,7 @@ Resources:
               ignoreErrors: "true"
         03_gpu_nvidia_grid_install:
           files:
-            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver
+            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html
               content: |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
@@ -2147,7 +2147,7 @@ Resources:
               group: "root"
         04_gpu_nvidia_gaming_install:
           files:
-            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver
+            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html
               content: |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
@@ -2708,7 +2708,7 @@ Outputs:
   DCVwebConsole:
     Description: DCV web browser client (login as ec2-user)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
+      - "https://${IpAddress}:${listenPort}/?username=ec2-user     ( dcv://ec2-user:@${IpAddress}:${listenPort} )"
       - IpAddress:
           !If [
             displayPublicIP,

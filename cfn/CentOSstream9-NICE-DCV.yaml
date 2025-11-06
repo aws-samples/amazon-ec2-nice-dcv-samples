@@ -2286,7 +2286,7 @@ Outputs:
   DCVwebConsole:
     Description: DCV web browser client (login as ec2-user)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
+      - "https://${IpAddress}:${listenPort}/?username=ec2-user     ( dcv://ec2-user:@${IpAddress}:${listenPort} )"
       - IpAddress:
           !If [
             displayPublicIP,

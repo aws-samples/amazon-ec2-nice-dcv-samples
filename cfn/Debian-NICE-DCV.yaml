@@ -2339,7 +2339,7 @@ Outputs:
   DCVwebConsole:
     Description: DCV web browser client (login as admin)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
+      - "https://${IpAddress}:${listenPort}/?username=admin     ( dcv://admin:@${IpAddress}:${listenPort} )"
       - IpAddress:
           !If [
             displayPublicIP,

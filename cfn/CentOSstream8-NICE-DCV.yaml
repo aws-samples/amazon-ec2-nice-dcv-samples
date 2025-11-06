@@ -2324,7 +2324,7 @@ Outputs:
   DCVwebConsole:
     Description: DCV web browser client (login as cloud-user)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}          ( dcv://${IpAddress}:${listenPort} )"
+      - "https://${IpAddress}:${listenPort}/?username=cloud-user     ( dcv://cloud-user:@${IpAddress}:${listenPort} )"
       - IpAddress:
           !If [
             displayPublicIP,
