@@ -254,7 +254,8 @@ Parameters:
       - p5e.48xlarge (H200 - 8 x 141 GB GPU memory)
       - p5en.48xlarge (H200 - 8 x 141 GB GPU memory)
 
-      - p6-b200.48xlarge (B200 - 8 x 180 GB GPU memory)
+      - p6-b200.48xlarge (B200 - 8 x 179 GiB GPU memory)
+      - p6-b300.48xlarge (B300 - 8 x 269 GiB GPU memory)
 
       - g5g.2xlarge ARM64 (T4G - 16 GB GPU memory)
       - g5g.4xlarge ARM64 (T4G - 16 GB GPU memory)
