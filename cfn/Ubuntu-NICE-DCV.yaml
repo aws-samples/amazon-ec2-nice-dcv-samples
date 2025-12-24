@@ -2400,15 +2400,20 @@ Resources:
                 apt-get install -q -y nvidia-settings
 
                 # P instance: https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/#optional-installing-fabric-manager-and-the-nscq-library
+                # https://repost.aws/articles/ARWGxLArMBQ4y1MKoSHTq3gQ/
                 if ( ec2-metadata -t | grep -q " p[0-9]" ); then
-                  apt-get install -q -y nvidia-fabricmanager-$VERSION libnvidia-nscq-$VERSION
-                  apt-get install -q -y nvidia-imex-$VERSION
-                  if ( ec2-metadata -t | grep -q " p6" ); then
-                    apt-get install -q -y nvlsm
-                    apt-get install -q -y infiniband-diags
-                    echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
-                    modprobe ib_umad
-                  fi
+                    apt-get install -q -y nvidia-fabricmanager-$VERSION libnvidia-nscq-$VERSION
+                    apt-get install -q -y nvidia-imex-$VERSION
+                    if ( ec2-metadata -t | grep -q " p6" ); then
+                      if ( arch | grep -q x86_64 ); then
+                        DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                        wget https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/x86_64/nvlsm_2025.06.10-1_amd64.deb
+                        apt-get install -q -y ./nvlsm*.deb
+                        apt-get install -q -y infiniband-diags
+                        echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
+                        modprobe ib_umad
+                      fi
+                    fi
                   systemctl enable --now nvidia-fabricmanager
                 fi
 
