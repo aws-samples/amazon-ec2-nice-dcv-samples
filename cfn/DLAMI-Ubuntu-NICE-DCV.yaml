@@ -145,36 +145,37 @@ Parameters:
     Type: String
     Description: https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html https://aws.amazon.com/releasenotes/dlami-support-policy/
     AllowedValues:
-      # aws ssm get-parameters-by-path --recursive --path /aws/service/neuron/dlami | jq -r  ".Parameters[].Name"
-      # aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami | jq -r  ".Parameters[].Name"
+      # aws ssm get-parameters-by-path --recursive --path /aws/service/neuron/dlami | jq -r  ".Parameters[].Name" | grep ubuntu
+      # aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami | jq -r  ".Parameters[].Name" | grep ubuntu
+      - Ubuntu 24.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-24.04/latest/image_id
       - Ubuntu 22.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-22.04/latest/image_id
 
+      - Ubuntu 24.04 (Neuron JAX 0.7) |/aws/service/neuron/dlami/jax-0.7/ubuntu-24.04/latest/image_id
       - Ubuntu 22.04 (Neuron JAX 0.6) |/aws/service/neuron/dlami/jax-0.6/ubuntu-22.04/latest/image_id
 
+      - Ubuntu 24.04 (Neuron PyTorch 2.9) |/aws/service/neuron/dlami/pytorch-2.9/ubuntu-24.04/latest/image_id
       - Ubuntu 22.04 (Neuron PyTorch 2.8) |/aws/service/neuron/dlami/pytorch-2.8/ubuntu-22.04/latest/image_id
 
       - Ubuntu 22.04 (Neuron TensorFlow 2.10) |/aws/service/neuron/dlami/tensorflow-2.10/ubuntu-22.04/latest/image_id
 
+      - Ubuntu 24.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-24.04/latest/image_id
       - Ubuntu 22.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-22.04/latest/image_id
 
       - Ubuntu 24.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-24.04/latest/ami-id
       - Ubuntu 22.04 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
 
+      - Ubuntu 24.04 (PyTorch 2.9) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.9-ubuntu-24.04/latest/ami-id
       - Ubuntu 24.04 (PyTorch 2.8) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.8-ubuntu-24.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.7) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.7-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.6) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
 
       - Ubuntu 22.04 (TensorFlow 2.18) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.18-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (TensorFlow 2.17) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.17-ubuntu-22.04/latest/ami-id
 
       - Ubuntu 24.04 (Base) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-ubuntu-24.04/latest/ami-id
       - Ubuntu 22.04 (Base) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
 
+      - Ubuntu 24.04 (PyTorch 2.9) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.9-ubuntu-24.04/latest/ami-id
       - Ubuntu 24.04 (PyTorch 2.8) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.8-ubuntu-24.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.7) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.7-ubuntu-22.04/latest/ami-id
-      - Ubuntu 22.04 (PyTorch 2.6) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.6-ubuntu-22.04/latest/ami-id
 
-    Default: "Ubuntu 24.04 (PyTorch 2.8) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.8-ubuntu-24.04/latest/ami-id"
+    Default: "Ubuntu 24.04 (PyTorch 2.9) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.9-ubuntu-24.04/latest/ami-id"
 
   ec2Name:
     Type: String
@@ -188,7 +189,7 @@ Parameters:
     ConstraintDescription: Select a key pair
   instanceType:
     Type: String
-    Description: https://console.aws.amazon.com/ec2/#InstanceTypes https://aws.amazon.com/ec2/instance-types/#Accelerated_Computing
+    Description: https://console.aws.amazon.com/ec2/#InstanceTypes https://aws.amazon.com/ec2/instance-types/accelerated-computing/
     AllowedValues:
       - g4dn.xlarge (T4 - 16 GB GPU memory)
       - g4dn.2xlarge (T4 - 16 GB GPU memory)
