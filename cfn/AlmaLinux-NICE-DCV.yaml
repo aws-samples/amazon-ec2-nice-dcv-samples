@@ -207,7 +207,7 @@ Parameters:
     Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 570.195.03
+    Default: 580.105.08
   listenPort:
     Type: Number
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
@@ -1686,7 +1686,6 @@ Resources:
 
                 dnf update -q -y
 
-
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
                   if (systemctl status firewalld | grep -q running); then
@@ -2136,7 +2135,7 @@ Resources:
                 else
                   ARCH=sbsa
                 fi
-                dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2185,7 +2184,7 @@ Resources:
                 else
                   ARCH=sbsa
                 fi
-                dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2208,11 +2207,27 @@ Resources:
                 else
                   ARCH=sbsa
                 fi
-                dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 dnf clean all
                 dnf -q -y module install nvidia-driver:open-dkms
                 dnf install -q -y nvidia-settings
                 dnf install -q -y nvidia-xconfig
+
+                # P instance: https://repost.aws/articles/ARpmJcNiCtST2A3hrrM_4R4A/
+                if ( ec2-metadata -t | grep -q " p[0-9]" ); then
+                  if ( dnf module list | grep nvidia-driver | grep open-dkms | grep -q fm ); then
+                    dnf module install -q -y nvidia-driver:open-dkms/fm
+                  else
+                    dnf install -q -y nvidia-fabricmanager libnvidia-nscq libnvsdm nvidia-imex
+                  fi
+                  if ( ec2-metadata -t | grep -q " p6" ); then
+                    dnf install -q -y nvlsm
+                    dnf install -q -y nvlink5
+                    echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
+                    modprobe ib_umad
+                  fi
+                  systemctl enable --now nvidia-fabricmanager
+                fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2243,7 +2258,24 @@ Resources:
                 else
                   ARCH=sbsa
                 fi
-                dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
+                dnf clean expire-cache
+
+                # P instance: https://repost.aws/articles/ARpmJcNiCtST2A3hrrM_4R4A/
+                if ( ec2-metadata -t | grep -q " p[0-9]" ); then
+                  if ( dnf module list | grep nvidia-driver | grep open-dkms | grep -q fm ); then
+                    dnf module install -q -y nvidia-driver:open-dkms/fm
+                  else
+                    dnf install -q -y nvidia-fabricmanager libnvidia-nscq libnvsdm nvidia-imex
+                  fi
+                  if ( ec2-metadata -t | grep -q " p6" ); then
+                    dnf install -q -y nvlsm
+                    dnf install -q -y nvlink5
+                    echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
+                    modprobe ib_umad
+                  fi
+                  systemctl enable --now nvidia-fabricmanager
+                fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service

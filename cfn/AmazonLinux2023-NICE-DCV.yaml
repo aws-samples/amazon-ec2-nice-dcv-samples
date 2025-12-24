@@ -199,7 +199,7 @@ Parameters:
     Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 570.195.03
+    Default: 580.105.08
   listenPort:
     Type: Number
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
@@ -1927,7 +1927,7 @@ Resources:
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
                 curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-amzn2023-$(arch).tgz
-                tar -xvzf nice-dcv-amzn2023-$(arch).tgz && cd nice-dcv-*-amzn2023-$(arch)
+                tar -xzf nice-dcv-amzn2023-$(arch).tgz && cd nice-dcv-*-amzn2023-$(arch)
                 dnf install -q -y ./nice-dcv-server-*.rpm
                 dnf install -q -y ./nice-dcv-web-viewer-*.rpm
                 dnf install -q -y ./nice-xdcv-*.rpm
@@ -2174,6 +2174,22 @@ Resources:
                 dnf install -q -y nvidia-settings
                 dnf install -q -y nvidia-xconfig
 
+                # P instance: https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/
+                if ( ec2-metadata -t | grep -q " p[0-9]" ); then
+                  if ( dnf module list | grep nvidia-driver | grep open-dkms | grep -q fm ); then
+                    dnf module install -q -y nvidia-driver:open-dkms/fm
+                  else
+                    dnf install -q -y nvidia-fabricmanager libnvidia-nscq libnvsdm nvidia-imex
+                  fi
+                  if ( ec2-metadata -t | grep -q " p6" ); then
+                    dnf install -q -y nvlsm
+                    dnf install -q -y nvlink5
+                    echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
+                    modprobe ib_umad
+                  fi
+                  systemctl enable --now nvidia-fabricmanager
+                fi
+
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
                 rm -f ${0}
@@ -2210,6 +2226,23 @@ Resources:
                   ARCH=sbsa
                 fi
                 dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
+                dnf clean expire-cache
+
+                # P instance: https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/
+                if ( ec2-metadata -t | grep -q " p[0-9]" ); then
+                  if ( dnf module list | grep nvidia-driver | grep open-dkms | grep -q fm ); then
+                    dnf module install -q -y nvidia-driver:open-dkms/fm
+                  else
+                    dnf install -q -y nvidia-fabricmanager libnvidia-nscq libnvsdm nvidia-imex
+                  fi
+                  if ( ec2-metadata -t | grep -q " p6" ); then
+                    dnf install -q -y nvlsm
+                    dnf install -q -y nvlink5
+                    echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
+                    modprobe ib_umad
+                  fi
+                  systemctl enable --now nvidia-fabricmanager
+                fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2235,6 +2268,22 @@ Resources:
                 dnf install -q -y nvidia-release
                 dnf install -q -y nvidia-open
                 dnf install -q -y nvidia-xconfig
+
+                # P instance: https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/
+                if ( ec2-metadata -t | grep -q " p[0-9]" ); then
+                  if ( dnf module list | grep nvidia-driver | grep open-dkms | grep -q fm ); then
+                    dnf module install -q -y nvidia-driver:open-dkms/fm
+                  else
+                    dnf install -q -y nvidia-fabricmanager libnvidia-nscq libnvsdm nvidia-imex
+                  fi
+                  if ( ec2-metadata -t | grep -q " p6" ); then
+                    dnf install -q -y nvlsm
+                    dnf install -q -y nvlink5
+                    echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
+                    modprobe ib_umad
+                  fi
+                  systemctl enable --now nvidia-fabricmanager
+                fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service

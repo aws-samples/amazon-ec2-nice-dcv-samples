@@ -23,6 +23,8 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
+          default: Amazon Linux 2 will end of support date (End of Life, or EOL) on 2026-06-30
+      - Label:
           default: EC2
         Parameters:
           - ec2Name
@@ -193,7 +195,7 @@ Parameters:
     Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 570.195.03
+    Default: 580.105.08
   listenPort:
     Type: Number
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
