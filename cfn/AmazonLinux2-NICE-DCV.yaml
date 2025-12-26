@@ -23,7 +23,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: Amazon Linux 2 will end of support date (End of Life, or EOL) on 2026-06-30
+          default: AL2 (Amazon Linux 2) EOL (End of Life) on 2026-06-30
       - Label:
           default: EC2
         Parameters:
@@ -2100,10 +2100,10 @@ Resources:
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
 
                 # Add access to NVIDIA repo
-                DISTRO=rhel7
-                if (arch | grep -q x86); then
-                  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
-                fi
+                # DISTRO=rhel7
+                # if (arch | grep -q x86); then
+                #  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
+                # fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2114,7 +2114,7 @@ Resources:
               group: "root"
         04_gpu_nvidia_gaming_install:
           files:
-            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html
+            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver
               content: |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
@@ -2150,10 +2150,10 @@ Resources:
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
 
                 # Add access to NVIDIA repo
-                DISTRO=rhel7
-                if (arch | grep -q x86); then
-                  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
-                fi
+                # DISTRO=rhel7
+                #if (arch | grep -q x86); then
+                #  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
+                # fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2211,10 +2211,10 @@ Resources:
                 sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc10-gcc IGNORE_CC_MISMATCH=1/" dkms.conf
 
                 # Add access to NVIDIA repo
-                DISTRO=rhel7
-                if (arch | grep -q x86); then
-                  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
-                fi
+                # DISTRO=rhel7
+                #if (arch | grep -q x86); then
+                #  yum-config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$(arch)/cuda-$DISTRO.repo
+                # fi
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
