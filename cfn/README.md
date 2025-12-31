@@ -13,6 +13,8 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
   - [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html#vpc-dns-support): `enableDnsSupport` and `enableDnsHostnames` enabled
   - [Subnet](https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html#subnet-settings): `Enable resource name DNS A record on launch` enabled
 
+*You can use [VPC-NICE-DCV.yaml](VPC-NICE-DCV.yaml) to create a dual-stack public subnet with the necessary configuration*
+
 ### Availability
 
 - Verify instance type [Region](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html) and [AZ](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error) availability.
@@ -42,8 +44,6 @@ Enter a **Stack name** and specify parameters values.
 ### CloudFormation Parameters
 
 In most cases, the default values are sufficient. You will need to specify values for `vpcID`, `subnetID` and `ec2KeyPair` (Linux). For security reasons, configure `ingressIPv4` and `ingressIPv6` to your IP address.
-
-*You can use [VPC-NICE-DCV.yaml](VPC-NICE-DCV.yaml) to create a dual-stack public subnet*
 
 EC2
 
