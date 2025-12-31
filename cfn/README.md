@@ -10,14 +10,14 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 
 - EC2 instances *must* be provisioned in a subnet with *outbound IPv4 internet connectivity*
 - To use [Amazon CloudFront](https://aws.amazon.com/cloudfront/), the following must be enabled
-  - [VPC DNS](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html#vpc-dns-support) attribute `enableDnsSupport` and `enableDnsHostnames`
-  - [Resource-based name (RBN)](https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html#subnet-settings) attribute `Enable resource name DNS A record on launch`
+  - [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html#vpc-dns-support): `enableDnsSupport` and `enableDnsHostnames` enabled
+  - [Subnet](https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html#subnet-settings): `Enable resource name DNS A record on launch` enabled
 
 ### Availability
 
 - Verify instance type [Region](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html) and [AZ](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error) availability.
 - Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html#on-demand-instance-quotas) value of your desired instance type and request quota increase where necessary.  
-- MarketPlace AMI ([AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4), [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d)): Subscribe before using. Some Marketplace AMIs may only support specific instance types, visit the corresponding page to view available options.
+- MarketPlace AMI ([AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4), [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d)): subscribe before using. Some Marketplace AMIs may only support specific instance types, visit the corresponding page to view available options.
 - [Deep Learning AMI](#about-dlami-template): Verify Region availability before using. You can use AWS CLI command `aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami --region <REGION_CODE>)`. DLAMIs are not available if it returns `aws/service/deeplearning is not a valid namespace` error message.
 
 ### License Agreement
