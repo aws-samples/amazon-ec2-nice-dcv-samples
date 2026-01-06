@@ -77,7 +77,7 @@ Metadata:
           default: Others
         Parameters:
           - installDocker
-          - r53ZoneID
+          - enableR53acmeSupport
 
     ParameterLabels:
       ec2Name:
@@ -140,7 +140,7 @@ Metadata:
 
       installDocker:
         default: "Install Docker"
-      r53ZoneID:
+      enableR53acmeSupport:
         default: "Route 53 Zone ID access for Certbot Route 53 DNS plugin"
 
 Parameters:
@@ -664,10 +664,13 @@ Parameters:
       - "Yes"
       - "No"
     Default: "Yes"
-  r53ZoneID:
+  enableR53acmeSupport:
     Type: String
-    Description: https://console.aws.amazon.com/route53/hostedzones https://certbot-dns-route53.readthedocs.io/
-    Default: ""
+    Description: https://letsencrypt.org/docs/challenge-types https://certbot-dns-route53.readthedocs.io/
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "Yes"
 
 Conditions:
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
@@ -729,7 +732,7 @@ Conditions:
 
   installWebmin: !Equals [!Ref installWebmin, "Yes"]
 
-  hasR53Zone: !Not [!Equals [!Ref r53ZoneID, ""]]
+  hasR53Zone: !Equals [!Ref enableR53acmeSupport, "Yes"]
 
   createAGA: !Equals [!Ref enableAGA, "Yes"]
 
@@ -990,7 +993,7 @@ Resources:
                 - Effect: Allow
                   Action:
                     - route53:ChangeResourceRecordSets
-                  Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/${r53ZoneID}
+                  Resource: !Sub arn:${AWS::Partition}:route53:::hostedzone/*
                   Condition:
                     IpAddress:
                       aws:SourceIp: 0.0.0.0/0
@@ -1018,7 +1021,7 @@ Resources:
       Roles:
         - !Ref instanceIamRole
 
-  securityGroup:
+  sgEC2Instance:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Allow inbound DCV and SSH
@@ -1147,21 +1150,21 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
-  securityGroupForCloudFrontHTTP:
+  sgCloudFrontIPv4:
     Type: AWS::EC2::SecurityGroup
     Condition: createCFsgHTTP
     Properties:
       GroupDescription: Allow inbound HTTP from CloudFront (IPv4)
       VpcId: !Ref vpcID
       SecurityGroupIngress:
-        - Description: HTTP (CloudFront origin IP)
+        - Description: HTTP (CloudFront origin IPv4)
           IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           SourcePrefixListId:
             !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       SecurityGroupEgress:
-        - Description: Ping (CloudFront origin IP)
+        - Description: Ping (CloudFront origin IPv4)
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
@@ -1174,7 +1177,7 @@ Resources:
           Value: !Ref AWS::StackId
         - Key: Name
           Value: !Sub
-            - "${AWS::StackName}-CloudFrontHTTP-${UID}"
+            - "${AWS::StackName}-CloudFrontHTTP-IPv4-${UID}"
             - UID:
                 !Select [
                   3,
@@ -1183,21 +1186,21 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
-  securityGroupForCloudFrontIpv6HTTP:
+  sgCloudFrontIPv6:
     Type: AWS::EC2::SecurityGroup
     Condition: createCFsgHTTPS
     Properties:
       GroupDescription: Allow inbound HTTP from CloudFront (IPv6)
       VpcId: !Ref vpcID
       SecurityGroupIngress:
-        - Description: HTTP (CloudFront origin IP)
+        - Description: HTTP (CloudFront origin IPv6)
           IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           SourcePrefixListId:
             !FindInMap [CFprefixMap, !Ref AWS::Region, Ipv6PrefixList]
       SecurityGroupEgress:
-        - Description: Ping (CloudFront origin IP)
+        - Description: Ping (CloudFront origin IPv6)
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
@@ -1210,7 +1213,7 @@ Resources:
           Value: !Ref AWS::StackId
         - Key: Name
           Value: !Sub
-            - "${AWS::StackName}-CloudFrontHTTPS-${UID}"
+            - "${AWS::StackName}-CloudFrontHTTP-IPv6-${UID}"
             - UID:
                 !Select [
                   3,
@@ -1219,7 +1222,7 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
-  securityGroupForR53HealthChecks:
+  sgR53HealthChecks:
     Type: AWS::EC2::SecurityGroup
     Condition: createAGA
     Properties:
@@ -1876,22 +1879,10 @@ Resources:
       DisableApiTermination: !If [enableProtection, true, false]
       EbsOptimized: true
       SecurityGroupIds:
-        - !Ref securityGroup
-        - !If [
-            createCFsgHTTP,
-            !Ref securityGroupForCloudFrontHTTP,
-            !Ref AWS::NoValue,
-          ]
-        - !If [
-            createCFsgHTTPS,
-            !Ref securityGroupForCloudFrontIpv6HTTP,
-            !Ref AWS::NoValue,
-          ]
-        - !If [
-            createAGA,
-            !Ref securityGroupForR53HealthChecks,
-            !Ref AWS::NoValue,
-          ]
+        - !Ref sgEC2Instance
+        - !If [createCFsgHTTP, !Ref sgCloudFrontIPv4, !Ref AWS::NoValue]
+        - !If [createCFsgHTTPS, !Ref sgCloudFrontIPv6, !Ref AWS::NoValue]
+        - !If [createAGA, !Ref sgR53HealthChecks, !Ref AWS::NoValue]
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -2177,6 +2168,7 @@ Resources:
 
   cfDistribution:
     Type: AWS::CloudFront::Distribution
+    DependsOn: ec2Instance
     Condition: createCloudFront
     Properties:
       DistributionConfig:
@@ -2283,8 +2275,8 @@ Outputs:
             DefaultValue: "console.aws.amazon.com",
           ]
 
-  DCVwebConsole:
-    Description: DCV web browser client (login as ec2-user)
+  DCVUrl:
+    Description: DCV URL (login as ec2-user)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}/?username=ec2-user     ( dcv://ec2-user:@${IpAddress}:${listenPort} )"
       - IpAddress:
@@ -2294,18 +2286,18 @@ Outputs:
             !GetAtt ec2Instance.PrivateIp,
           ]
 
-  DCVwebConsoleAGA:
+  DCVUrlAGA:
     Condition: createAGA
     Description: DCV web browser client through AGA (login as ec2-user)
-    Value: !Sub https://${aga.DnsName}:${listenPort}
+    Value: !Sub "https://${aga.DnsName}:${listenPort}/?username=ec2-user    ( dcv://ec2-user:@${aga.DnsName}:${listenPort} )"
 
   SecurityGroup:
     Description: Security Group
-    Value: !Ref securityGroup
+    Value: !Ref sgEC2Instance
     Export:
       Name: !Sub ${AWS::StackName}-SecurityGroup
 
-  InstanceID:
+  EC2instanceID:
     Description: Instance ID
     Value: !Ref ec2Instance
     Export:
@@ -2358,7 +2350,7 @@ Outputs:
             DefaultValue: "console.aws.amazon.com",
           ]
 
-  CloudFrontURL:
+  CloudFrontUrl:
     Condition: createCloudFront
     Description: CloudFront distribution URL
     Value: !Sub "https://${cfDistribution.DomainName}"

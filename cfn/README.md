@@ -9,22 +9,18 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 ### Requirements
 
 - EC2 instances *must* be provisioned in a subnet with *outbound IPv4 internet connectivity*
-- To use [Amazon CloudFront](https://aws.amazon.com/cloudfront/), the following must be enabled
-  - [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html#vpc-dns-support): `enableDnsSupport` and `enableDnsHostnames` enabled
-  - [Subnet](https://docs.aws.amazon.com/vpc/latest/userguide/configure-subnets.html#subnet-settings): `Enable resource name DNS A record on launch` enabled
-
-*You can use [VPC-NICE-DCV.yaml](VPC-NICE-DCV.yaml) to create a dual-stack public subnet with the necessary configuration*
+- To use [Amazon CloudFront](https://aws.amazon.com/cloudfront/), [VPC DNS](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html#vpc-dns-support) attributes `enableDnsSupport` and `enableDnsHostnames` must be enabled.
 
 ### Availability
 
 - Verify instance type [Region](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html) and [AZ](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error) availability.
 - Check the [On-Demand Instance quota](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-quotas.html#on-demand-instance-quotas) value of your desired instance type and request quota increase where necessary.  
-- MarketPlace AMI ([AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4), [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d)): subscribe before using. Some Marketplace AMIs may only support specific instance types, visit the corresponding page to view available options.
+- MarketPlace AMI ([AlmaLinux](https://aws.amazon.com/marketplace/seller-profile?id=529d1014-352c-4bed-8b63-6120e4bd3342), [CentOS](https://aws.amazon.com/marketplace/seller-profile?id=045847c6-6990-4bdb-b490-0b159744e3a4), [Kali Linux](https://aws.amazon.com/marketplace/seller-profile?id=3fd16b5c-a3f6-43b5-b254-0a6ae8f6a350), [Rocky Linux](https://aws.amazon.com/marketplace/seller-profile?id=01538adc-2664-49d5-b926-3381dffce12d)): Subscribe before using. Some Marketplace AMIs may only support specific instance types, visit the corresponding page to view available options.
 - [Deep Learning AMI](#about-dlami-template): Verify Region availability before using. You can use AWS CLI command `aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami --region <REGION_CODE>)`. DLAMIs are not available if it returns `aws/service/deeplearning is not a valid namespace` error message.
 
 ### License Agreement
 
-- NVIDIA [GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html), NVIDIA [Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) drivers are for AWS customers only. You are bound by their respective End User License Agreements upon installation of software.
+- NVIDIA [GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver), NVIDIA [Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) drivers are for AWS customers only. You are bound by their respective End User License Agreements upon installation of software.
 - Templates may offer the option to install [Webmin](https://github.com/webmin/webmin) and/or [Docker Engine](https://docs.docker.com/engine/), which are released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) and [Apache License, Version 2.0](https://github.com/moby/moby/blob/master/LICENSE) respectively.
 - DLAMI template installs [Visual Studio Code](https://github.com/microsoft/vscode) which is released under [MIT-0](https://github.com/microsoft/vscode/blob/main/LICENSE.txt) license, and includes [AWS Toolkit for Visual Code](https://aws.amazon.com/visualstudiocode/) and other useful extensions.
 - Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed in the EC2 instance.
@@ -33,17 +29,19 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 
 Download `<OS>-NICE-DCV.yaml` CloudFormation file where `<OS>` is the desired operating system.
 
-Login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template). 
+Login to AWS [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create/template).
 
 ### Creating CloudFormation stack
 
 To [create CloudFormation stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html#create-stack), choose **Create stack** at top right of the **Stacks** page, and then choose **With new resources (standard)**.
-Choose **Upload a template file**, click **Choose File** to select your downloaded `.yaml` file, and click **Next**. 
-Enter a **Stack name** and specify parameters values. 
+Choose **Upload a template file**, click **Choose File** to select your downloaded `.yaml` file, and click **Next**.
+Enter a **Stack name** and specify parameters values.
 
 ### CloudFormation Parameters
 
 In most cases, the default values are sufficient. You will need to specify values for `vpcID`, `subnetID` and `ec2KeyPair` (Linux). For security reasons, configure `ingressIPv4` and `ingressIPv6` to your IP address.
+
+*You can use [VPC-NICE-DCV.yaml](VPC-NICE-DCV.yaml) to create a dual-stack public subnet*
 
 EC2
 
@@ -51,7 +49,7 @@ EC2
 - `ec2KeyPair` (Linux) : [EC2 key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for [SSH access](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-ssh.html#connect-linux-inst-sshClient). [Create a key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html) if you do not have one
 - `osVersion` (where applicable) : operating system version and processor architecture (Intel/AMD x86_64 or [Graviton](https://aws.amazon.com/ec2/graviton/) arm64). Default is latest version and arm64
 - `imageId` (where applicable) : [System Manager Parameter](https://aws.amazon.com/blogs/compute/using-system-manager-parameter-as-an-alias-for-ami-id/) path to AMI ID
--  `instanceType` : appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). *The instance type you specify must matches the selected processor architecture.*  Default is `t4g.medium` and `t3.medium` for arm64 and x86_64 architecture respectively
+- `instanceType` : appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). *The instance type you specify must matches the selected processor architecture.*  Default is `t4g.medium` and `t3.medium` for arm64 and x86_64 architecture respectively
 - `ec2TerminationProtection` : enable [EC2 termination protection](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html) to prevent accidental deletion. Default is `Yes`
 
 DCV
@@ -59,10 +57,10 @@ DCV
 - `driverType` (Windows) : graphics driver to install
   - [DCV-IDD](https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2023-1-16220) (Windows Server 2019 or later) : Indirect Display Driver (IDD) that optimizes the graphics pipeline for higher frame rates and significantly reduces overall CPU usage (default)
   - [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)
-  - [NVIDIA-GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html) ([G6, G6f, Gr6, Gr6f](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : for professional visualization applications
-  - [NVIDIA-Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html) ([G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances)  instance) : contain optimizations for gaming
-  - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/public-nvidia-driver.html) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance) : for compute workloads. Windows graphics will be handled by IDD driver
-    - Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install. 
+  - [NVIDIA-GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) ([G6, G6f, Gr6, Gr6f](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : for professional visualization applications
+  - [NVIDIA-Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) ([G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances)  instance) : contain optimizations for gaming
+  - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance) : for compute workloads. Windows graphics will be handled by IDD driver
+    - Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install.
   - [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
   - `none` : do not install any driver
 
@@ -75,10 +73,10 @@ DCV
 - `sessionType` (Linux) : `virtual` (default) or `console` [session type](#console-and-virtual-sessions). Virtual sessions support custom resolution, [multi-screen](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html) across up to [four monitors](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-num-heads), and up to [4K resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-head-resolution) per display.
   
     [GPU driver installation](#gpu-linux-instances) option may be available for some Linux OSs
-([AlmaLinux](AlmaLinux-NICE-DCV.yaml),  [Amazon Linux 2023](AmazonLinux2023-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [Rocky Linux](RockyLinux-NICE-DCV.yaml), [Ubuntu](Ubuntu-NICE-DCV.yaml)) as follows:
-  - `console-with-NVIDIA_GRID_Driver` ([G6, G6f, Gr6, Gr6f](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html) driver ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode)
-  - `console-with-NVIDIA_Gaming_Driver` ([G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : install [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html) driver
-  - `*-with-NVIDIA_repo_Driver` ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)  instance, e.g. [P6](https://aws.amazon.com/ec2/instance-types/p6/), [G5g](https://aws.amazon.com/ec2/instance-types/g5g/)) : install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/public-nvidia-driver.html) (also know as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) driver from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation). Refer to [NVIDIA Driver Installation Guide](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html#system-requirements) for supported OS (`$distro`) and architecture (`$arch`)
+([AlmaLinux](AlmaLinux-NICE-DCV.yaml),  [Amazon Linux 2023](AmazonLinux2023-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [Rocky Linux](RockyLinux-NICE-DCV.yaml), [Ubuntu](Ubuntu-NICE-DCV.yaml)) as follows:
+  - `console-with-NVIDIA_GRID_Driver` ([G6, G6f, Gr6, Gr6f](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-GRID-driver) driver ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode)
+  - `console-with-NVIDIA_Gaming_Driver` ([G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : install [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver) driver
+  - `*-with-NVIDIA_repo_Driver` ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)  instance, e.g. [P4](https://aws.amazon.com/ec2/instance-types/p4/), [G5g](https://aws.amazon.com/ec2/instance-types/g5g/)) : install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) (also know as [NVIDIA Data Center GPU](https://docs.nvidia.com/datacenter/tesla/drivers/index.html)) driver from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation). Refer to [NVIDIA Driver Installation Guide](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html#system-requirements) for supported OS (`$distro`) and architecture (`$arch`)
   - `*-with-AL2023_repo_Driver` (x86_64 Amazon Linux 2023): install NVIDIA drivers from [AL2023](https://docs.aws.amazon.com/linux/al2023/release-notes/relnotes-2023.7.20250331.html) repository
   - `*-with-Ubuntu_repo_Driver` (Ubuntu) : install [pre-compiled NVIDIA modules](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/#installing-the-pre-compiled-nvidia-modules-for-your-kernel) from [Ubuntu repository](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/)
   - `*-with-NVIDIA_runfile_Driver` (NVIDIA [GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)) : install NVIDIA Tesla driver using [runfile installer](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile-installation) from [driver downloads](https://www.nvidia.com/Download/Find.aspx).
@@ -110,7 +108,7 @@ Remote Access
 Web Server
 
 - `enableCloudFront`: [create](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-creating-console.html) a [Amazon CloudFront](https://aws.amazon.com/cloudfront/) distribution to your EC2 instance. Associated charges are listed on [Amazon CloudFront pricing](https://aws.amazon.com/cloudfront/pricing/) page. Default is `No`
-- `originType`: either `EC2` [custom origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html#concept_CustomOrigin) or `VPC origin`. Most [AWS Regions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html#vpc-origins-supported-regions) support [VPC Origins](https://aws.amazon.com/blogs/networking-and-content-delivery/introducing-cloudfront-virtual-private-cloud-vpc-origins-shield-your-web-applications-from-public-internet/), which allow CloudFront to deliver content even if your EC2 instance is in a VPC private subnet. Enable `assignStaticIP` if using `EC2` origin. Default is `EC2` 
+- `originType`: either `EC2` [custom origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html#concept_CustomOrigin) or `VPC origin`. Most [AWS Regions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html#vpc-origins-supported-regions) support [VPC Origins](https://aws.amazon.com/blogs/networking-and-content-delivery/introducing-cloudfront-virtual-private-cloud-vpc-origins-shield-your-web-applications-from-public-internet/), which allow CloudFront to deliver content even if your EC2 instance is in a VPC private subnet. Enable `assignStaticIP` if using `EC2` origin. Default is `EC2`
 - `allowWebServerPorts` : allow inbound HTTP/HTTPS to EC2 instance. This option is not related to `enableCloudFront` Default is `No`
 
 *CloudFormation template does not install web server on EC2 instance.*
@@ -133,7 +131,7 @@ AWS Global Accelerator (AGA)
 
 - `enableAGA` : deploy [AWS Global Accelerator (AGA)](https://aws.amazon.com/global-accelerator/) network accelerator, which can optimize streaming traffic especially when connecting over long distances or over unreliable networks. You can use the [AWS Global Accelerator Speed Comparison Tool](https://speedtest.globalaccelerator.aws) to see the performance difference when transferring data using Global Accelerator. Associated charges are listed on [AWS Global Accelerator pricing](https://aws.amazon.com/global-accelerator/pricing/) page. Default is `No`
 
-*Verify AGA [Region and Availability Zone (AZ) availability](https://docs.aws.amazon.com/global-accelerator/latest/dg/preserve-client-ip-address.regions.html) before enabling this service.* 
+*Verify AGA [Region and Availability Zone (AZ) availability](https://docs.aws.amazon.com/global-accelerator/latest/dg/preserve-client-ip-address.regions.html) before enabling this service.*
 
 Others
 
@@ -141,25 +139,26 @@ Others
 
 *Docker Engine is not [Docker Desktop](https://docs.docker.com/desktop/). Docker on Linux will use `172.17.0.0/16` subnet.*
 
-- `r53ZoneID` : [Amazon Route 53](https://aws.amazon.com/route53/) hosted zone ID to grant [EC2 IAM Role](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html) access to. To be used for [Route 53 DNS-01 challenge](https://certbot-dns-route53.readthedocs.io/en/stable/) by [Certbot](https://eff-certbot.readthedocs.io/en/stable/intro.html) (or other [ACME clients](https://letsencrypt.org/docs/client-options/)), to obtain certificates for [DCV server](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) and/or other applications. A `*` value will grant access to all Route 53 zones in your AWS account. Permission is restricted to **_acme-challenge.\*** TXT DNS records using [resource record set permissions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-permissions.html). Default is empty string for no access.
+- `enableR53acmeSupport`: grant EC2 instance IAM permission for [ACME clients](https://letsencrypt.org/docs/client-options/) such as [Certbot](https://certbot.eff.org/) to use [DNS-01 challenge](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge) with your [Amazon Route 53](https://aws.amazon.com/route53/) [public hosted zone](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html) to obtain free HTTPS/TLS certificates. For security reasons, DNS record access is restricted to **_acme-challenge.\*** TXT records using [resource record set permissions](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-permissions.html). Default is `Yes`
 
 *Route 53 must be [configured](https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/dns-configuring.html) as DNS service for your domain.*
 
-Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html), and click **Submit** to launch your stack. 
+Continue **Next** with [Configure stack options](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-add-tags.html), [Review Stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-review.html), and click **Submit** to launch your stack.
 
 It may take more than 15 minutes to provision the EC2 instance. After your stack has been successfully created, its status changes to **CREATE_COMPLETE**.
 
 ## CloudFormation Outputs and Exports
 
-The following URLs are available in **Outputs** section 
+The following URLs are available in **Outputs** section
 
-- `DCVwebConsole` : [DCV web browser console](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-browser-connect.html) URL link. Login as user specified in *Description* field. Default password is EC2 Instance ID.
-- `SSMsessionManager`* : [SSM Session Manager](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-systems-manager-session-manager.html) URL link. Use this to set a strong DCV login user password. Password change command is in *Description* field.
+- `DCVUrl` : DCV [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) and [native client](https://docs.aws.amazon.com/dcv/latest/userguide/client.html) URLs. Native clients can be downloaded from [https://www.amazondcv.com/](https://www.amazondcv.com/). Login as the user specified in *Description* field. Default password is `EC2instanceID` value
 - `EC2console` : EC2 Console URL link to manage EC2 instance.
 - `EC2iamRole` : EC2 [IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html) URL link to manage permission.
+- `EC2instanceID`: EC2 instance ID
 - `EC2instanceConnect`* (if available, Linux) : [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html).
-- `EC2serialConsole` (Linux): [EC2 Serial Console](https://aws.amazon.com/blogs/aws/troubleshoot-boot-and-networking-issues-with-new-ec2-serial-console/) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-serial-console-prerequisites.html).
-- `RDPconnect` (Windows) : in-browser [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) URL link. Use this to update DCV server.
+- `EC2serialConsole` (Linux): [EC2 Serial Console](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-serial-console.html) URL. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-serial-console-prerequisites.html).
+- `RDPconnect` (Windows) : in-browser [Fleet Manager Remote Desktop](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-rdp-fleet-manager.html) URL link. Use this to update DCV server.
+- `SSMsessionManager`* : [SSM Session Manager](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-systems-manager-session-manager.html) URL. You can use this to set a strong DCV login user password. Password change command is in *Description* field.
 
 \* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to DCV server using [native clients](#dcv-clients).*
 
@@ -169,7 +168,7 @@ If `installWebmin` is `Yes`
 
 If `enableAGA` is `Yes`
 
-- `DCVwebConsoleAGA` : DCV web browser console URL link through AGA
+- `DCVUrlAGA` : DCV web browser console URL link through AGA
 - `AGAconsole` : Global Accelerator console URL link
 - `AGAipv4Addresses` : IPv4 addresses
 
@@ -178,7 +177,7 @@ If `enableAGA` is `Yes`
 If `enableCloudFront` is `Yes`
 
 - `CloudFrontConsole` : CloudFront console URL link. Some adjustment of your CloudFront distribution settings may be required.
-- `CloudFrontURL` : CloudFront distribution URL link, e.g. https://d111111abcdef8.cloudfront.net
+- `CloudFrontUrl` : CloudFront distribution URL link, e.g. <https://d111111abcdef8.cloudfront.net>
 
 The following are available as [CloudFormation Exports](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-stack-exports.html)
 
@@ -192,7 +191,7 @@ Refer to [DCV User Guide](https://docs.aws.amazon.com/dcv/latest/userguide/getti
 
 ### DCV clients
 
-Besides [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-browser-connect.html), DCV offers [Windows](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-win.html), [Linux](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-linux.html) and [macOS](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-mac.html) native clients that support [additional features](https://docs.aws.amazon.com/dcv/latest/userguide/client-features.html) such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/disable-quic.html) transport protocol, [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html), and [printer redirection](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html). Native clients can be download from [https://www.amazondcv.com/](https://www.amazondcv.com/). 
+Besides [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-browser-connect.html), DCV offers [Windows](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-win.html), [Linux](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-linux.html) and [macOS](https://docs.aws.amazon.com/dcv/latest/userguide/using-connecting-mac.html) native clients that support [additional features](https://docs.aws.amazon.com/dcv/latest/userguide/client-features.html) such as [QUIC UDP](https://docs.aws.amazon.com/dcv/latest/adminguide/disable-quic.html) transport protocol, [multi-channel audio](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-audio.html), and [printer redirection](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html). Native clients can be download from [https://www.amazondcv.com/](https://www.amazondcv.com/).
 
 ### Remove web browser client
 
@@ -216,7 +215,7 @@ The blog [Building a high-performance Windows workstation on AWS for graphics in
 
 Below shows steps to provision a G6 instance with NVIDIA GRID driver in Malaysia Region
 
-https://github.com/user-attachments/assets/b9d4419c-94d0-4696-a58e-29e7c0261f27
+<https://github.com/user-attachments/assets/b9d4419c-94d0-4696-a58e-29e7c0261f27>
 
 For NVIDIA GPU instances, [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) and [cuDNN (CUDA® Deep Neural Network library)](https://developer.nvidia.com/cudnn) can be downloaded and installed from [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads?target_os=Windows&target_arch=x86_64&target_version=Server2022) and [https://developer.nvidia.com/cudnn-downloads](https://developer.nvidia.com/cudnn-downloads?target_os=Windows&target_arch=x86_64) respectively.
 
@@ -229,6 +228,7 @@ Template configures a default Windows screen resolution of 1920 by 1080. If you 
 To update DCV Server, connect via Fleet Manager Remote Desktop console using `RDPconnect` link and run `C:\Users\Administrator\update-DCV.cmd`
 
 ## About DLAMI template
+
 `DLAMI-<OS>-NICE-DCV.yaml` [Ubuntu]("DLAMI-Ubuntu-NICE-DCV.yaml") and [Amazon Linux 2023]("DLAMI-AL2023-NICE-DCV.yaml") templates uses [AWS Deep Learning AMI (DLAMI)](https://aws.amazon.com/ai/machine-learning/amis/) to build a deep learning workstation.
 
 ### DLAMI options
@@ -243,9 +243,7 @@ Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devgui
 
 ### Demo
 
-https://github.com/user-attachments/assets/52918231-376e-424f-b76f-8330cc7c42a2
-
-
+<https://github.com/user-attachments/assets/52918231-376e-424f-b76f-8330cc7c42a2>
 
 ## About Linux templates
 
@@ -263,9 +261,9 @@ The login user name depends on Linux distributions as follows:
 
 DCV offers [console and virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html) on Linux OS.
 
-With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server instance, `Xdcv`, and runs a desktop environment inside the X server. Multiple user sessions are supported for virtual sessions. 
+With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server instance, `Xdcv`, and runs a desktop environment inside the X server. Multiple user sessions are supported for virtual sessions.
 
-With console sessions  (`console`, `console-with-*`), DCV directly captures the content of the desktop screen. Only one console session can be hosted at a time. 
+With console sessions  (`console`, `console-with-*`), DCV directly captures the content of the desktop screen. Only one console session can be hosted at a time.
 
 ### GPU Linux instances
 
@@ -281,17 +279,18 @@ There are limits to display resolution and multi-screen support per GPU for cons
 
 You can use virtual session option (`virtual-with-NVIDIA-*`) when using GPU primarily for compute workloads. The CloudFormation templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` session, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types.
 
-### Install NVIDIA CUDA Toolkit
+### Installing NVIDIA CUDA Toolkit and other software
 
-To install [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) on GPU EC2 instances with the following `sessionType` options:
+[CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may be installed on GPU EC2 instances with the following `sessionType` options:
 
 - `*-AL2023_repo_*` : `sudo dnf install -y cuda-toolkit`
+- `*-Ubuntu_repo_*` :  `sudo apt install -y nvidia-cuda-toolkit`
 - `*-NVIDIA_repo_*`, `*-NVIDIA_GRID*`, `*-NVIDIA_Gaming*`, `*-NVIDIA_runfile*` : `sudo <packmgr_cli> install -y cuda-toolkit`
   - where  `<packmgr_cli>` is the OS package manager command-line tool, i.e.`apt` and `yum`/`dnf` for Ubuntu, and other Linux OSs respectively. *Refer to [CUDA documentation](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#) for [installation options](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#additional-package-manager-capabilities) and [post-installation actions](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#post-installation-actions)*
   
-  - Template adds access to other NVIDIA repository software such as [NVIDIA Fabric Manager](https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html), [Data Center GPU Manager (DCGM)](https://docs.nvidia.com/datacenter/dcgm/latest/user-guide/getting-started.html#installation), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html), [GPUDirect Storage](https://docs.nvidia.com/gpudirect-storage/overview-guide/index.html), [NCCL](https://docs.nvidia.com/deeplearning/nccl/install-guide/index.html#down) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/installation/latest/linux.html#package-manager-network-installation). Refer to documentation links and below community articles for more information
+  - Template adds access to other NVIDIA repository software such as [NVIDIA Fabric Manager](https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html), [Data Center GPU Manager (DCGM)](https://docs.nvidia.com/datacenter/dcgm/latest/user-guide/getting-started.html#installation), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html), [GPUDirect Storage](https://docs.nvidia.com/gpudirect-storage/overview-guide/index.html), [NCCL](https://docs.nvidia.com/deeplearning/nccl/install-guide/index.html#down) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/installation/latest/linux.html#package-manager-network-installation). Refer to documentation links and following community articles for more information
 
-### NVIDIA software install scripts
+### Installing NVIDIA software
 
 NVIDIA driver, CUDA Toolkit, NVIDIA Container Toolkit, Docker and other software installation/configuration scripts are available from the following [re:Post](https://repost.aws/) community articles:
 
@@ -304,7 +303,7 @@ Depending on use case, [DLAMI template](#about-dlami-template) may be a more bet
 
 ### Updating DCV server on Linux
 
-Use */home/{user name}/update-dcv* script to update DCV server. 
+Use */home/{user name}/update-dcv* script to update DCV server.
 
 ### Troubleshooting
 
@@ -339,17 +338,18 @@ To futher secure your EC2 instance, you may want to
 - [Remove web browser client](#remove-web-browser-client) and use [native client](https://download.amazondcv.com/).
 - Restrict DCV/SSH/RDP/Webmin access to your IP address only (`ingressIPv4` and `ingressIPv6`).
 - Linux: Disable SSH access from public internet (`allowSSHport`)
-  - Use [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html#ec2-instance-connect-connecting-console) or [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#start-ec2-console) for in-browser terminal access, or 
+  - Use [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html#ec2-instance-connect-connecting-console) or [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#start-ec2-console) for in-browser terminal access, or
   - Start a session using [AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-cli) or [SSH](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-ssh) with [Session Manager plugin for the AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)
 - Windows: Disallow RDP (`allowRDPport`) access from public internet.
   - Use [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) for in-browser RDP access.
 - Use [AWS Backup](https://aws.amazon.com/blogs/aws/aws-backup-ec2-instances-efs-single-file-restore-and-cross-region-backup/) (`enableBackup`) data protection
-  - Enable [AWS Backup Vault Lock](https://aws.amazon.com/blogs/storage/enhance-the-security-posture-of-your-backups-with-aws-backup-vault-lock/) to prevent backups from accidental or malicious deletion, and for [protection from ransomware](https://aws.amazon.com/blogs/security/updated-ebook-protecting-your-aws-environment-from-ransomware/). 
+  - Enable [AWS Backup Vault Lock](https://aws.amazon.com/blogs/storage/enhance-the-security-posture-of-your-backups-with-aws-backup-vault-lock/) to prevent backups from accidental or malicious deletion, and for [protection from ransomware](https://aws.amazon.com/blogs/security/updated-ebook-protecting-your-aws-environment-from-ransomware/).
   - If your [Region](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) does not support AWS Backup, you can setup automatic [EBS snapshots](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSSnapshots.html) using [Amazon Data Lifecycle Manager](https://aws.amazon.com/blogs/storage/automating-amazon-ebs-snapshot-and-ami-management-using-amazon-dlm/).
-- If hosting a website 
+- If hosting a website
   - Use [Amazon CloudFront](https://aws.amazon.com/cloudfront/) (`enableCloudFront`) with [VPC Origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html).
+  - Consider CloudFront [flat-rate pricing plans](https://aws.amazon.com/blogs/networking-and-content-delivery/introducing-flat-rate-pricing-plans-with-no-overages/) that combine CloudFront with multiple AWS services, and features [monthly price](https://aws.amazon.com/cloudfront/pricing/) with no overage charges regardless of whether your website goes viral or faces a DDoS attack
   - The CloudFormation template creates additional inbound HTTP and HTTPS security groups with [AWS-managed prefix list for Amazon CloudFront](https://aws.amazon.com/blogs/networking-and-content-delivery/limit-access-to-your-origins-using-the-aws-managed-prefix-list-for-amazon-cloudfront/) as source where possible. You can remove HTTP and HTTPS public internet inbound (`0.0.0.0/0`) from your security group
-  - Use [AWS WAF](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html) to protect your CloudFront distribution 
+  - Use [AWS WAF](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html) to protect your CloudFront distribution
 - Enable [Amazon Inspector](https://aws.amazon.com/inspector/) to [scan EC2 instance](https://docs.aws.amazon.com/inspector/latest/user/scanning-ec2.html) for software vulnerabilities and unintended network exposure.
 - Enable [Amazon GuardDuty](https://aws.amazon.com/guardduty/) security monitoring service with [Malware Protection for EC2](https://docs.aws.amazon.com/guardduty/latest/ug/malware-protection.html)
 
@@ -388,8 +388,3 @@ To remove created resources,
 - [Disable](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html) EC2 instance termination protection (if enabled)
 - [Delete](https://docs.aws.amazon.com/aws-backup/latest/devguide/deleting-backups.html) any recovery points in created backup vault
 - [Delete](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html) CloudFormation stack
-
-
-
-
-
