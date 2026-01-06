@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-# Description: Deep Learning AMI with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/ ) (uksb-632il17651) (tag:DLAMI-AL2023)
+Description: Deep Learning AMI with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples/ ) (uksb-632il17651) (tag:DLAMI-AL2023)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
