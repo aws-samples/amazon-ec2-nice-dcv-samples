@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-#Description: Ubuntu with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Ubuntu)
+Description: Ubuntu with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Ubuntu)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
