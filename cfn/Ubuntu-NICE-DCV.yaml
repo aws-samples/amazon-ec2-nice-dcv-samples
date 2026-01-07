@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
-Description: Ubuntu with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Ubuntu)
+#Description: Ubuntu with DCV ( https://github.com/aws-samples/amazon-ec2-nice-dcv-samples ) (uksb-632il17651) (tag:Ubuntu)
 Transform: "AWS::LanguageExtensions"
 
 Metadata:
@@ -1599,11 +1599,11 @@ Resources:
           virtual-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
           console-with-Ubuntu_repo_Driver:
-            - 07_gpu_ubuntu_driver_install
+            - 07_gpu_ubuntu_repo_install
           virtual-with-Ubuntu_repo_Driver:
-            - 07_gpu_ubuntu_driver_install
+            - 07_gpu_ubuntu_repo_install
           virtual-with-Ubuntu_repo_Driver-GPU_sharing:
-            - 07_gpu_ubuntu_driver_install
+            - 07_gpu_ubuntu_repo_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/ubuntu/update-dcv":
@@ -2389,7 +2389,7 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
-        07_gpu_ubuntu_driver_install:
+        07_gpu_ubuntu_repo_install:
           files:
             "/opt/install-gpu-driver": # https://ubuntu.com/server/docs/nvidia-drivers-installation
               content: |
@@ -2401,6 +2401,17 @@ Resources:
                 VERSION=$(apt-cache search "nvidia-driver" | grep "^nvidia-driver-.*-server-open" | cut -d"-" -f3 | sort -r | head -1)
                 apt-get install -q -y linux-modules-nvidia-$VERSION-server-open-aws nvidia-headless-no-dkms-$VERSION-server-open nvidia-driver-$VERSION-server-open nvidia-utils-$VERSION-server
                 apt-get install -q -y nvidia-settings
+
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
+                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
+                apt-get update -q
 
                 # P instance: https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/#optional-installing-fabric-manager-and-the-nscq-library
                 if ( ec2-metadata -t | grep -q " p[0-9]" ); then

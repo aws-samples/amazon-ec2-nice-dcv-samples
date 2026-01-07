@@ -284,11 +284,10 @@ You can use virtual session option (`virtual-with-NVIDIA-*`) when using GPU prim
 [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may be installed on GPU EC2 instances with the following `sessionType` options:
 
 - `*-AL2023_repo_*` : `sudo dnf install -y cuda-toolkit`
-- `*-Ubuntu_repo_*` :  `sudo apt install -y nvidia-cuda-toolkit`
-- `*-NVIDIA_repo_*`, `*-NVIDIA_GRID*`, `*-NVIDIA_Gaming*`, `*-NVIDIA_runfile*` : `sudo <packmgr_cli> install -y cuda-toolkit`
+- `*-NVIDIA_repo_*`, `*-NVIDIA_GRID*`, `*-NVIDIA_Gaming*`, `*-NVIDIA_runfile*`, `*-Ubuntu_repo_*` : `sudo <packmgr_cli> install -y cuda-toolkit`
   - where  `<packmgr_cli>` is the OS package manager command-line tool, i.e.`apt` and `yum`/`dnf` for Ubuntu, and other Linux OSs respectively. *Refer to [CUDA documentation](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#) for [installation options](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#additional-package-manager-capabilities) and [post-installation actions](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#post-installation-actions)*
   
-  - Template adds access to other NVIDIA repository software such as [NVIDIA Fabric Manager](https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html), [Data Center GPU Manager (DCGM)](https://docs.nvidia.com/datacenter/dcgm/latest/user-guide/getting-started.html#installation), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html), [GPUDirect Storage](https://docs.nvidia.com/gpudirect-storage/overview-guide/index.html), [NCCL](https://docs.nvidia.com/deeplearning/nccl/install-guide/index.html#down) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/installation/latest/linux.html#package-manager-network-installation). Refer to documentation links and following community articles for more information
+  - Template adds access to other NVIDIA repository software such as [NVIDIA Fabric Manager](https://docs.nvidia.com/datacenter/tesla/fabric-manager-user-guide/index.html), [Data Center GPU Manager (DCGM)](https://docs.nvidia.com/datacenter/dcgm/latest/user-guide/getting-started.html#installation), [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html), [GPUDirect Storage](https://docs.nvidia.com/gpudirect-storage/overview-guide/index.html), [NCCL](https://docs.nvidia.com/deeplearning/nccl/install-guide/index.html#down) and [cuDNN](https://docs.nvidia.com/deeplearning/cudnn/installation/latest/linux.html#package-manager-network-installation). Refer to documentation links and below community articles for details
 
 ### Installing NVIDIA software
 
