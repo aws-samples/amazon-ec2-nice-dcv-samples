@@ -138,7 +138,7 @@ Metadata:
         default: "Deploy AWS Global Accelerator"
 
       enableR53acmeSupport:
-        default: "Optional: Route 53 Zone ID for DNS record"
+        default: "Enable Route 53 ACME protocol DNS-01 challenge support"
 
 Parameters:
   imageId:
