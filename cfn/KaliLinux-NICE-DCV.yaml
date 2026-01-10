@@ -146,7 +146,7 @@ Metadata:
       installDocker:
         default: "Install Docker Engine aka Docker CE"
       enableR53acmeSupport:
-        default: "Route 53 Zone ID access for Certbot Route 53 DNS plugin"
+        default: "Enable Route 53 ACME protocol DNS-01 challenge support"
 
 Parameters:
   osVersion:
