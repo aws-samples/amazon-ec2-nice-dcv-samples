@@ -2764,7 +2764,7 @@ Outputs:
 
   WebminUrl:
     Condition: installWebmin
-    Description: Webmin (set root password and login as root)
+    Description: Webmin URL (login as rocky)
     Value:
       !If [
         displayPublicIP,

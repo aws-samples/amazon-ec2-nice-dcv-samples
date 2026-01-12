@@ -164,7 +164,7 @@ The following URLs are available in **Outputs** section
 
 If `installWebmin` is `Yes`
 
-- `WebminUrl` : [Webmin](https://webmin.com/) URL link. Set the root password by running `sudo passwd root` from `EC2instanceConnect`, `SSMsessionManager` or SSH session, and login as `root`.
+- `WebminUrl` : [Webmin](https://webmin.com/) URL link. Login as the user specified in *Description* field. Default password is `EC2instanceID` value
 
 If `enableAGA` is `Yes`
 
