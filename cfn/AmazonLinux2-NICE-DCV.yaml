@@ -187,6 +187,7 @@ Parameters:
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_runfile_Driver"
       - "console"
+      - "virtual-with-NVIDIA_GRID_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
       - "virtual-with-NVIDIA_GRID_Driver-GPU_sharing"
     Default: "virtual"
@@ -1554,6 +1555,8 @@ Resources:
             - 02_dcv_gpu_install
           console-with-NVIDIA_GRID_Driver:
             - 03_gpu_nvidia_grid_install
+          virtual-with-NVIDIA_GRID_Driver:
+            - 03_gpu_nvidia_grid_install
           virtual-with-NVIDIA_GRID_Driver-GPU_sharing:
             - 03_gpu_nvidia_grid_install
           console-with-NVIDIA_Gaming_Driver:
@@ -2667,7 +2670,7 @@ Outputs:
 
   WebminUrl:
     Condition: installWebmin
-    Description: Webmin URL (login as ec2-user)
+    Description: Webmin (set root password and login as root)
     Value:
       !If [
         displayPublicIP,

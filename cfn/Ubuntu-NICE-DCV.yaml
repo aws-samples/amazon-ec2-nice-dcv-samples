@@ -201,6 +201,7 @@ Parameters:
       - "console-with-Ubuntu_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
       - "console"
+      - "virtual-with-NVIDIA_GRID_Driver"
       - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-Ubuntu_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
@@ -302,7 +303,7 @@ Parameters:
     Description: https://docs.aws.amazon.com/ebs/latest/userguide/volume_constraints.html
     MinValue: 10
     MaxValue: 16384
-    Default: 50
+    Default: 25
   volumeType:
     Type: String
     Description: https://aws.amazon.com/ebs/general-purpose/
@@ -1583,6 +1584,8 @@ Resources:
           dcv_gpu_install:
             - 02_dcv_gpu_install
           console-with-NVIDIA_GRID_Driver:
+            - 03_gpu_nvidia_grid_install
+          virtual-with-NVIDIA_GRID_Driver:
             - 03_gpu_nvidia_grid_install
           virtual-with-NVIDIA_GRID_Driver-GPU_sharing:
             - 03_gpu_nvidia_grid_install
@@ -2950,7 +2953,7 @@ Outputs:
 
   WebminUrl:
     Condition: installWebmin
-    Description: Webmin URL (login as ubuntu)
+    Description: Webmin (set root password and login as root)
     Value:
       !If [
         displayPublicIP,

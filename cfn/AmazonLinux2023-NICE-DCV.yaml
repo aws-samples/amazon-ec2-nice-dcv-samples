@@ -187,6 +187,7 @@ Parameters:
       - "console-with-AL2023_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
       - "console"
+      - "virtual-with-NVIDIA_GRID_Driver"
       - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-AL2023_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
@@ -1560,6 +1561,8 @@ Resources:
             - 03_gpu_nvidia_grid_install
           virtual-with-NVIDIA_GRID_Driver-GPU_sharing:
             - 03_gpu_nvidia_grid_install
+          virtual-with-NVIDIA_GRID_Driver:
+            - 03_gpu_nvidia_grid_install
           console-with-NVIDIA_Gaming_Driver:
             - 04_gpu_nvidia_gaming_install
           console-with-NVIDIA_repo_Driver:
@@ -2743,7 +2746,7 @@ Outputs:
 
   WebminUrl:
     Condition: installWebmin
-    Description: Webmin URL (login as ec2-user)
+    Description: Webmin (set root password and login as root)
     Value:
       !If [
         displayPublicIP,
