@@ -1841,10 +1841,12 @@ Resources:
                 sleep 10
                 pkill "^dnf$"
 
-                # Snap: https://snapcraft.io/docs/installing-snap-on-red-hat
-                dnf install -q -y snapd
-                systemctl enable --now snapd snapd.socket
-                ln -s /var/lib/snapd/snap /snap
+                if ( ! echo $OS_VERSION | grep -q 8 ); then
+                  # Snap: https://snapcraft.io/docs/installing-snap-on-red-hat
+                  dnf install -q -y snapd
+                  systemctl enable --now snapd snapd.socket
+                  ln -s /var/lib/snapd/snap /snap
+                fi
 
                 # dnf-automatic
                 dnf install -q -y dnf-automatic
@@ -1893,7 +1895,9 @@ Resources:
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
                 dnf remove -q -y awscli
-                sudo snap install aws-cli --classic
+                if ( ! echo $OS_VERSION | grep -q 8 ); then
+                  sudo snap install aws-cli --classic
+                fi
                 if [ -e /snap/bin/aws ]; then
                   rm -f /home/ec2-user/update-awscli
                 else
@@ -1902,7 +1906,9 @@ Resources:
                 echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
 
                 # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
-                sudo snap install certbot --classic
+                if ( ! echo $OS_VERSION | grep -q 8 ); then
+                  sudo snap install certbot --classic
+                fi
                 if [ -e /snap/bin/certbot ]; then
                   ln -s /snap/bin/certbot /usr/bin/certbot
                   sudo snap set certbot trust-plugin-with-root=ok
