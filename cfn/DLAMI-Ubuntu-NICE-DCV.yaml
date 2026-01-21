@@ -229,6 +229,13 @@ Parameters:
       - g6e.24xlarge (L40S - 4 x 48 GB GPU memory)
       - g6e.48xlarge (L40S - 8 x 48 GB GPU memory)
 
+      - g7e.2xlarge (RTX PRO Server 6000 - 96 GB GPU memory)
+      - g7e.4xlarge (RTX PRO Server 6000 - 96 GB GPU memory)
+      - g7e.8xlarge (RTX PRO Server 6000 - 96 GB GPU memory)
+      - g7e.12xlarge (RTX PRO Server 6000 - 2 x 96 GB GPU memory)
+      - g7e.24xlarge (RTX PRO Server 6000 - 4 x 96 GB GPU memory)
+      - g7e.48xlarge (RTX PRO Server 6000 - 8 x 96 GB GPU memory)
+
       - inf1.xlarge (Inferentia)
       - inf1.2xlarge (Inferentia)
       - inf1.6xlarge (Inferentia x 4)
