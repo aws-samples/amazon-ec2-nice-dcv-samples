@@ -1188,7 +1188,7 @@ Resources:
 
   sgCloudFrontIPv6:
     Type: AWS::EC2::SecurityGroup
-    Condition: createCFsgHTTPS
+    Condition: createCFsgHTTP
     Properties:
       GroupDescription: Allow inbound HTTP from CloudFront (IPv6)
       VpcId: !Ref vpcID
@@ -1903,7 +1903,7 @@ Resources:
       SecurityGroupIds:
         - !Ref sgEC2Instance
         - !If [createCFsgHTTP, !Ref sgCloudFrontIPv4, !Ref AWS::NoValue]
-        - !If [createCFsgHTTPS, !Ref sgCloudFrontIPv6, !Ref AWS::NoValue]
+        - !If [createCFsgHTTP, !Ref sgCloudFrontIPv6, !Ref AWS::NoValue]
         - !If [createAGA, !Ref sgR53HealthChecks, !Ref AWS::NoValue]
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
