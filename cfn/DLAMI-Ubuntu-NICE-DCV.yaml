@@ -364,13 +364,13 @@ Parameters:
     Default: "EC2"
   allowWebServerPorts:
     Type: String
-    # Description: Allow HTTP/HTTPS inbound to EC2 instance
+    Description: HTTP is needed for IP address certificate
     AllowedValues:
       - "No"
       - HTTP-and-HTTPS
       - HTTP
       - HTTPS
-    Default: "No"
+    Default: "HTTP"
 
   volumeSize:
     Type: Number
@@ -1700,6 +1700,24 @@ Resources:
                   fi
                 fi
 
+                # IP address cert
+                if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                  if ( echo "${displayPublicIP}" | grep -q -i "Yes" ); then
+                    IP_ADDR=$(curl checkip.amazonaws.com)
+                    certbot certonly --standalone -n --ip-address $IP_ADDR --preferred-profile shortlived --agree-tos
+                    # post cert renewal
+                    mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
+                    # DCV TLS cert: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html
+                    cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
+                    cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                    chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key    
+                    chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  fi
+                fi
+                if [ -f "/opt/dcv-renew-cert.sh" ]; then
+                  rm /opt/dcv-renew-cert.sh
+                fi
+
                 # Use NVIDIA for console and virtual (x86_64)
                 SESSION="${sessionType}"
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
@@ -1728,6 +1746,19 @@ Resources:
                 rm -f ${!0}
                 systemctl daemon-reload
               mode: "000755"
+              owner: "root"
+              group: "root"
+            "/opt/dcv-renew-cert.sh":
+              content: |
+                #!/bin/bash
+                IP_ADDR=$(curl checkip.amazonaws.com)
+                if [ -d "/etc/letsencrypt/live/$IP_ADDR/" ]; then
+                  cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
+                  cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                  chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                fi
+              mode: "000744"
               owner: "root"
               group: "root"
             "/opt/aws/amazon-cloudwatch-agent/bin/config.json":
@@ -1777,6 +1808,12 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
+                export DEBIAN_FRONTEND=noninteractive
+
+                # Change password
+                PWD=$(cat /var/lib/cloud/data/instance-id)
+                USER=ubuntu
+                echo "$USER:$PWD" | chpasswd
 
                 # Update OS
                 apt-get update -q
@@ -1894,11 +1931,7 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
-
-                # Change password
-                PWD=$(cat /var/lib/cloud/data/instance-id)
-                USER=ubuntu
-                echo "$USER:$PWD" | chpasswd
+                export DEBIAN_FRONTEND=noninteractive
 
                 # Update OS
                 apt-get update -q
@@ -2439,9 +2472,16 @@ Outputs:
           ]
 
   EC2serialConsole:
-    Condition: createSgEIC
     Description: EC2 Serial Console
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh?connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
+    Value: !Sub
+      - "https://${AWS::Region}.${url}/ec2-instance-connect/ssh?connType=serial&instanceId=${ec2Instance}&serialPort=0#/"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
 
   EC2iamRole:
     Description: EC2 IAM role
@@ -2506,7 +2546,7 @@ Outputs:
 
   WebminUrl:
     Condition: installWebmin
-    Description: Webmin URL (login as ubuntu)
+    Description: Webmin (login as ubuntu)
     Value:
       !If [
         displayPublicIP,

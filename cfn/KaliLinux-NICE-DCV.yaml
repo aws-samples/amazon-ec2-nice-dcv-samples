@@ -97,7 +97,7 @@ Metadata:
         default: "Enable EC2 termination protection to prevent accidental deletion"
 
       sessionType:
-        default: "DCV session type"
+        default: "DCV session type and GPU driver"
       listenPort:
         default: "TCP/UDP listen port"
 
@@ -266,13 +266,13 @@ Parameters:
     Default: "EC2"
   allowWebServerPorts:
     Type: String
-    # Description: Allow HTTP/HTTPS inbound to EC2 instance
+    Description: HTTP is needed for IP address certificate
     AllowedValues:
       - "No"
       - HTTP-and-HTTPS
       - HTTP
       - HTTPS
-    Default: "No"
+    Default: "HTTP"
 
   volumeSize:
     Type: Number
@@ -1637,6 +1637,24 @@ Resources:
                   fi
                 fi
 
+                # IP address cert
+                if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                  if ( echo "${displayPublicIP}" | grep -q -i "Yes" ); then
+                    IP_ADDR=$(curl checkip.amazonaws.com)
+                    certbot certonly --standalone -n --ip-address $IP_ADDR --preferred-profile shortlived --agree-tos
+                    # post cert renewal
+                    mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
+                    # DCV TLS cert: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html
+                    cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
+                    cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                    chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key    
+                    chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  fi
+                fi
+                if [ -f "/opt/dcv-renew-cert.sh" ]; then
+                  rm /opt/dcv-renew-cert.sh
+                fi
+
                 SESSION="${sessionType}"
                 case $SESSION in
                   console-with-NVIDIA*)
@@ -1657,9 +1675,9 @@ Resources:
                 systemctl enable dcvserver && systemctl restart dcvserver
 
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
-                if ( echo "${sessionType}" | grep -q "NVIDIA" ); then
-                  if [ "${installDocker}" = "Yes" ]; then
-                    if (! apt-get search nvidia | grep -q nvidia-container-toolkit); then
+                if ( which nvidia-smi ); then
+                  if ( which docker ); then
+                    if (! apt-cache search nvidia-container-toolkit | grep -q nvidia-container-toolkit); then
                       cd /tmp
                       curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
                         && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
@@ -1673,10 +1691,32 @@ Resources:
                   fi
                 fi
 
+                # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Solution-NVIDIA-GPU-On-EC2.html
+                if ( which nvidia-smi ); then
+                  systemctl stop amazon-cloudwatch-agent
+                  /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json -s
+                  systemctl restart amazon-cloudwatch-agent
+                else
+                  rm -f /opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json
+                fi
+
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
                 systemctl daemon-reload
               mode: "000755"
+              owner: "root"
+              group: "root"
+            "/opt/dcv-renew-cert.sh":
+              content: |
+                #!/bin/bash
+                IP_ADDR=$(curl checkip.amazonaws.com)
+                if [ -d "/etc/letsencrypt/live/$IP_ADDR/" ]; then
+                  cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
+                  cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                  chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                fi
+              mode: "000744"
               owner: "root"
               group: "root"
             "/etc/polkit-1/rules.d/kali.rules":
@@ -1727,11 +1767,50 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+            "/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json":
+              content: |
+                {
+                    "agent": {
+                        "metrics_collection_interval": 300,
+                        "run_as_user": "root"
+                    },
+                    "metrics": {
+                        "namespace": "CWAgent",
+                        "append_dimensions": {
+                            "InstanceId": "${aws:InstanceId}"
+                        },
+                        "metrics_collected": {
+                            "mem": {
+                                "measurement": [
+                                    "used_percent"
+                                ]
+                            },
+                            "disk": {
+                                "measurement": [
+                                    "used_percent"
+                                ],
+                                "resources": [
+                                    "/"
+                                ]
+                            },
+                            "nvidia_gpu": {
+                                "measurement": [
+                                    "utilization_gpu",
+                                    "memory_used"
+                                ]
+                            }
+                        }
+                    }
+                }
+              mode: "000644"
+              owner: "root"
+              group: "root"
             "/root/install-sw.sh":
               content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
+                export DEBIAN_FRONTEND=noninteractive
 
                 # Change password
                 PWD=$(cat /var/lib/cloud/data/instance-id)

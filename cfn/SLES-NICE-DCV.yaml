@@ -247,7 +247,7 @@ Parameters:
     Default: "EC2"
   allowWebServerPorts:
     Type: String
-    # Description: Allow HTTP/HTTPS inbound to EC2 instance
+    # Description: HTTP is needed for IP address certificate
     AllowedValues:
       - "No"
       - HTTP-and-HTTPS

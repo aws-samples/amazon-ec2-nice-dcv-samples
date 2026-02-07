@@ -1,10 +1,10 @@
 ## Amazon-EC2-NICE-DCV-Samples
 
-[AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates that provision Windows or Linux [Amazon EC2](https://aws.amazon.com/ec2/) GUI (graphical user interface) instances running [Amazon DCV](https://aws.amazon.com/hpc/dcv/) remote display protocol server. Supports GPU driver install and [AWS Deep Learning AMIs](https://aws.amazon.com/ai/machine-learning/amis/). 
+[AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates that provision Windows or Linux [Amazon EC2](https://aws.amazon.com/ec2/) GUI (graphical user interface) instances running [Amazon DCV](https://aws.amazon.com/hpc/dcv/) remote display protocol server. Supports GPU driver install and [AWS Deep Learning AMIs](https://aws.amazon.com/ai/machine-learning/amis/).
 
 ## Description
 
-[Amazon DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops in the cloud from any device. To use, install a [desktop environment and desktop manager](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gui) (Linux), [install DCV server software](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html), and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) or [native client](https://www.amazondcv.com/latest.html). 
+[Amazon DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops in the cloud from any device. To use, install a [desktop environment and desktop manager](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gui) (Linux), [install DCV server software](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html), and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) or [native client](https://www.amazondcv.com/latest.html).
 
 DCV client do not require a license while DCV server requires [licensing](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html). A license is not required for DCV server on Amazon EC2 if they can access Amazon S3 endpoint for [license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2).
 
@@ -14,11 +14,12 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 
 - [GNOME](https://www.gnome.org/) desktop environment (Linux)
 - [Amazon DCV](https://aws.amazon.com/hpc/dcv/) server with most [features](https://docs.aws.amazon.com/dcv/latest/userguide/client-features.html) implemented including
-  - [HTML 5 web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) 
+  - [HTML 5 web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html)
   - [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html)
   - [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html)
   - [Printing](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html)
-  - Custom DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html) 
+  - Custom [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html)
+  - [IP address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) on [DCV Server](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) (most Linux OS)
 - GPU
   - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) driver install (optional: Windows and some Linux OSs)
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/) to run GPU-accelerated containers (optional)
@@ -32,7 +33,7 @@ The CloudFormation templates provision EC2 instances running DCV server with the
   - [gp3 or gp2](https://aws.amazon.com/ebs/general-purpose/) EBS volume type
   - [AWS Backup](https://aws.amazon.com/backup/) data protection (optional)
 - Installed applications
-  - [AWS CLI v2](https://aws.amazon.com/cli/) with [partial mode](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html#cli-usage-auto-prompt-modes) [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html) 
+  - [AWS CLI v2](https://aws.amazon.com/cli/) with [partial mode](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html#cli-usage-auto-prompt-modes) [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html)
   - [Amazon CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html)
   - [Certbot](https://certbot.eff.org/) with [Amazon Route 53](https://aws.amazon.com/route53/) [DNS challenge](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge) support
   - [Docker Engine](https://docs.docker.com/engine/) also known as Docker CE (optional: Windows and Linux)
@@ -42,9 +43,9 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 
 ### Demo
 
-https://github.com/user-attachments/assets/16be5a5e-a347-40bc-85cc-22ce3f0995f8
+<https://github.com/user-attachments/assets/16be5a5e-a347-40bc-85cc-22ce3f0995f8>
 
-https://github.com/user-attachments/assets/1383609c-cebc-4548-a248-d046a272a903
+<https://github.com/user-attachments/assets/1383609c-cebc-4548-a248-d046a272a903>
 
 ## Deployment
 
@@ -94,4 +95,3 @@ This library is licensed under the MIT-0 License. See the LICENSE file.
 ## Notice
 
 Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed on the EC2 instance. Some operating systems *are not supported* by DCV.  Refer to [documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for information.
-

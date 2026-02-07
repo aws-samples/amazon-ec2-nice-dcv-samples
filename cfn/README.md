@@ -109,7 +109,7 @@ Web Server
 
 - `enableCloudFront`: [create](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-creating-console.html) a [Amazon CloudFront](https://aws.amazon.com/cloudfront/) distribution to your EC2 instance. Associated charges are listed on [Amazon CloudFront pricing](https://aws.amazon.com/cloudfront/pricing/) page. Default is `No`
 - `originType`: either `EC2` [custom origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html#concept_CustomOrigin) or `VPC origin`. Most [AWS Regions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html#vpc-origins-supported-regions) support [VPC Origins](https://aws.amazon.com/blogs/networking-and-content-delivery/introducing-cloudfront-virtual-private-cloud-vpc-origins-shield-your-web-applications-from-public-internet/), which allow CloudFront to deliver content even if your EC2 instance is in a VPC private subnet. Enable `assignStaticIP` if using `EC2` origin. Default is `EC2`
-- `allowWebServerPorts` : allow inbound HTTP/HTTPS to EC2 instance. This option is not related to `enableCloudFront` Default is `No`
+- `allowWebServerPorts` : allow inbound HTTP/HTTPS to EC2 instance. This option is not related to `enableCloudFront`
 
 *CloudFormation template does not install web server on EC2 instance.*
 
@@ -200,6 +200,12 @@ On Linux instances, the web browser client can be disabled by removing `nice-dcv
 ### USB remotization
 
 DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html), allowing use of specialized USB devices, such as 3D pointing devices and two-factor authentication USB dongles, on Windows and Linux OSs. To use feature on a supported Linux server OS, run the command `sudo dcvusbdriverinstaller` and restart EC2 instance. Feature is for [installable Windows clients](https://docs.aws.amazon.com/dcv/latest/userguide/using-usb.html) only.
+
+### Valid TLS certificate
+
+Amazon DCV automatically generates a self-signed certificate. For most Linux OSs, the cloudformation template will attempt to use [Certbot](https://certbot.eff.org/) to request and [install](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) valid [IPv4 address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability). This feature is only available if `displayPublicIP` is `Yes` and `allowWebServerPorts` allows HTTP. IP address certificates are valid for 160 hours, just over six days, and Certbot will attempt to renew them before expiry. To ensure proper operation, use `assignStaticIP`to associate a static IPv4 address.
+
+Besides IPv4, Let's Encrypt also supports IPv6 address certificate. Refer to [Certbot](https://eff-certbot.readthedocs.io/en/stable/) and [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) for more details.
 
 ### Secure centralized access
 

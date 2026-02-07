@@ -276,13 +276,13 @@ Parameters:
     Default: "EC2"
   allowWebServerPorts:
     Type: String
-    # Description: Allow HTTP/HTTPS inbound to EC2 instance
+    Description: HTTP is needed for IP address certificate
     AllowedValues:
       - "No"
       - HTTP-and-HTTPS
       - HTTP
       - HTTPS
-    Default: "No"
+    Default: "HTTP"
 
   volumeSize:
     Type: Number
@@ -1664,7 +1664,6 @@ Resources:
                 touch /etc/smart-restart-conf.d/0-post-restart
                 chmod +x /etc/smart-restart-conf.d/0-post-restart
 
-
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
                   if (systemctl status firewalld | grep -q running); then
@@ -1685,6 +1684,24 @@ Resources:
                       firewall-offline-cmd --add-port 10000/tcp
                     fi
                   fi
+                fi
+
+                # IP address cert
+                if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                  if ( echo "${displayPublicIP}" | grep -q -i "Yes" ); then
+                    IP_ADDR=$(curl checkip.amazonaws.com)
+                    certbot certonly --standalone -n --ip-address $IP_ADDR --preferred-profile shortlived --agree-tos
+                    # post cert renewal
+                    mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
+                    # DCV TLS cert: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html
+                    cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
+                    cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                    chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key    
+                    chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  fi
+                fi
+                if [ -f "/opt/dcv-renew-cert.sh" ]; then
+                  rm /opt/dcv-renew-cert.sh
                 fi
 
                 # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
@@ -1748,6 +1765,19 @@ Resources:
                 rm -f ${!0}
                 systemctl daemon-reload
               mode: "000755"
+              owner: "root"
+              group: "root"
+            "/opt/dcv-renew-cert.sh":
+              content: |
+                #!/bin/bash
+                IP_ADDR=$(curl checkip.amazonaws.com)
+                if [ -d "/etc/letsencrypt/live/$IP_ADDR/" ]; then
+                  cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
+                  cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                  chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                fi
+              mode: "000744"
               owner: "root"
               group: "root"
             "/opt/aws/amazon-cloudwatch-agent/bin/config.json":
@@ -1895,10 +1925,18 @@ Resources:
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
                 echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
 
+                # Certbot PIP: https://certbot.eff.org/instructions?ws=other&os=pip
                 # Certbot: https://github.com/amazonlinux/amazon-linux-2023/issues/444
-                dnf install -q -y certbot python3-certbot-dns-route53
-                dnf install -q -y python3-certbot-apache
-                dnf install -q -y python3-certbot-nginx
+                dnf install -q -y python3.13 python3.13-pip
+                python3.13 -m venv /opt/certbot
+                /opt/certbot/bin/pip install --upgrade pip
+                /opt/certbot/bin/pip install certbot
+                /opt/certbot/bin/pip install certbot-dns-route53
+                /opt/certbot/bin/pip install certbot-apache
+                /opt/certbot/bin/pip install certbot-nginx
+                ln -s -f /opt/certbot/bin/certbot /usr/bin/certbot
+                touch /etc/sysconfig/certbot
+                chmod og-rwx /etc/sysconfig/certbot
                 systemctl daemon-reload
                 systemctl enable --now certbot-renew.timer
 
@@ -1906,6 +1944,44 @@ Resources:
               mode: "000740"
               owner: "root"
               group: "root"
+            "/usr/lib/systemd/system/certbot-renew.timer":
+              content: |
+                [Unit]
+                Description=This is the timer to set the schedule for automated renewals
+
+                [Timer]
+                OnCalendar=*-*-* 00/12:00:00
+                RandomizedDelaySec=12hours
+                Persistent=true
+
+                [Install]
+                WantedBy=timers.target
+              mode: "000640"
+              owner: "root"
+              group: "root"
+            "/usr/lib/systemd/system/certbot-renew.service":
+              content: |
+                [Unit]
+                Description=This service automatically renews any certbot certificates found
+
+                [Service]
+                EnvironmentFile=/etc/sysconfig/certbot
+                Type=oneshot
+                ExecStart=/usr/bin/certbot renew --noninteractive --no-random-sleep-on-renew $PRE_HOOK $POST_HOOK $RENEW_HOOK $DEPLOY_HOOK $CERTBOT_ARGS
+              mode: "000640"
+              owner: "root"
+              group: "root"
+            "/home/ec2-user/update-certbot":
+              content: |
+                #!/bin/bash
+                sudo /opt/certbot/bin/pip install --upgrade pip
+                sudo /opt/certbot/bin/pip install --upgrade certbot
+                sudo /opt/certbot/bin/pip install --upgrade certbot-dns-route53
+                sudo /opt/certbot/bin/pip install --upgrade certbot-apache
+                sudo /opt/certbot/bin/pip install --upgrade certbot-nginx
+              mode: "000755"
+              owner: "ec2-user"
+              group: "users"
           commands:
             install:
               command: "/root/install-sw.sh >> /var/log/install-sw.log 2>&1"

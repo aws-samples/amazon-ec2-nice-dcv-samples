@@ -290,20 +290,20 @@ Parameters:
     Default: "EC2"
   allowWebServerPorts:
     Type: String
-    # Description: Allow HTTP/HTTPS inbound to EC2 instance
+    Description: HTTP is needed for IP address certificate
     AllowedValues:
       - "No"
       - HTTP-and-HTTPS
       - HTTP
       - HTTPS
-    Default: "No"
+    Default: "HTTP"
 
   volumeSize:
     Type: Number
     Description: https://docs.aws.amazon.com/ebs/latest/userguide/volume_constraints.html
     MinValue: 10
     MaxValue: 16384
-    Default: 25
+    Default: 50
   volumeType:
     Type: String
     Description: https://aws.amazon.com/ebs/general-purpose/
@@ -1711,6 +1711,24 @@ Resources:
                   fi
                 fi
 
+                # IP address cert
+                if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                  if ( echo "${displayPublicIP}" | grep -q -i "Yes" ); then
+                    IP_ADDR=$(curl checkip.amazonaws.com)
+                    certbot certonly --standalone -n --ip-address $IP_ADDR --preferred-profile shortlived --agree-tos
+                    # post cert renewal
+                    mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
+                    # DCV TLS cert: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html
+                    cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
+                    cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                    chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key    
+                    chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  fi
+                fi
+                if [ -f "/opt/dcv-renew-cert.sh" ]; then
+                  rm /opt/dcv-renew-cert.sh
+                fi
+
                 # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
                 case $SESSION in
@@ -1777,6 +1795,19 @@ Resources:
                 rm -f ${!0}
                 systemctl daemon-reload
               mode: "000755"
+              owner: "root"
+              group: "root"
+            "/opt/dcv-renew-cert.sh":
+              content: |
+                #!/bin/bash
+                IP_ADDR=$(curl checkip.amazonaws.com)
+                if [ -d "/etc/letsencrypt/live/$IP_ADDR/" ]; then
+                  cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
+                  cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                  chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                fi
+              mode: "000744"
               owner: "root"
               group: "root"
             "/opt/aws/amazon-cloudwatch-agent/bin/config.json":
