@@ -749,11 +749,7 @@ Conditions:
       !Or [!Condition createSgHTTP, !Condition createCloudFront],
       !Condition hasCFprefix,
     ]
-  createCFsgHTTPS:
-    !And [
-      !Or [!Condition createSgHTTPS, !Condition createCloudFront],
-      !Condition hasCFprefix,
-    ]
+
   createCloudFront: !Equals [!Ref enableCloudFront, "Yes"]
   cfVPCOrigin:
     !And [!Condition createCloudFront, !Equals [!Ref originType, "VPC Origin"]]
@@ -1689,9 +1685,9 @@ Resources:
                 # IP address cert
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
                   if ( echo "${displayPublicIP}" | grep -q -i "Yes" ); then
-                    IP_ADDR=$(curl checkip.amazonaws.com)
-                    certbot certonly --standalone -n --ip-address $IP_ADDR --preferred-profile shortlived --agree-tos
-                    # post cert renewal
+                    IP_ADDR=$(curl -s checkip.amazonaws.com)
+                    certbot certonly -n --agree-tos --standalone --preferred-profile shortlived --ip-address $IP_ADDR
+                    # post cert renewal hook
                     mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
                     # DCV TLS cert: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html
                     cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
@@ -1770,14 +1766,14 @@ Resources:
             "/opt/dcv-renew-cert.sh":
               content: |
                 #!/bin/bash
-                IP_ADDR=$(curl checkip.amazonaws.com)
-                if [ -d "/etc/letsencrypt/live/$IP_ADDR/" ]; then
-                  cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
-                  cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                CERT_FOLDER=$(curl -s checkip.amazonaws.com)
+                if [ -d "/etc/letsencrypt/live/$CERT_FOLDER/" ]; then
+                  cp -f /etc/letsencrypt/live/$CERT_FOLDER/fullchain.pem /etc/dcv/dcv.pem
+                  cp -f /etc/letsencrypt/live/$CERT_FOLDER/privkey.pem /etc/dcv/dcv.key
                   chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
                   chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
                 fi
-              mode: "000744"
+              mode: "000755"
               owner: "root"
               group: "root"
             "/opt/aws/amazon-cloudwatch-agent/bin/config.json":

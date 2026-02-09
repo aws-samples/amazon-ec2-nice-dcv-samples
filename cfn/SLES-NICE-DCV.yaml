@@ -713,11 +713,7 @@ Conditions:
       !Or [!Condition createSgHTTP, !Condition createCloudFront],
       !Condition hasCFprefix,
     ]
-  createCFsgHTTPS:
-    !And [
-      !Or [!Condition createSgHTTPS, !Condition createCloudFront],
-      !Condition hasCFprefix,
-    ]
+
   createCloudFront: !Equals [!Ref enableCloudFront, "Yes"]
   cfVPCOrigin:
     !And [!Condition createCloudFront, !Equals [!Ref originType, "VPC Origin"]]
