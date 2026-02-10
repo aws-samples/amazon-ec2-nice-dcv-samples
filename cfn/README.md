@@ -20,11 +20,12 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 
 ### License Agreement
 
-Usage indicate license agreement acceptance of all software that is installed on EC2 instance, which include (but is not limited to) the following
+Usage indicate license agreement acceptance of all software that is installed on EC2 instance, which include (but not limited to) the following
 
 - NVIDIA [GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html), NVIDIA [Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html) and [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html) drivers are for AWS customers only. You are bound by their respective End User License Agreements upon installation of software.
-- Template may use [Certbot](https://certbot.eff.org/) or other ACME client to request [Let's Encrypt](https://letsencrypt.org/) TLS certificate. You are bound by [Let's Encrypt Subscriber Agreement](https://letsencrypt.org/repository/#let-s-encrypt-subscriber-agreement)
-- Templates may offer the option to install [Webmin](https://github.com/webmin/webmin) and/or [Docker Engine](https://docs.docker.com/engine/), which are released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) and [Apache License, Version 2.0](https://github.com/moby/moby/blob/master/LICENSE) respectively.
+- Template may use [Certbot](https://certbot.eff.org/) (Linux) or [Posh-ACME](https://poshac.me/docs/latest/) (Windows), which are released under [Apache](https://github.com/certbot/certbot/blob/main/LICENSE.txt) and [MIT](https://github.com/rmbolger/Posh-ACME/blob/main/LICENSE) license respectively, to request and install [Let's Encrypt](https://letsencrypt.org/) TLS certificate. You are bound by [Let's Encrypt Subscriber Agreement](https://letsencrypt.org/repository/#let-s-encrypt-subscriber-agreement)
+- Templates may offer the option to install [Webmin](https://github.com/webmin/webmin) and/or [Docker Engine](https://docs.docker.com/engine/), which are released under [BSD-3-Clause](https://github.com/webmin/webmin?tab=BSD-3-Clause-1-ov-file) and [Apache License](https://github.com/moby/moby/blob/master/LICENSE) respectively.
+- Windows template uses [Chocolatey](https://chocolatey.org/), which is released under [Apache](https://github.com/chocolatey/choco/blob/develop/LICENSE) license, to install software
 - DLAMI template installs [Visual Studio Code](https://github.com/microsoft/vscode) which is released under [MIT-0](https://github.com/microsoft/vscode/blob/main/LICENSE.txt) license, and includes [AWS Toolkit for Visual Code](https://aws.amazon.com/visualstudiocode/) and other useful extensions.
 - DCV usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html)
 
@@ -204,11 +205,13 @@ On Linux instances, the web browser client can be disabled by removing `nice-dcv
 
 DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html), allowing use of specialized USB devices, such as 3D pointing devices and two-factor authentication USB dongles, on Windows and Linux OSs. To use feature on a supported Linux server OS, run the command `sudo dcvusbdriverinstaller` and restart EC2 instance. Feature is for [installable Windows clients](https://docs.aws.amazon.com/dcv/latest/userguide/using-usb.html) only.
 
-### Valid TLS certificate
+### TLS certificate
 
-Amazon DCV automatically generates a self-signed certificate. For most Linux OSs, the cloudformation template will attempt to use [Certbot](https://certbot.eff.org/) to request and [install](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) valid [IPv4 address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability). This feature is only available if `displayPublicIP` is `Yes` and `allowWebServerPorts` allows HTTP. IP address certificates are valid for 160 hours, just over six days, and Certbot will attempt to renew them before expiry. To ensure proper operation, use `assignStaticIP`to associate a static IPv4 address.
+Amazon DCV server automatically generates a self-signed certificate. For Windows and some Linux OSs, the template will attempt to use [Posh-ACME](https://poshac.me/docs/latest/) (Windows) or [Certbot](https://certbot.eff.org/) (Linux) to request and [install](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) valid [Let's Encrypt IPv4 address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability). This feature is only available if `displayPublicIP` is `Yes` and `allowWebServerPorts` allows HTTP. IP address certificates are valid for 160 hours, just over six days, and Certbot/Posh-ACME will attempt to renew them before expiry. To ensure proper operation, use `assignStaticIP`to associate a static IPv4 address.
 
-Besides IPv4, Let's Encrypt also supports IPv6 address certificate. Refer to [Certbot](https://eff-certbot.readthedocs.io/en/stable/) and [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) for more details.
+Renewal on Windows is managed through [task scheduler](https://poshac.me/docs/v4/Tutorial/#task-scheduler-cron). Do update the tasks' user credentials if you change administrator password.
+
+Let's Encrypt supports both IPv4 and IPv6 address certificates. Refer to [Certbot](https://eff-certbot.readthedocs.io/en/stable/), [Posh-ACME](https://poshac.me/docs/latest/) and [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) documentation for more details.
 
 ### Secure centralized access
 

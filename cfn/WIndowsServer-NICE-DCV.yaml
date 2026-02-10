@@ -248,13 +248,13 @@ Parameters:
     Default: "EC2"
   allowWebServerPorts:
     Type: String
-    # Description: HTTP is needed for IP address certificate
+    Description: HTTP is needed for IP address certificate
     AllowedValues:
       - "No"
       - HTTP-and-HTTPS
       - HTTP
       - HTTPS
-    Default: "No"
+    Default: "HTTP"
 
   volumeSize:
     Type: Number
@@ -706,11 +706,7 @@ Conditions:
       !Or [!Condition createSgHTTP, !Condition createCloudFront],
       !Condition hasCFprefix,
     ]
-  createCFsgHTTPS:
-    !And [
-      !Or [!Condition createSgHTTPS, !Condition createCloudFront],
-      !Condition hasCFprefix,
-    ]
+
   createCloudFront: !Equals [!Ref enableCloudFront, "Yes"]
   cfVPCOrigin:
     !And [!Condition createCloudFront, !Equals [!Ref originType, "VPC Origin"]]
@@ -1371,7 +1367,9 @@ Resources:
           dcv_gpu_install:
             - 03_dcv_gpu_install
           dcv_docker_install:
-            - 04_dcv_docker_install
+            - 08_dcv_docker_install
+          dcv_cert_install:
+            - 06_dcv_cert_install
         00_setup:
           files:
             c:\\Users\\Administrator\\update-DCV.cmd:
@@ -1489,7 +1487,7 @@ Resources:
               content: !Sub |
                 @echo off
                 IF EXIST c:\windows\temp\dcv-sw-install.txt EXIT
-                ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-sw-install.txt
+                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-sw-install.txt
 
                 @echo ** set administrator password
                 powershell -C "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
@@ -1543,7 +1541,7 @@ Resources:
                 @echo off
                 powershell -Command "Start-Sleep -s 5"
                 IF EXIST c:\windows\temp\dcv-install.txt EXIT
-                ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-install.txt
+                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-install.txt
                 cd \windows\temp
 
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
@@ -1590,7 +1588,7 @@ Resources:
                 @echo off
                 powershell -Command "Start-Sleep -s 5"
                 IF EXIST c:\windows\temp\dcv-gpu-install.txt EXIT                
-                ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-gpu-install.txt
+                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-gpu-install.txt
 
                 start /wait c:\windows\temp\install-PSReadLine.cmd
                 start /wait c:\windows\temp\install-DisplaySettings.cmd
@@ -1734,7 +1732,7 @@ Resources:
                   echo Download and install
                   curl -s -L %1 -o nvidia-driver.exe
                   start /wait nvidia-driver -s
-                  ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-gpu-install.txt
+                  ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-gpu-install.txt
                   shutdown /r /t 1 /f
                   powershell -Command "Start-Sleep -s 5"
                 ) || (
@@ -1746,19 +1744,95 @@ Resources:
               command: c:\windows\temp\dcv-gpu-install.cmd >> c:\windows\temp\dcv-gpu-install.log
               ignoreErrors: true
               waitAfterCompletion: forever
-        04_dcv_docker_install:
+        06_dcv_cert_install:
+          files:
+            c:\\windows\\temp\\dcv-cert-install.cmd:
+              content: |
+                @echo off
+                powershell -Command "Start-Sleep -s 5"
+                IF EXIST c:\windows\temp\dcv-cert-install.txt EXIT
+
+                @echo ** set administrator password
+                powershell -C "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
+                set /p INSTANCEID=<c:\windows\temp\instanceid.txt
+
+                # https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create
+                schtasks /create /sc daily /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert daily" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
+                schtasks /create /sc onstart /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert on start" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
+
+                # Open HTTP port for ACME HTTP-01 challenge
+                netsh advfirewall firewall add rule name="HTTP" dir=in action=allow protocol=tcp localport=80
+
+                powershell -Command "Install-Module -Name Posh-ACME -Force"
+                powershell -NoProfile -File "c:\windows\temp\install-dcv-cert.ps1" 
+
+                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-cert-install.txt
+                exit
+            c:\\windows\\temp\\install-dcv-cert.ps1:
+              content: |
+                $global:progressPreference = 'silentlyContinue'
+
+                # Administrator to create/renew DCV cert through scheduled task 
+                # $username = 'administrator'
+                # $password = Get-EC2InstanceMetadata -Category InstanceId
+
+                # Initial cert by SYSTEM
+                Install-Module -Name Posh-ACME -Force
+                Import-Module Posh-ACME
+                Set-PAServer LE_PROD
+
+                $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
+                $cert = New-PACertificate $PublicIp -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name "DCV-Cert"
+                $cert | Format-List
+                New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.pem -ItemType SymbolicLink -Value $cert.CertFile
+                New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.key -ItemType SymbolicLink -Value $cert.KeyFile
+            C:\\Windows\\System32\\config\\systemprofile\\AppData\\Local\\NICE\\dcv\\renew-dcv-cert.ps1:
+              content: |
+                $global:progressPreference = 'silentlyContinue'
+
+                # Open HTTP port for ACME HTTP-01 challenge
+                netsh advfirewall firewall add rule name="HTTP" dir=in action=allow protocol=tcp localport=80
+
+                $moduleName = "Posh-ACME"               
+                if (-not (Get-Module -ListAvailable -Name $moduleName)) {
+                    Install-Module -Name $moduleName -Force
+                }
+
+                Import-Module Posh-ACME
+                Set-PAServer LE_PROD
+
+                $cert = Get-PACertificate -Name "DCV-Cert"
+
+                if (!$cert) {
+                  New-PAAccount -AcceptTOS -Force
+                  $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
+                  $cert = New-PACertificate $PublicIp -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name "DCV-Cert"
+                  $cert | Format-List
+
+                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.pem -ItemType SymbolicLink -Value $cert.CertFile -Force
+                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.key -ItemType SymbolicLink -Value $cert.KeyFile -Force
+                }
+                else {
+                  Set-PAAccount
+                  Submit-Renewal -Name "DCV-Cert"
+                }
+          commands:
+            install-cert:
+              command: c:\windows\temp\dcv-cert-install.cmd >> c:\windows\temp\dcv-cert-install.log
+              ignoreErrors: true
+        08_dcv_docker_install:
           files:
             c:\\windows\\temp\\dcv-docker-install.cmd:
-              content: !Sub |
+              content: |
                 @echo off
                 powershell -Command "Start-Sleep -s 10"
                 IF EXIST c:\windows\temp\dcv-docker-install.txt EXIT
                 IF EXIST c:\windows\System32\dockerd.exe EXIT
 
-                powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"           
-                ECHO amazon-ec2-nice-dcv-samples > c:\windows\temp\dcv-docker-install.txt
+                powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"        
+                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-docker-install.txt
 
-                shutdown /r /t 1 /f   
+                shutdown /r /t 1 /f
                 powershell -Command "Start-Sleep -s 5"
 
                 exit
@@ -1840,6 +1914,14 @@ Resources:
 
           @echo ** install graphics driver
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_gpu_install
+
+          @echo ** install IP address certificate
+          echo "${allowWebServerPorts}" | findstr /C:"HTTP"
+          if %ERRORLEVEL% == 0 (
+            if ${displayPublicIP} EQU Yes (
+              cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_cert_install
+            )
+          )
 
           @echo ** install Docker
           IF ${installDocker} EQU Yes (
@@ -2116,7 +2198,7 @@ Resources:
 Outputs:
   RDPconnect:
     Description: Fleet Manager Remote Desktop
-    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/systems-manager/managed-instances/rdp-connect?region=${AWS::Region}&instances=${ec2Instance}
+    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/systems-manager/fleet-manager/remote-desktop?region=${AWS::Region}&nodeIds=${ec2Instance}&authType=USER_CREDENTIALS
 
   EC2console:
     Description: EC2 console
