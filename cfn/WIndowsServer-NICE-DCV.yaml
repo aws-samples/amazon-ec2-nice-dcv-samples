@@ -179,7 +179,7 @@ Parameters:
     Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 573.48
+    Default: 582.16
   listenPort:
     Type: Number
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
@@ -1772,12 +1772,11 @@ Resources:
               content: |
                 $global:progressPreference = 'silentlyContinue'
 
-                # Administrator to create/renew DCV cert through scheduled task 
-                # $username = 'administrator'
-                # $password = Get-EC2InstanceMetadata -Category InstanceId
-
                 # Initial cert by SYSTEM
-                Install-Module -Name Posh-ACME -Force
+                $moduleName = "Posh-ACME"
+                if (-not (Get-Module -ListAvailable -Name $moduleName)) {
+                  Install-Module -Name $moduleName -Force
+                }
                 Import-Module Posh-ACME
                 Set-PAServer LE_PROD
 
@@ -1795,14 +1794,12 @@ Resources:
 
                 $moduleName = "Posh-ACME"               
                 if (-not (Get-Module -ListAvailable -Name $moduleName)) {
-                    Install-Module -Name $moduleName -Force
+                  Install-Module -Name $moduleName -Force
                 }
-
                 Import-Module Posh-ACME
                 Set-PAServer LE_PROD
 
                 $cert = Get-PACertificate -Name "DCV-Cert"
-
                 if (!$cert) {
                   New-PAAccount -AcceptTOS -Force
                   $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
@@ -2198,7 +2195,15 @@ Resources:
 Outputs:
   RDPconnect:
     Description: Fleet Manager Remote Desktop
-    Value: !Sub https://${AWS::Region}.console.aws.amazon.com/systems-manager/fleet-manager/remote-desktop?region=${AWS::Region}&nodeIds=${ec2Instance}&authType=USER_CREDENTIALS
+    Value: !Sub
+      - "https://${AWS::Region}.${url}/systems-manager/fleet-manager/remote-desktop?region=${AWS::Region}&nodeIds=${ec2Instance}&authType=USER_CREDENTIALS"
+      - url:
+          !FindInMap [
+            ConsoleUrl,
+            !Ref "AWS::Partition",
+            url,
+            DefaultValue: "console.aws.amazon.com",
+          ]
 
   EC2console:
     Description: EC2 console
