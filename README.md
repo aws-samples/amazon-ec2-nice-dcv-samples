@@ -19,7 +19,7 @@ The CloudFormation templates provision EC2 instances running DCV server with the
   - [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html)
   - [Printing](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html)
   - Custom [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html)
-  - [IP address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) on [DCV Server](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) (most Linux OSs)
+  - Valid [IP address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) on [DCV Server](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) (Windows and most Linux OSs)
 - GPU
   - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) driver install (optional: Windows and some Linux OSs)
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/) to run GPU-accelerated containers (optional)
