@@ -75,7 +75,6 @@ DCV
 *If GPU driver installation does not work, you can select `DCV-IDD` or `none` option, and install driver manually. Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for GPU driver installation and configuration guidance.*
 
 - `sessionType` (Linux) : `virtual` (default) or `console` [session type](#console-and-virtual-sessions). Virtual sessions support custom resolution, [multi-screen](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html) across up to [four monitors](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-num-heads), and up to [4K resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-head-resolution) per display.
-  
     [GPU driver installation](#gpu-linux-instances) option may be available for some Linux OSs
 ([AlmaLinux](AlmaLinux-NICE-DCV.yaml),  [Amazon Linux 2023](AmazonLinux2023-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [Rocky Linux](RockyLinux-NICE-DCV.yaml), [Ubuntu](Ubuntu-NICE-DCV.yaml)) as follows:
   - `*-with-NVIDIA_GRID_Driver` ([G7e](https://aws.amazon.com/ec2/instance-types/g7e/), [G6, G6f, Gr6, Gr6f](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html) driver ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode)
@@ -91,8 +90,8 @@ DCV
 
 - `teslaDriverVersion` (where applicable) : [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `*-NVIDIA_runfile_Driver` option is selected
   - To obtain a suitable version, go to [NVIDIA Driver page](https://www.nvidia.com/en-us/drivers/). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value
-
 - `listenPort` : DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
+- `installReverseProxy` (Windows and some Linux): install web reverse proxy to allow DCV access through HTTPS port 443. *This feature is experimental*
 
 Network
 
@@ -164,15 +163,21 @@ The following URLs are available in **Outputs** section
 - `RDPconnect` (Windows) : in-browser [Fleet Manager Remote Desktop](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-rdp-fleet-manager.html) URL link. Use this to update DCV server.
 - `SSMsessionManager`* : [SSM Session Manager](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-systems-manager-session-manager.html) URL. You can use this to set a strong DCV login user password. Password change command is in *Description* field.
 
-\* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect to DCV server using [native clients](#dcv-clients).*
+\* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect directly to DCV server using [native clients](#dcv-clients).*
+
+If `installReverseProxy` is `Yes`
+
+- reverseProxyURL: DCV [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) and [native client](https://docs.aws.amazon.com/dcv/latest/userguide/client.html) HTTPS URL
+
+*This feature is experimental and may not provide good user experience*
 
 If `installWebmin` is `Yes`
 
-- `WebminUrl` : [Webmin](https://webmin.com/) URL link. Login as the user specified in *Description* field. Default password is `EC2instanceID` value
+- `WebminUrl` : [Webmin](https://webmin.com/) URL. Login as the user specified in *Description* field. Default password is `EC2instanceID` value
 
 If `enableAGA` is `Yes`
 
-- `DCVUrlAGA` : DCV web browser console URL link through AGA
+- `DCVUrlAGA` :  DCV [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) and [native client](https://docs.aws.amazon.com/dcv/latest/userguide/client.html) URLs through AGA
 - `AGAconsole` : Global Accelerator console URL link
 - `AGAipv4Addresses` : IPv4 addresses
 
@@ -207,9 +212,9 @@ DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguid
 
 ### TLS certificate
 
-Amazon DCV server automatically generates a self-signed certificate. For Windows and some Linux OSs, the template will attempt to use [Posh-ACME](https://poshac.me/docs/latest/) (Windows) or [Certbot](https://certbot.eff.org/) (Linux) to request and [install](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) valid [Let's Encrypt IPv4 address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability). This feature is only available if `displayPublicIP` is `Yes` and `allowWebServerPorts` allows HTTP. IP address certificates are valid for 160 hours, just over six days, and Certbot/Posh-ACME will attempt to renew them before expiry. To ensure proper operation, use `assignStaticIP`to associate a static IPv4 address.
+Amazon DCV server automatically generates a self-signed certificate. For Windows and some Linux OSs, the template will attempt to use [Posh-ACME](https://poshac.me/docs/latest/) (Windows) or [Certbot](https://certbot.eff.org/) (Linux) to request and [install](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) valid [Let's Encrypt IPv4 address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability). This feature is only available if `displayPublicIP` is `Yes` and `allowWebServerPorts` allows HTTP.
 
-Renewal on Windows is managed through [task scheduler](https://poshac.me/docs/v4/Tutorial/#task-scheduler-cron). Do update the tasks' user credentials if you change administrator password.
+IP address certificates are valid for 160 hours, just over six days, and Certbot/Posh-ACME will attempt to renew them before expiry. To ensure proper operation, use `assignStaticIP`to associate a static IPv4 address. Renewal on Windows is managed through [task scheduler](https://poshac.me/docs/v4/Tutorial/#task-scheduler-cron). Do update the tasks' user credentials if you change administrator password.
 
 Let's Encrypt supports both IPv4 and IPv6 address certificates. Refer to [Certbot](https://eff-certbot.readthedocs.io/en/stable/), [Posh-ACME](https://poshac.me/docs/latest/) and [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) documentation for more details.
 

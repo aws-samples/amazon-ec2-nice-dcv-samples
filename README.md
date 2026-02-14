@@ -17,11 +17,10 @@ The CloudFormation templates provision EC2 instances running DCV server with the
   - [HTML 5 web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html)
   - [Copy and Paste](https://docs.aws.amazon.com/dcv/latest/userguide/using-copy-paste.html)
   - [File transfer](https://docs.aws.amazon.com/dcv/latest/userguide/using-transfer.html)
-  - [Printing](https://docs.aws.amazon.com/dcv/latest/userguide/using-print.html)
   - Custom [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html)
-  - Valid [IP address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability) on [DCV Server](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) (Windows and most Linux OSs)
+  - Valid [IP address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability)
 - GPU
-  - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) driver install (optional: Windows and some Linux OSs)
+  - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) driver install (optional)
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/) to run GPU-accelerated containers (optional)
   - DCV [GPU sharing](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html) (optional)
 - Administration and Data Protection
@@ -43,9 +42,9 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 
 ### Demo
 
-https://github.com/user-attachments/assets/7f6fbf36-13a1-40f0-92ad-dfd913657985
+<https://github.com/user-attachments/assets/7f6fbf36-13a1-40f0-92ad-dfd913657985>
 
-https://github.com/user-attachments/assets/b5929843-71fb-46d5-a08a-bfd8d40c4d0c
+<https://github.com/user-attachments/assets/1383609c-cebc-4548-a248-d046a272a903>
 
 ## Deployment
 

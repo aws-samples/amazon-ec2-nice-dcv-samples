@@ -35,6 +35,7 @@ Metadata:
           - driverType
           - teslaDriverVersion
           - listenPort
+          - installReverseProxy
       - Label:
           default: Network
         Parameters:
@@ -92,6 +93,8 @@ Metadata:
         default: "[NVIDIA-Tesla] Tesla driver version"
       listenPort:
         default: "TCP/UDP listen port"
+      installReverseProxy:
+        default: "Install HTTPS reverse proxy to DCV server (experimental)"
 
       vpcID:
         default: "VPC with outbound internet connectivity"
@@ -186,6 +189,13 @@ Parameters:
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
+  installReverseProxy:
+    Type: String
+    Description: Reverse web proxy on port 443
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
   vpcID:
     Type: AWS::EC2::VPC::Id
@@ -684,10 +694,14 @@ Conditions:
       !Equals [!Ref allowWebServerPorts, HTTP],
       !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
     ]
+  installReverseProxy: !Equals [!Ref installReverseProxy, "Yes"]
   createSgHTTPS:
     !Or [
-      !Equals [!Ref allowWebServerPorts, HTTPS],
-      !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
+      !Condition installReverseProxy,
+      !Or [
+        !Equals [!Ref allowWebServerPorts, HTTPS],
+        !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
+      ],
     ]
   hasCFprefix:
     !Not [
@@ -959,7 +973,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIp: 0.0.0.0/0
+            CidrIp: !Ref ingressIPv4
           - !Ref AWS::NoValue
         - !If
           - createSgHTTPS
@@ -967,7 +981,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIpv6: ::/0
+            CidrIpv6: !Ref ingressIPv6
           - !Ref AWS::NoValue
         - !If
           - createSgRDP
@@ -1574,6 +1588,13 @@ Resources:
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#display
                 reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
                 reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
+
+                @ Port forward HTTPS TCP 443 to DCV
+                IF ${installReverseProxy} EQU Yes (
+                  netsh advfirewall firewall add rule name="HTTPS" dir=in action=allow protocol=tcp localport=443
+                  netsh int portproxy add v4tov4 listenport=443 connectaddress=127.0.0.1 connectport=${listenPort}
+                  netsh int portproxy add v6tov6 listenport=443 connectaddress=::1 connectport=${listenPort}
+                )
 
                 exit
           commands:
@@ -2255,6 +2276,17 @@ Outputs:
             !GetAtt ec2Instance.PrivateIp,
           ]
 
+  ReverseProxyURL:
+    Description: Reverse Proxy URL (login as administrator)
+    Value: !Sub
+      - "https://${IpAddress}/?username=administrator     ( dcv://administrator:@${IpAddress}:443 )"
+      - IpAddress:
+          !If [
+            displayPublicIP,
+            !GetAtt ec2Instance.PublicIp,
+            !GetAtt ec2Instance.PrivateIp,
+          ]
+  
   DCVUrlAGA:
     Condition: createAGA
     Description: DCV web browser client through AGA (login as administrator)
