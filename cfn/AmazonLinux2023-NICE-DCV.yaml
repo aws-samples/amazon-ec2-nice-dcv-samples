@@ -1709,7 +1709,7 @@ Resources:
                     if [ -d "/etc/letsencrypt/live/$IP_ADDR/" ]; then
                       cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
                       cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
-                      chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key    
+                      chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
                       chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
 
                       # HTTPS reverse proxy
@@ -2011,7 +2011,7 @@ Resources:
               ignoreErrors: "true"
         00_dcv_install:
           files:
-            "/opt/reverse-proxy":
+            "/opt/ReverseProxy":
               content: !Sub |
                 # 
                 server {                      
@@ -2138,11 +2138,12 @@ Resources:
                   cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default."`date +"%Y-%m-%d"`"
 
                   # HTTPS proxy
-                  cp /opt/reverse-proxy /etc/nginx/sites-available/reverse-proxy
-                  ln -s /etc/nginx/sites-available/reverse-proxy /etc/nginx/sites-enabled/reverse-proxy
+                  cp /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
+                  ln -s /etc/nginx/sites-available/ReverseProxy /etc/nginx/sites-enabled/ReverseProxy
+
                   systemctl enable --now nginx
                 else
-                  rm -f /opt/reverse-proxy
+                  rm -f /opt/ReverseProxy
                 fi
 
 
