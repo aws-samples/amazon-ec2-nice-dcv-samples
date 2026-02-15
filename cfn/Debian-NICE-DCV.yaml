@@ -1617,15 +1617,15 @@ Resources:
                     IP_ADDR=$(curl -s checkip.amazonaws.com)
                     certbot certonly -n --agree-tos --standalone --preferred-profile shortlived --ip-address $IP_ADDR
 
-                    # post cert renewal hook
-                    mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
-
                     # DCV TLS cert: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html
                     if [ -d "/etc/letsencrypt/live/$IP_ADDR/" ]; then
                       cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
                       cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
                       chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
                       chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+
+                      # post cert renewal hook
+                      mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
                     fi
                   fi
                 fi
