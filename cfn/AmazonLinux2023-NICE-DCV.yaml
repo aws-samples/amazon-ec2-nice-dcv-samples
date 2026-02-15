@@ -2896,6 +2896,7 @@ Outputs:
           ]
 
   ReverseProxyURL:
+    Condition: installReverseProxy
     Description: Reverse Proxy URL (login as ec2-user)
     Value: !Sub
       - "https://${IpAddress}/?username=ec2-user     ( dcv://ec2-user:@${IpAddress}:443 )"

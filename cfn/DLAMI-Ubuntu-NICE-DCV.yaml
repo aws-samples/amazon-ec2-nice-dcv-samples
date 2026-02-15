@@ -2608,6 +2608,7 @@ Outputs:
           ]
 
   ReverseProxyURL:
+    Condition: installReverseProxy
     Description: Reverse Proxy URL (login as ubuntu)
     Value: !Sub
       - "https://${IpAddress}/?username=ubuntu     ( dcv://ubuntu:@${IpAddress}:443 )"

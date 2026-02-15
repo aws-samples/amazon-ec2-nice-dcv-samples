@@ -2571,6 +2571,7 @@ Outputs:
           ]
 
   ReverseProxyURL:
+    Condition: installReverseProxy
     Description: Reverse Proxy URL (login as kali)
     Value: !Sub
       - "https://${IpAddress}/?username=kali     ( dcv://kali:@${IpAddress}:443 )"
