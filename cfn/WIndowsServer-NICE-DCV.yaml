@@ -715,11 +715,7 @@ Conditions:
         pl-none,
       ],
     ]
-  createCFsgHTTP:
-    !And [
-      !Or [!Condition createSgHTTP, !Condition createCloudFront],
-      !Condition hasCFprefix,
-    ]
+  createCFsgHTTP: !And [!Condition createCloudFront, !Condition hasCFprefix]
 
   createCloudFront: !Equals [!Ref enableCloudFront, "Yes"]
   cfVPCOrigin:
@@ -2287,7 +2283,7 @@ Outputs:
             !GetAtt ec2Instance.PublicIp,
             !GetAtt ec2Instance.PrivateIp,
           ]
-  
+
   DCVUrlAGA:
     Condition: createAGA
     Description: DCV web browser client through AGA (login as administrator)

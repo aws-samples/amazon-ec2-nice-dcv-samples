@@ -769,8 +769,8 @@ Conditions:
       !Condition installReverseProxy,
       !Or [
         !Equals [!Ref allowWebServerPorts, HTTPS],
-        !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]
-      ]
+        !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
+      ],
     ]
   hasCFprefix:
     !Not [
@@ -784,11 +784,7 @@ Conditions:
         pl-none,
       ],
     ]
-  createCFsgHTTP:
-    !And [
-      !Or [!Condition createSgHTTP, !Condition createCloudFront],
-      !Condition hasCFprefix,
-    ]
+  createCFsgHTTP: !And [!Condition createCloudFront, !Condition hasCFprefix]
 
   createCloudFront: !Equals [!Ref enableCloudFront, "Yes"]
   cfVPCOrigin:
