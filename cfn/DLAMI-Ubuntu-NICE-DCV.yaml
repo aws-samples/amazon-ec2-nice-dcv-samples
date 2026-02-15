@@ -1970,7 +1970,7 @@ Resources:
 
                   location / {
                     proxy_pass https://localhost:${listenPort};
-                    proxy_redirect http://localhost:${listenPort} $scheme://$http_host/;
+                    proxy_redirect https://localhost:${listenPort} $scheme://$http_host/;
 
                     proxy_http_version 1.1;
                     proxy_set_header Upgrade $http_upgrade;
