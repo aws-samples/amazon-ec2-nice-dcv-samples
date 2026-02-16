@@ -1701,8 +1701,6 @@ Resources:
                 #!/bin/bash
                 export DEBIAN_FRONTEND=noninteractive
 
-                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
-
                 apt-get update
                 apt-get upgrade -q -y
 
@@ -1809,6 +1807,8 @@ Resources:
                 else
                   rm -f /opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json
                 fi
+
+                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}

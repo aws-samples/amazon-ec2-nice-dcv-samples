@@ -1690,8 +1690,6 @@ Resources:
                 #!/bin/bash
                 export DEBIAN_FRONTEND=noninteractive
 
-                /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
-
                 apt-get update
                 apt-get upgrade -q -y
 
@@ -1760,6 +1758,8 @@ Resources:
                     ;;
                 esac
                 systemctl enable dcvserver && systemctl restart dcvserver
+
+                /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
