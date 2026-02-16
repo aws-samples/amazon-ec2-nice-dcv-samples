@@ -91,7 +91,9 @@ DCV
 - `teslaDriverVersion` (where applicable) : [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `*-NVIDIA_runfile_Driver` option is selected
   - To obtain a suitable version, go to [NVIDIA Driver page](https://www.nvidia.com/en-us/drivers/). Select the **Product Type**, **Product Series**, and **Product** values for your `instanceType` as per [To download a public NVIDIA driver](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) table, and select the correct **Operating System**. Click **Search** and copy **Version** value
 - `listenPort` : DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
-- `installReverseProxy` (*experimental*: Windows and some Linux): install HTTPS reverse web proxy to allow DCV access through port 443. Default is `No`
+- `installReverseProxy` (Windows and most Linux): install reverse web proxy to allow DCV access on standard HTTPS port 443. This option does not support QUIC communication for improved performance.  Default is `No`
+
+
 
 Network
 
@@ -167,9 +169,9 @@ The following URLs are available in **Outputs** section
 
 If `installReverseProxy` is `Yes`
 
-- reverseProxyURL: DCV [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) and [native client](https://docs.aws.amazon.com/dcv/latest/userguide/client.html) HTTPS URL
+- `reverseProxyURL` : DCV [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) and [native client](https://docs.aws.amazon.com/dcv/latest/userguide/client.html) HTTPS URL
 
-*This feature is experimental and may not provide good user experience*
+*Reverse proxy does not support QUIC and may not provide optimal user experience*
 
 If `installWebmin` is `Yes`
 
@@ -220,7 +222,9 @@ Let's Encrypt supports both IPv4 and IPv6 address certificates. Refer to [Certbo
 
 ### Secure centralized access
 
-If you have a fleet of Amazon DCV servers, you can use [Amazon DCV Connection Gateway](https://docs.aws.amazon.com/dcv/latest/gw-admin/what-is-gw.html) to centralize access. Refer to blog [Getting started with managing NICE DCV sessions secured behind a NICE DCV Connection Gateway](https://aws.amazon.com/blogs/desktop-and-application-streaming/getting-started-with-managing-nice-dcv-sessions-secured-behind-a-nice-dcv-connection-gateway/) and [dcv-samples](https://github.com/aws-samples/dcv-samples) for more information. Consider [Amazon WorkSpaces Family](https://aws.amazon.com/workspaces-family/) if you are looking for a fully managed VDI (virtual desktop infrastructure) service.
+If you have a fleet of Amazon DCV servers, you can use [Amazon DCV Connection Gateway](https://docs.aws.amazon.com/dcv/latest/gw-admin/what-is-gw.html) to centralize access. Refer to blog [Getting started with managing NICE DCV sessions secured behind a NICE DCV Connection Gateway](https://aws.amazon.com/blogs/desktop-and-application-streaming/getting-started-with-managing-nice-dcv-sessions-secured-behind-a-nice-dcv-connection-gateway/) and [dcv-samples](https://github.com/aws-samples/dcv-samples) for more information.
+
+Consider [Research and Engineering Studio on AWS (RES)](https://aws.amazon.com/hpc/res/) if you need to  manage secure cloud-based research and engineering environments, and [Amazon WorkSpaces Family](https://aws.amazon.com/workspaces-family/) if you are looking for a fully managed VDI (virtual desktop infrastructure) service.
 
 ## About Windows template
 
