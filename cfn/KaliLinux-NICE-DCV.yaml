@@ -102,7 +102,7 @@ Metadata:
       listenPort:
         default: "TCP/UDP listen port"
       installReverseProxy:
-        default: "Install HTTPS reverse proxy to DCV server (experimental)"
+        default: "Install HTTPS reverse proxy"
 
       vpcID:
         default: "VPC with outbound internet connectivity"
@@ -196,7 +196,7 @@ Parameters:
     Default: "virtual_(xfce)"
   listenPort:
     Type: Number
-    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+    Description: "Number must be higher than 1024: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
     MinValue: 1024
     MaxValue: 65535
     Default: 8443

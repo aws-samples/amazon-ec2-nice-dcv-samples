@@ -94,7 +94,7 @@ Metadata:
       listenPort:
         default: "TCP/UDP listen port"
       installReverseProxy:
-        default: "Install HTTPS reverse proxy to DCV server (experimental)"
+        default: "Install HTTPS reverse proxy"
 
       vpcID:
         default: "VPC with outbound internet connectivity"
@@ -179,13 +179,13 @@ Parameters:
     Default: DCV-IDD
   teslaDriverVersion:
     Type: String
-    Description: "https://www.nvidia.com/Download/Find.aspx : Product Type = Data Center/Tesla"
+    Description: https://docs.nvidia.com/datacenter/tesla/index.html
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
     Default: 582.16
   listenPort:
     Type: Number
-    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+    Description: "Number must be higher than 1024: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
@@ -1577,7 +1577,7 @@ Resources:
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
 
-                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html
+                @echo ** "Number must be higher than 1024: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v web-port /t REG_DWORD /d ${listenPort} /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v quic-port /t REG_DWORD /d ${listenPort} /f
 
