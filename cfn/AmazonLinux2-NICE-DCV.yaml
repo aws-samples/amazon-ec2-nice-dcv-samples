@@ -102,9 +102,9 @@ Metadata:
       vpcID:
         default: "VPC with outbound internet connectivity"
       subnetID:
-        default: "Subnet in selected VPC with outbound internet connectivity"
+        default: "Subnet in selected VPC with outbound internet IPv4 connectivity"
       displayPublicIP:
-        default: "EC2 in public subnet with public IP assigned?"
+        default: "EC2 instance in public subnet with public IP assigned?"
       assignStaticIP:
         default: "Elastic IP: assign static public internet IPv4 address"
 
@@ -216,7 +216,7 @@ Parameters:
     ConstraintDescription: Select a Subnet
   displayPublicIP:
     Type: String
-    Description: Select No if EC2 has no public IP
+    Description: Select No if instance has no public IPv4 address
     AllowedValues:
       - "Yes"
       - "No"
