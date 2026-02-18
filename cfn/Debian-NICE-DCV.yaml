@@ -37,6 +37,7 @@ Metadata:
         Parameters:
           - sessionType
           - listenPort
+          - installReverseProxy
       - Label:
           default: Network
         Parameters:
@@ -95,6 +96,8 @@ Metadata:
         default: "DCV session type"
       listenPort:
         default: "TCP/UDP listen port"
+      installReverseProxy:
+        default: "Install HTTPS reverse proxy"
 
       vpcID:
         default: "VPC with outbound internet connectivity"
@@ -190,6 +193,13 @@ Parameters:
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
+  installReverseProxy:
+    Type: String
+    Description: Reverse web proxy on port 443
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
   vpcID:
     Type: AWS::EC2::VPC::Id
@@ -705,10 +715,14 @@ Conditions:
       !Equals [!Ref allowWebServerPorts, HTTP],
       !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
     ]
+  installReverseProxy: !Equals [!Ref installReverseProxy, "Yes"]
   createSgHTTPS:
     !Or [
-      !Equals [!Ref allowWebServerPorts, HTTPS],
-      !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
+      !Condition installReverseProxy,
+      !Or [
+        !Equals [!Ref allowWebServerPorts, HTTPS],
+        !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
+      ],
     ]
   hasCFprefix:
     !Not [
@@ -1513,8 +1527,12 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp
-                sudo rm -f /tmp/nice-dcv-ubuntu2404-$(arch).tgz
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2404-$(arch).tgz
+                sudo rm -f /tmp/nice-dcv-ubuntu*-$(arch).tgz
+                if ( cat /etc/os-release | grep " 12." ); then
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-$(arch).tgz
+                else
+                  wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2404-$(arch).tgz
+                fi
                 tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-$(arch)
                 sudo apt-get install -y ./nice-dcv-server_*.deb
                 sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
@@ -1620,6 +1638,15 @@ Resources:
 
                       # post cert renewal hook
                       mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
+
+                      # HTTPS reverse proxy
+                      if [ "${installReverseProxy}" = "Yes" ]; then
+                        rm -f /etc/ssl/certs/ssl-cert-snakeoil.pem
+                        rm -f /etc/ssl/private/ssl-cert-snakeoil.key
+                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/ssl/certs/ssl-cert-snakeoil.pem
+                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/ssl/private/ssl-cert-snakeoil.key
+                        systemctl restart nginx
+                      fi
                     fi
                   fi
                 fi
@@ -1809,6 +1836,48 @@ Resources:
               ignoreErrors: "true"
         00_dcv_install:
           files:
+            "/opt/ReverseProxy":
+              content: !Sub |
+                # 
+                server {                      
+                  # HTTPS
+                  listen 443 ssl http2 default_server;
+                  listen [::]:443 ssl http2 default_server;
+
+                  server_name  _;
+
+                  ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
+                  ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
+
+                  ssl_protocols TLSv1.3;
+                  ssl_prefer_server_ciphers on;
+
+                  ssl_session_cache shared:SSL:1m;
+                  ssl_session_timeout  10m;
+
+                  location / {
+                    proxy_pass https://localhost:${listenPort};
+                    proxy_redirect https://localhost:${listenPort} $scheme://$http_host/;
+
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade $http_upgrade;
+                    proxy_set_header Connection "upgrade";
+
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+
+                    proxy_buffering off;
+                    
+                    client_max_body_size 20M;
+                    proxy_read_timeout 10m;
+                    proxy_send_timeout 10m;
+                  }
+                }
+              mode: "000644"
+              owner: "root"
+              group: "root"
             "/root/install-dcv.sh":
               content: !Sub |
                 #!/bin/bash
@@ -1844,8 +1913,8 @@ Resources:
                 case $OS_VERSION in
                   12)
                     rm -f /home/admin/update-dcv
-                    curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2024.0/Servers/nice-dcv-2024.0-19030-ubuntu2204-$(arch).tgz
-                    tar -xvzf nice-dcv-2024.0-19030-ubuntu2204-$(arch).tgz && cd nice-dcv-*-$(arch)
+                    curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2204-$(arch).tgz
+                    tar -xvzf nice-dcv-ubuntu2204-$(arch).tgz && cd nice-dcv-*-$(arch)
                     ;;
                   *)
                     curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2404-$(arch).tgz
@@ -1887,6 +1956,28 @@ Resources:
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"admin\"\nstorage-root=\"\%home%\"" /etc/dcv/dcv.conf
+
+                # Nginx reverse proxy to DCV
+                if [ "${installReverseProxy}" = "Yes" ]; then
+                  # Nginx HTTPS proxy
+                  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem -nodes -subj "/C=XX/ST=State/L=City/O=Company/OU=Dept/CN=Host"
+                  apt-get install -q -y nginx
+                  
+                  cp /etc/nginx/nginx.conf  /etc/nginx/nginx.conf."`date +"%Y-%m-%d"`"
+                  # disable gzip as per https://bugs.debian.org/773332
+                  sed -i "s/gzip on/gzip off/g" /etc/nginx/nginx.conf
+                  
+                  # disable default site
+                  rm -f /etc/nginx/sites-enabled/default
+                  
+                  # HTTPS proxy
+                  cp /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
+                  ln -s /etc/nginx/sites-available/ReverseProxy /etc/nginx/sites-enabled/ReverseProxy
+
+                  systemctl enable --now nginx
+                else
+                  rm -f /opt/ReverseProxy
+                fi
 
                 rm -f ${!0}
               mode: "000740"
@@ -2359,6 +2450,18 @@ Outputs:
     Description: DCV URL (login as admin)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}/?username=admin     ( dcv://admin:@${IpAddress}:${listenPort} )"
+      - IpAddress:
+          !If [
+            displayPublicIP,
+            !GetAtt ec2Instance.PublicIp,
+            !GetAtt ec2Instance.PrivateIp,
+          ]
+
+  ReverseProxyURL:
+    Condition: installReverseProxy
+    Description: Reverse Proxy URL (login as admin)
+    Value: !Sub
+      - "https://${IpAddress}/?username=admin     ( dcv://admin:@${IpAddress}:443 )"
       - IpAddress:
           !If [
             displayPublicIP,
