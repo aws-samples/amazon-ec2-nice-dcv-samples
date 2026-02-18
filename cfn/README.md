@@ -96,7 +96,7 @@ Network
 
 - `vpcID` : [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
 - `subnetID` : subnet in selected VPC with internet connectivity. Select subnet in default VPC if unsure. Ensure your specified `instanceType` is available in your selected subnet AZ
-- `displayPublicIP` : set this to `No` for EC2 instance in a subnet that will not receive [public IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#concepts-public-addresses). EC2 private IP will be displayed in CloudFormation Outputs section instead. Default is `Yes`
+- `displayPublicIP` : set this to `No` for EC2 instance in a subnet that will not receive [public IPv4 address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#concepts-public-addresses). EC2 private IP will be displayed in CloudFormation Outputs section instead. Default is `Yes`
 - `assignStaticIP` : associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) to prevent assigned IPv4 address from changing every time EC2 instance is stopped and started. Associated charges are listed on [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addresses) page. Default is `Yes`
 
 Remote Access
@@ -154,13 +154,13 @@ It may take more than 15 minutes to provision the EC2 instance. After your stack
 The following URLs are available in **Outputs** section
 
 - `DCVUrl` : DCV [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) and [native client](https://docs.aws.amazon.com/dcv/latest/userguide/client.html) URLs. Native clients can be downloaded from [https://www.amazondcv.com/](https://www.amazondcv.com/). Login as the user specified in *Description* field. Default password is `EC2instanceID` value
-- `EC2console` : EC2 Console URL link to manage EC2 instance.
-- `EC2iamRole` : EC2 [IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html) URL link to manage permission.
+- `EC2console` : EC2 Console URL link to manage EC2 instance
+- `EC2iamRole` : EC2 [IAM role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html) URL link to manage permission
 - `EC2instanceID`: EC2 instance ID
-- `EC2instanceConnect`* (if available, Linux) : [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html).
-- `EC2serialConsole` (Linux): [EC2 Serial Console](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-serial-console.html) URL. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-serial-console-prerequisites.html).
-- `RDPconnect` (Windows) : in-browser [Fleet Manager Remote Desktop](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-rdp-fleet-manager.html) URL link. Use this to update DCV server.
-- `SSMsessionManager`* : [SSM Session Manager](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-systems-manager-session-manager.html) URL. You can use this to set a strong DCV login user password. Password change command is in *Description* field.
+- `EC2instanceConnect`* (if available, Linux) : [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html) URL link. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-eic.html)
+- `EC2serialConsole` (Linux): [EC2 Serial Console](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-to-serial-console.html) URL. Functionality is available under [certain conditions](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-serial-console-prerequisites.html)
+- `RDPconnect` (Windows) : in-browser [Fleet Manager Remote Desktop](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-rdp-fleet-manager.html) URL link. Use this to update DCV server
+- `SSMsessionManager`* : [SSM Session Manager](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-with-systems-manager-session-manager.html) URL. You can use this to set a strong DCV login user password. Password change command is in *Description* field
 
 \* *SSM session manager and EC2 Instance Connect are primarily for remote terminal administration purposes. For best user experience, connect directly to DCV server using [native clients](#dcv-clients).*
 
@@ -342,7 +342,7 @@ If you enable AWS Backup (`enableBackup`), you can restore your [EC2 instance](h
 
 ### Private subnet
 
-The CloudFormation templates are designed to provision EC2 instances in [public subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html). To use them for EC2 instances in [private subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) with internet connectivity, set `displayPublicIP` and `assignStaticIP` parameter values to `No`.
+The CloudFormation templates are designed to provision EC2 instances in [public subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html). To use them for EC2 instances in [private subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html) with internet connectivity, set `displayPublicIP` value to `No`.
 
 ### Local Zones
 
