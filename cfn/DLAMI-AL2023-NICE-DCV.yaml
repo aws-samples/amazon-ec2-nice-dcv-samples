@@ -1708,7 +1708,7 @@ Resources:
                 chmod +x /etc/smart-restart-conf.d/0-post-restart
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
-                if (systemctl list-units | grep -q firewalld); then
+                if (systemctl status firewalld | grep -q firewalld); then
                   if (systemctl status firewalld | grep -q running); then
                     firewall-cmd --permanent --add-port ${listenPort}/tcp
                     firewall-cmd --permanent --add-port ${listenPort}/udp

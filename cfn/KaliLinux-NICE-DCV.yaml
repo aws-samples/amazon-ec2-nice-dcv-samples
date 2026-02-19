@@ -1647,7 +1647,7 @@ Resources:
                 apt-get upgrade -q -y
 
                 # Add DCV ports
-                if (systemctl list-units | grep -q ufw); then
+                if (systemctl status ufw | grep -q ufw); then
                   ufw allow ${listenPort}/tcp
                   ufw allow ${listenPort}/udp
                   ufw allow https
