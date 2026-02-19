@@ -1557,6 +1557,28 @@ Resources:
               content: !Sub |
                 #!/bin/bash
 
+                if (cat /etc/os-release | grep -q 15.); then
+                  export CFN_SIGNAL="python3 /usr/bin/cfn-signal"                   
+                else
+                  export CFN_SIGNAL="python2 /usr/local/bin/cfn-signal"
+                fi
+
+                # Create Elastic IP first for association before creating IP address cert
+                if [ "${assignStaticIP}" = "Yes" ]; then
+                  if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                    if [ "${displayPublicIP}" = "Yes" ]; then
+                      $CFN_SIGNAL -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                      if (systemctl list-units | grep -q nginx); then
+                        systemctl stop nginx
+                      fi
+                      systemctl stop dcvserver
+                      if (! which nvidia-smi); then
+                        sleep 25
+                      fi
+                    fi
+                  fi
+                fi
+
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl list-units | grep -q firewalld); then
                   if (systemctl status firewalld | grep -q running); then
@@ -1572,6 +1594,20 @@ Resources:
                     firewall-offline-cmd --add-service https
                   fi
                 fi
+
+                SESSION="${sessionType}"
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                case $SESSION in
+                  console*)
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                esac
+                #systemctl enable dcvserver && systemctl restart dcvserver
+
 
                 # IP address cert
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
@@ -1593,25 +1629,6 @@ Resources:
                 fi
                 if [ -f "/opt/dcv-renew-cert.sh" ]; then
                   rm /opt/dcv-renew-cert.sh
-                fi
-
-                SESSION="${sessionType}"
-                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-                case $SESSION in
-                  console*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
-                  virtual*)
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                esac
-                systemctl enable dcvserver && systemctl restart dcvserver
-
-                if (cat /etc/os-release | grep -q 15.); then
-                  export CFN_SIGNAL="python3 /usr/bin/cfn-signal"                   
-                else
-                  export CFN_SIGNAL="python2 /usr/local/bin/cfn-signal"
                 fi
                 $CFN_SIGNAL -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 

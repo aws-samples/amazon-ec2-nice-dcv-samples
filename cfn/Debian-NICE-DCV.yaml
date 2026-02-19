@@ -1132,7 +1132,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIp: 0.0.0.0/0
+            CidrIp: !Ref ingressIPv4
           - !Ref AWS::NoValue
         - !If
           - createSgHTTPS
@@ -1140,7 +1140,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIpv6: ::/0
+            CidrIpv6: !Ref ingressIPv6
           - !Ref AWS::NoValue
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
@@ -1609,6 +1609,22 @@ Resources:
                 #!/bin/bash
                 export DEBIAN_FRONTEND=noninteractive
 
+                # Create Elastic IP first for association before creating IP address cert
+                if [ "${assignStaticIP}" = "Yes" ]; then
+                  if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                    if [ "${displayPublicIP}" = "Yes" ]; then
+                      python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                      if (systemctl list-units | grep -q nginx); then
+                        systemctl stop nginx
+                      fi
+                      systemctl stop dcvserver
+                      if (! which nvidia-smi); then
+                        sleep 25
+                      fi
+                    fi
+                  fi
+                fi
+
                 apt-get update -q
                 apt-get upgrade -q -y
 
@@ -1622,6 +1638,21 @@ Resources:
                     ufw allow 10000/tcp
                   fi
                 fi
+
+                SESSION="${sessionType}"
+
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                case $SESSION in
+                  console*)
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                esac
+                #systemctl enable dcvserver && systemctl restart dcvserver
+
 
                 # IP address cert
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
@@ -1645,7 +1676,6 @@ Resources:
                         rm -f /etc/ssl/private/ssl-cert-snakeoil.key
                         ln -s -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/ssl/certs/ssl-cert-snakeoil.pem
                         ln -s -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/ssl/private/ssl-cert-snakeoil.key
-                        systemctl restart nginx
                       fi
                     fi
                   fi
@@ -1654,19 +1684,10 @@ Resources:
                   rm /opt/dcv-renew-cert.sh
                 fi
 
-                SESSION="${sessionType}"
-
-                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-                case $SESSION in
-                  console*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
-                  virtual*)
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                esac
                 systemctl enable dcvserver && systemctl restart dcvserver
+                if (systemctl list-units | grep -q nginx); then
+                  systemctl restart nginx
+                fi
 
                 python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 

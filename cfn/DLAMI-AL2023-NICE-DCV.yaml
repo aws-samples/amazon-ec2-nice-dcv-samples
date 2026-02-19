@@ -1682,6 +1682,22 @@ Resources:
               content: !Sub |
                 #!/bin/bash
 
+                # Create Elastic IP first for association before creating IP address cert
+                if [ "${assignStaticIP}" = "Yes" ]; then
+                  if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                    if [ "${displayPublicIP}" = "Yes" ]; then
+                      /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                      if (systemctl list-units | grep -q nginx); then
+                        systemctl stop nginx
+                      fi
+                      systemctl stop dcvserver
+                      if (! which nvidia-smi); then
+                        sleep 25
+                      fi
+                    fi
+                  fi
+                fi
+
                 dnf update -q -y
 
                 # https://docs.aws.amazon.com/linux/al2023/ug/managing-repos-os-updates.html#automatic-restart-services
@@ -1713,6 +1729,29 @@ Resources:
                   fi
                 fi
 
+                SESSION="${sessionType}"
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                case $SESSION in
+                  console*)
+                    if (which nvidia-xconfig); then
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                    fi
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  *GPU_sharing*)
+                    if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then  # GPU sharing
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                      systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    fi
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                esac
+                #systemctl enable dcvserver && systemctl restart dcvserver
+
                 # IP address cert
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
                   if [ "${displayPublicIP}" = "Yes" ]; then
@@ -1735,7 +1774,6 @@ Resources:
                         rm -f /etc/pki/tls/nginx/key.pem
                         ln -s -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/pki/tls/nginx/cert.pem
                         ln -s -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/pki/tls/nginx/key.pem
-                        systemctl restart nginx
                       fi
                     fi
                   fi
@@ -1744,28 +1782,10 @@ Resources:
                   rm /opt/dcv-renew-cert.sh
                 fi
 
-                SESSION="${sessionType}"
-                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-                case $SESSION in
-                  console*)
-                    if (which nvidia-xconfig); then
-                      nvidia-xconfig --preserve-busid --enable-all-gpus
-                    fi
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
-                  *GPU_sharing*)
-                    if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then  # GPU sharing
-                      nvidia-xconfig --preserve-busid --enable-all-gpus
-                      systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    fi
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                  virtual*)
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                esac
                 systemctl enable dcvserver && systemctl restart dcvserver
+                if (systemctl list-units | grep -q nginx); then
+                  systemctl restart nginx
+                fi
 
                 /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 

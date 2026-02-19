@@ -1627,7 +1627,23 @@ Resources:
                 #!/bin/bash
                 export DEBIAN_FRONTEND=noninteractive
 
-                apt-get update
+                # Create Elastic IP first for association before creating IP address cert
+                if [ "${assignStaticIP}" = "Yes" ]; then
+                  if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                    if [ "${displayPublicIP}" = "Yes" ]; then
+                      python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                      if (systemctl list-units | grep -q nginx); then
+                        systemctl stop nginx
+                      fi
+                      systemctl stop dcvserver
+                      if (! which nvidia-smi); then
+                        sleep 25
+                      fi
+                    fi
+                  fi
+                fi
+
+                apt-get update -q
                 apt-get upgrade -q -y
 
                 # Add DCV ports
@@ -1639,37 +1655,6 @@ Resources:
                   if [ "${installWebmin}" = "Yes" ]; then
                     ufw allow 10000/tcp
                   fi
-                fi
-
-                # IP address cert
-                if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
-                  if [ "${displayPublicIP}" = "Yes" ]; then
-                    IP_ADDR=$(curl -s checkip.amazonaws.com)
-                    certbot certonly -n --agree-tos --standalone --preferred-profile shortlived --ip-address $IP_ADDR
-
-                    # DCV TLS cert: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html
-                    if [ -d "/etc/letsencrypt/live/$IP_ADDR/" ]; then
-                      cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
-                      cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
-                      chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
-                      chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
-
-                      # post cert renewal hook
-                      mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
-
-                      # HTTPS reverse proxy
-                      if [ "${installReverseProxy}" = "Yes" ]; then
-                        rm -f /etc/ssl/certs/ssl-cert-snakeoil.pem
-                        rm -f /etc/ssl/private/ssl-cert-snakeoil.key
-                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/ssl/certs/ssl-cert-snakeoil.pem
-                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/ssl/private/ssl-cert-snakeoil.key
-                        systemctl restart nginx
-                      fi
-                    fi
-                  fi
-                fi
-                if [ -f "/opt/dcv-renew-cert.sh" ]; then
-                  rm /opt/dcv-renew-cert.sh
                 fi
 
                 SESSION="${sessionType}"
@@ -1689,7 +1674,7 @@ Resources:
                     systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
                     ;;
                 esac
-                systemctl enable dcvserver && systemctl restart dcvserver
+                #systemctl enable dcvserver && systemctl restart dcvserver
 
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
                 if ( which nvidia-smi ); then
@@ -1715,6 +1700,41 @@ Resources:
                   systemctl restart amazon-cloudwatch-agent
                 else
                   rm -f /opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json
+                fi
+
+                # IP address cert
+                if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                  if [ "${displayPublicIP}" = "Yes" ]; then
+                    IP_ADDR=$(curl -s checkip.amazonaws.com)
+                    certbot certonly -n --agree-tos --standalone --preferred-profile shortlived --ip-address $IP_ADDR
+
+                    # DCV TLS cert: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html
+                    if [ -d "/etc/letsencrypt/live/$IP_ADDR/" ]; then
+                      cp -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/dcv/dcv.pem
+                      cp -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/dcv/dcv.key
+                      chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                      chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+
+                      # post cert renewal hook
+                      mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
+
+                      # HTTPS reverse proxy
+                      if [ "${installReverseProxy}" = "Yes" ]; then
+                        rm -f /etc/ssl/certs/ssl-cert-snakeoil.pem
+                        rm -f /etc/ssl/private/ssl-cert-snakeoil.key
+                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/ssl/certs/ssl-cert-snakeoil.pem
+                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/ssl/private/ssl-cert-snakeoil.key
+                      fi
+                    fi
+                  fi
+                fi
+                if [ -f "/opt/dcv-renew-cert.sh" ]; then
+                  rm /opt/dcv-renew-cert.sh
+                fi
+
+                systemctl enable dcvserver && systemctl restart dcvserver
+                if (systemctl list-units | grep -q nginx); then
+                  systemctl restart nginx
                 fi
 
                 python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
