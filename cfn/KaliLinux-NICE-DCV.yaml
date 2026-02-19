@@ -1632,7 +1632,7 @@ Resources:
                   if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
                     if [ "${displayPublicIP}" = "Yes" ]; then
                       python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
-                      if (systemctl list-units | grep -q nginx); then
+                      if (systemctl status nginx | grep -q nginx); then
                         systemctl stop nginx
                       fi
                       systemctl stop dcvserver
@@ -1733,7 +1733,7 @@ Resources:
                 fi
 
                 systemctl enable dcvserver && systemctl restart dcvserver
-                if (systemctl list-units | grep -q nginx); then
+                if (systemctl status nginx | grep -q nginx); then
                   systemctl restart nginx
                 fi
 
