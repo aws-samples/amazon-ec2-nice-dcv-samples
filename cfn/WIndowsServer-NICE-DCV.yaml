@@ -1843,7 +1843,8 @@ Resources:
                 IF EXIST c:\windows\temp\dcv-docker-install.txt EXIT
                 IF EXIST c:\windows\System32\dockerd.exe EXIT
 
-                powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"        
+                powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"
+                c:\windows\System32\dockerd.exe --register-service --service-name docker
                 ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-docker-install.txt
 
                 shutdown /r /t 1 /f
@@ -1881,7 +1882,7 @@ Resources:
                 $daemonSettings | ConvertTo-Json | Out-File -FilePath $daemonSettingsFile -Encoding ASCII
 
                 # Register docker service.
-                &c:\windows\System32\dockerd.exe --register-service --service-name docker
+                # &c:\windows\System32\dockerd.exe --register-service --service-name docker
 
                 $windowsFeature = "Containers"
                 if (-not (Get-WindowsFeature $windowsFeature).Installed)
@@ -1943,6 +1944,8 @@ Resources:
           )
 
           cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region}
+
+          shutdown /r /t 1 /f
           </script>
       Tags:
         - Key: Name
