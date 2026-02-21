@@ -1543,7 +1543,7 @@ Resources:
           commands:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             install:
-              command: c:\windows\temp\dcv-sw-install.cmd >> c:\windows\temp\dcv-sw-install.log
+              command: c:\windows\temp\dcv-sw-install.cmd >> c:\windows\temp\dcv-sw-install.log 2>>&1
               ignoreErrors: true
               waitAfterCompletion: forever
         02_dcv_install:
@@ -1551,7 +1551,7 @@ Resources:
             c:\\windows\\temp\\dcv-install.cmd:
               content: !Sub |
                 @echo off
-                powershell -Command "Start-Sleep -s 5"
+                powershell -Command "Start-Sleep -s 3"
                 IF EXIST c:\windows\temp\dcv-install.txt EXIT
                 time /t >> c:\windows\temp\dcv-install.txt
                 cd \windows\temp
@@ -1587,7 +1587,7 @@ Resources:
                 reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
                 reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
 
-                @ Port forward HTTPS TCP 443 to DCV
+                @echo ** Port forward HTTPS TCP 443 to DCV
                 IF ${installReverseProxy} EQU Yes (
                   netsh advfirewall firewall add rule name="HTTPS" dir=in action=allow protocol=tcp localport=443
                   netsh int portproxy add v4tov4 listenport=443 connectaddress=127.0.0.1 connectport=${listenPort}
@@ -1600,14 +1600,14 @@ Resources:
           commands:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             install:
-              command: c:\windows\temp\dcv-install.cmd >> c:\windows\temp\dcv-install.log
+              command: c:\windows\temp\dcv-install.cmd >> c:\windows\temp\dcv-install.log 2>>&1
               ignoreErrors: true
         03_dcv_gpu_install:
           files:
             c:\\windows\\temp\\dcv-gpu-install.cmd:
               content: !Sub |
                 @echo off
-                powershell -Command "Start-Sleep -s 5"
+                powershell -Command "Start-Sleep -s 3"
                 IF EXIST c:\windows\temp\dcv-gpu-install.txt EXIT                
                 time /t >> c:\windows\temp\dcv-gpu-install.txt
 
@@ -1722,7 +1722,7 @@ Resources:
                 )
 
                 shutdown /r /t 1 /f
-                powershell -Command "Start-Sleep -s 5"
+                powershell -Command "Start-Sleep -s 60"
                 exit
             c:\\windows\\temp\\install-PSReadLine.cmd:
               content: |
@@ -1756,14 +1756,14 @@ Resources:
                   start /wait nvidia-driver -s
                   time /t >> c:\windows\temp\dcv-gpu-install.txt
                   shutdown /r /t 1 /f
-                  powershell -Command "Start-Sleep -s 5"
+                  powershell -Command "Start-Sleep -s 60"
                 ) || (
                   echo.
                 )
           commands:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             restart-computer:
-              command: c:\windows\temp\dcv-gpu-install.cmd >> c:\windows\temp\dcv-gpu-install.log
+              command: c:\windows\temp\dcv-gpu-install.cmd >> c:\windows\temp\dcv-gpu-install.log 2>>&1
               ignoreErrors: true
               waitAfterCompletion: forever
         06_dcv_cert_install:
@@ -1771,42 +1771,63 @@ Resources:
             c:\\windows\\temp\\dcv-cert-install.cmd:
               content: |
                 @echo off
-                powershell -Command "Start-Sleep -s 5"
+                powershell -Command "Start-Sleep -s 3"
                 IF EXIST c:\windows\temp\dcv-cert-install.txt EXIT
 
-                @echo ** set administrator password
-                powershell -C "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
+                @echo ** get administrator password
+                powershell -Command "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
                 set /p INSTANCEID=<c:\windows\temp\instanceid.txt
 
-                # https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create
+                @echo https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create
                 schtasks /create /sc daily /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert daily" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
                 schtasks /create /sc onstart /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert on start" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
 
-                # Open HTTP port for ACME HTTP-01 challenge
+                @echo Open HTTP port for ACME HTTP-01 challenge
                 netsh advfirewall firewall add rule name="HTTP" dir=in action=allow protocol=tcp localport=80
 
+                @echo Install Posh-ACME
                 powershell -Command "Install-Module -Name Posh-ACME -Force"
+
+                @echo Verify Posh-ACME
+                powershell -Command "Get-Module -ListAvailable -Name Posh-ACME"
+
+                @echo Install IP address cert
+                powershell -NoProfile -File "c:\windows\temp\install-dcv-cert.ps1" 
                 powershell -NoProfile -File "c:\windows\temp\install-dcv-cert.ps1" 
 
+                @echo Install done
                 time /t >> c:\windows\temp\dcv-cert-install.txt
                 exit
             c:\\windows\\temp\\install-dcv-cert.ps1:
               content: |
                 $global:progressPreference = 'silentlyContinue'
 
-                # Initial cert by SYSTEM
+                Write-Output "Install Posh-ACME if not available"
                 $moduleName = "Posh-ACME"
                 if (-not (Get-Module -ListAvailable -Name $moduleName)) {
                   Install-Module -Name $moduleName -Force
                 }
+
+                Write-Output "Configure Posh-ACME"
                 Import-Module Posh-ACME
                 Set-PAServer LE_PROD
 
-                $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
-                $cert = New-PACertificate $PublicIp -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name "DCV-Cert"
-                $cert | Format-List
-                New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.pem -ItemType SymbolicLink -Value $cert.CertFile
-                New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.key -ItemType SymbolicLink -Value $cert.KeyFile
+                $cert = Get-PACertificate -Name "DCV-Cert"
+                if (!$cert) {
+                  New-PAAccount -AcceptTOS -Force
+
+                  Write-Output "Get Public IP"
+                  $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
+
+                  Write-Output "Request cert for $PublicIp"
+                  $cert = New-PACertificate $PublicIp -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name "DCV-Cert"
+                  $cert | Format-List
+
+                  Write-Output "Install cert"
+                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.pem -ItemType SymbolicLink -Value $cert.CertFile
+                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.key -ItemType SymbolicLink -Value $cert.KeyFile
+                }
+                exit
             C:\\Windows\\System32\\config\\systemprofile\\AppData\\Local\\NICE\\dcv\\renew-dcv-cert.ps1:
               content: |
                 $global:progressPreference = 'silentlyContinue'
@@ -1837,7 +1858,7 @@ Resources:
                 }
           commands:
             install-cert:
-              command: c:\windows\temp\dcv-cert-install.cmd >> c:\windows\temp\dcv-cert-install.log
+              command: c:\windows\temp\dcv-cert-install.cmd >> c:\windows\temp\dcv-cert-install.log 2>>&1
               ignoreErrors: true
         08_dcv_docker_install:
           files:
@@ -1846,60 +1867,90 @@ Resources:
                 @echo off
                 powershell -Command "Start-Sleep -s 10"
 
-                IF EXIST c:\windows\System32\dockerd.exe c:\windows\System32\dockerd.exe --register-service --service-name docker
                 IF EXIST c:\windows\temp\dcv-docker-install.txt EXIT
 
+                @echo Install Containers feature
+                powershell -Command "Add-WindowsFeature Containers"
+
+                @echo Install Docker Engine
                 powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"
+                IF NOT EXIST c:\windows\system32\dockerd.exe (
+                  powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"
+                )
+
+                @echo Install done
                 time /t >> c:\windows\temp\dcv-docker-install.txt
 
+                @echo Create task to register docker daemon on reboot
+                powershell -Command "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
+                set /p INSTANCEID=<c:\windows\temp\instanceid.txt
+                schtasks /create /sc onstart /ru administrator /rp %INSTANCEID% /tn "DCV Register Docker" /tr "c:\windows\temp\dcv-register-docker.cmd > c:\windows\temp\dcv-register-docker.log 2>>&1" /f /rl:HIGHEST
+
+                @echo Rebooting
                 shutdown /r /t 1 /f
-                powershell -Command "Start-Sleep -s 5"
+                powershell -Command "Start-Sleep -s 60"
 
                 exit
             c:\\windows\\temp\\install-docker-ce.ps1:
               content: |
                 $global:progressPreference = 'silentlyContinue'
 
-                # Get latest Docker .zip package
+                Write-Output "Get latest Docker .zip package"
                 $availableVersions = ((Invoke-WebRequest -Uri "https://download.docker.com/win/static/stable/x86_64/" -UseBasicParsing).Links | Where-Object {$_.href -like "docker-*.zip"}).href | Sort-Object -Descending
                 $dockerZip = $availableVersions[0]
                 $zipUrl = "https://download.docker.com/win/static/stable/x86_64/$dockerZip"
 
-                # download package
+                Write-Output "Download package $zipUrl"
                 $destinationFolder = "c:\windows\temp"
                 (New-Object System.Net.WebClient).DownloadFile($zipUrl, "$destinationFolder\$dockerZip")
+                Unblock-File -Path "$destinationFolder\$dockerZip"
 
-                # Extract and copy to \windows\system32
+                Write-Output "Extract and copy to \windows\system32"
                 Expand-Archive -Path "$destinationFolder\$dockerZip" -DestinationPath "$destinationFolder"
-                Copy-Item -Path "$destinationFolder\docker\docker.exe" -Destination c:\windows\System32\docker.exe
-                Copy-Item -Path "$destinationFolder\docker\dockerd.exe" -Destination c:\windows\System32\dockerd.exe
+                Copy-Item -Path "$destinationFolder\docker\docker.exe" -Destination c:\windows\System32\docker.exe -Force
+                Copy-Item -Path "$destinationFolder\docker\dockerd.exe" -Destination c:\windows\System32\dockerd.exe -Force
 
-                # Prepare docker config path
+                Write-Output "Create docker config path"
                 $DockerDataPath = "c:\ProgramData\docker"
                 $dockerConfigPath = Join-Path $global:DockerDataPath "config"
                 md -Path $dockerConfigPath | Out-Null
 
-                # Prepare docker daemon.json
+                Write-Output "Create daemon.json"
                 $daemonSettings = New-Object PSObject
                 $daemonSettings | Add-Member NoteProperty hosts @("npipe://")
 
                 $daemonSettingsFile = Join-Path $dockerConfigPath "daemon.json"
                 $daemonSettings | ConvertTo-Json | Out-File -FilePath $daemonSettingsFile -Encoding ASCII
 
-                # Containers feature 
                 $windowsFeature = "Containers"
-                if (-not (Get-WindowsFeature $windowsFeature).Installed)
-                {
+                if (-not (Get-WindowsFeature $windowsFeature).Installed) {
+                  Write-Output "Containers feature"
                   Add-WindowsFeature $windowsFeature
                 }
 
-                # Register docker service
-                &c:\windows\System32\dockerd.exe --register-service --service-name docker
-                sc start docker
+                Write-Output "Attempt to register docker service"
+                Start-Process -FilePath "c:\windows\system32\dockerd.exe" -ArgumentList "--register-service" -Wait
+                &c:\windows\system32\dockerd.exe --register-service
+
+                Write-Output "Verify docker service"
+                &c:\windows\system32\dockerd.exe --validate
+                exit
+            c:\\windows\\temp\\dcv-register-docker.cmd:
+              content: |
+                @echo off
+                IF EXIST c:\windows\system32\dockerd.exe (
+                  @echo ** Register Docker service
+                  c:\windows\system32\dockerd.exe --register-service
+                  c:\windows\system32\sc.exe start docker
+                  c:\windows\system32\dockerd.exe --validate
+                  c:\windows\system32\sc.exe query docker
+                )
+                schtasks /delete /tn "DCV Register Docker" /f
+                exit
           commands:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             install-docker:
-              command: c:\windows\temp\dcv-docker-install.cmd >> c:\windows\temp\dcv-docker-install.log
+              command: c:\windows\temp\dcv-docker-install.cmd >> c:\windows\temp\dcv-docker-install.log 2>>&1
               ignoreErrors: true
               waitAfterCompletion: forever
     Properties:
@@ -1937,11 +1988,6 @@ Resources:
           @echo ** install graphics driver
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_gpu_install
 
-          @echo ** install Docker
-          IF ${installDocker} EQU Yes (
-            cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_docker_install
-          )
-
           @echo ** install IP address certificate
           echo "${allowWebServerPorts}" | findstr /C:"HTTP"
           if %ERRORLEVEL% == 0 (
@@ -1950,10 +1996,14 @@ Resources:
             )
           )
 
-          cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region}
+          @echo ** install Docker
+          IF ${installDocker} EQU Yes (
+            cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_docker_install
+          )
 
-          @echo ** register Docker service
-          IF EXIST c:\windows\System32\dockerd.exe c:\windows\System32\dockerd.exe --register-service --service-name docker  
+          c:\windows\system32\sc start dcvserver
+          netstat -an | findstr ":${listenPort}"
+          cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region}
 
           shutdown /r /t 1 /f
           </script>
