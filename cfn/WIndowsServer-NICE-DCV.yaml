@@ -1579,7 +1579,7 @@ Resources:
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
 
-                @echo ** "Number must be higher than 1024: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
+                @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v web-port /t REG_DWORD /d ${listenPort} /f
                 reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v quic-port /t REG_DWORD /d ${listenPort} /f
 
@@ -1587,8 +1587,8 @@ Resources:
                 reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
                 reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
 
-                @echo ** Port forward HTTPS TCP 443 to DCV
                 IF ${installReverseProxy} EQU Yes (
+                  @echo ** Port forward HTTPS TCP 443 to DCV
                   netsh advfirewall firewall add rule name="HTTPS" dir=in action=allow protocol=tcp localport=443
                   netsh int portproxy add v4tov4 listenport=443 connectaddress=127.0.0.1 connectport=${listenPort}
                   netsh int portproxy add v6tov6 listenport=443 connectaddress=::1 connectport=${listenPort}
@@ -1721,8 +1721,6 @@ Resources:
                   pnputil /add-driver *.inf /install /subdirs
                 )
 
-                shutdown /r /t 1 /f
-                powershell -Command "Start-Sleep -s 60"
                 exit
             c:\\windows\\temp\\install-PSReadLine.cmd:
               content: |
@@ -1750,13 +1748,14 @@ Resources:
               content: |
                 @echo off
                 echo %1
+
+                IF EXIST c:\windows\temp\dcv-tesla-install.txt EXIT                
                 curl -s -I %1 | findstr /C:" 200">nul && (
                   echo Download and install
                   curl -s -L %1 -o nvidia-driver.exe
                   start /wait nvidia-driver -s
-                  time /t >> c:\windows\temp\dcv-gpu-install.txt
-                  shutdown /r /t 1 /f
-                  powershell -Command "Start-Sleep -s 60"
+
+                  time /t >> c:\windows\temp\dcv-tesla-install.txt
                 ) || (
                   echo.
                 )
@@ -1885,10 +1884,6 @@ Resources:
                 powershell -Command "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
                 set /p INSTANCEID=<c:\windows\temp\instanceid.txt
                 schtasks /create /sc onstart /ru administrator /rp %INSTANCEID% /tn "DCV Register Docker" /tr "c:\windows\temp\dcv-register-docker.cmd > c:\windows\temp\dcv-register-docker.log 2>>&1" /f /rl:HIGHEST
-
-                @echo Rebooting
-                shutdown /r /t 1 /f
-                powershell -Command "Start-Sleep -s 60"
 
                 exit
             c:\\windows\\temp\\install-docker-ce.ps1:
