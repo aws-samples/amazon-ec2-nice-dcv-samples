@@ -6,7 +6,7 @@
 
 [Amazon DCV](https://aws.amazon.com/hpc/dcv/) is a high-performance remote visualisation protocol that enables users to securely connect to remote desktops in the cloud from any device. To use, install a [desktop environment and desktop manager](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gui) (Linux), [install DCV server software](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing.html), and remotely connect to the server using [web browser](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) or [native client](https://www.amazondcv.com/latest.html).
 
-There is no additional charge to use DCV on Amazon EC2 if instance can access Amazon S3 endpoint for [license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2). You pay only for the AWS resources that you create.
+There is no additional charge to use DCV on Amazon EC2 if instance can access Amazon S3 endpoint for [license verification](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html#setting-up-license-ec2).
 
 
 ### Features
@@ -21,7 +21,7 @@ The CloudFormation templates provision EC2 instances running DCV server with the
   - Custom [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html)
   - Managed virtual or console [sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html) (Linux)
   - Valid [IP address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability)
-  - Web proxy for DCV access on HTTPS port 443 (optional) 
+  - Web proxy for remote access on HTTPS port 443 (optional) 
 - GPU
   - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) driver install (optional)
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/) to run GPU-accelerated containers (optional)
@@ -37,8 +37,9 @@ The CloudFormation templates provision EC2 instances running DCV server with the
 - Installed applications
   - [AWS CLI v2](https://aws.amazon.com/cli/) with [partial mode](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html#cli-usage-auto-prompt-modes) [auto-prompt](https://docs.aws.amazon.com/cli/latest/userguide/cli-usage-parameters-prompting.html)
   - [Amazon CloudWatch agent](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Install-CloudWatch-Agent.html)
-  - [Certbot](https://certbot.eff.org/) with [Amazon Route 53](https://aws.amazon.com/route53/) [DNS challenge](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge) support
-  - [Docker Engine](https://docs.docker.com/engine/) also known as Docker CE (optional: Windows and Linux)
+  - [Certbot](https://certbot.eff.org/) with [Amazon Route 53](https://aws.amazon.com/route53/) [DNS challenge](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge) support (Linux)
+  - [Posh-ACME](https://poshac.me) with [Amazon Route 53](https://aws.amazon.com/route53/) [DNS challenge](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge) support (Windows)
+  - [Docker Engine](https://docs.docker.com/engine/) also known as Docker CE (optional)
 - Network and Content Delivery
   - [Amazon CloudFront](https://aws.amazon.com/cloudfront/) for web server (optional)
   - [AWS Global Accelerator](https://aws.amazon.com/global-accelerator/) network acceleration for DCV (optional)
