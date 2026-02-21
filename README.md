@@ -21,7 +21,7 @@ The CloudFormation templates provision EC2 instances running DCV server with the
   - Custom [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html)
   - Managed virtual or console [sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html) (Linux)
   - Valid [IP address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability)
-  - Web proxy for remote access on HTTPS port 443 (optional) 
+  - Web reverse proxy for remote access through HTTPS port 443 (optional) 
 - GPU
   - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) driver install (optional)
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/) to run GPU-accelerated containers (optional)
@@ -97,4 +97,4 @@ This library is licensed under the MIT-0 License. See the LICENSE file.
 
 ## Notice
 
-Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed on the EC2 instance. Some operating systems *are not supported* by DCV.  Refer to [documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for information.
+Usage indicates acceptance of [DCV EULA](https://www.amazondcv.com/eula.html) and license agreements of all software that is installed on EC2 instance. Some operating systems *are not supported* by DCV.  Refer to [documentation site](https://docs.aws.amazon.com/dcv/latest/adminguide/servers.html#requirements) for information.
