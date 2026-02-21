@@ -1497,7 +1497,7 @@ Resources:
               content: !Sub |
                 @echo off
                 IF EXIST c:\windows\temp\dcv-sw-install.txt EXIT
-                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-sw-install.txt
+                time /t >> c:\windows\temp\dcv-sw-install.txt
 
                 @echo ** set administrator password
                 powershell -C "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
@@ -1537,6 +1537,8 @@ Resources:
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-all
                 choco install --no-progress -y vcredist140
 
+                time /t >> c:\windows\temp\dcv-sw-install.txt
+
                 exit
           commands:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
@@ -1551,7 +1553,7 @@ Resources:
                 @echo off
                 powershell -Command "Start-Sleep -s 5"
                 IF EXIST c:\windows\temp\dcv-install.txt EXIT
-                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-install.txt
+                time /t >> c:\windows\temp\dcv-install.txt
                 cd \windows\temp
 
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-wininstall.html
@@ -1592,6 +1594,8 @@ Resources:
                   netsh int portproxy add v6tov6 listenport=443 connectaddress=::1 connectport=${listenPort}
                 )
 
+                time /t >> c:\windows\temp\dcv-install.txt
+
                 exit
           commands:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
@@ -1605,7 +1609,7 @@ Resources:
                 @echo off
                 powershell -Command "Start-Sleep -s 5"
                 IF EXIST c:\windows\temp\dcv-gpu-install.txt EXIT                
-                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-gpu-install.txt
+                time /t >> c:\windows\temp\dcv-gpu-install.txt
 
                 start /wait c:\windows\temp\install-PSReadLine.cmd
                 start /wait c:\windows\temp\install-DisplaySettings.cmd
@@ -1638,7 +1642,7 @@ Resources:
                     ) || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://ec2-windows-nvidia-drivers/latest/ . --no-sign-request
                     ) || (
-                    curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-18.4/573.48_grid_win10_win11_server2022_dch_64bit_international_aws_swl.exe
+                    curl -s -L -O https://ec2-windows-nvidia-drivers.s3.amazonaws.com/grid-19.4/582.16_grid_win10_win11_server2022_server2025_dch_64bit_international_aws_swl.exe
                   )
 
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global\GridLicensing" /v NvCplDisableManageLicensePage /t REG_DWORD /d 1 /f
@@ -1657,7 +1661,7 @@ Resources:
                     ) || (
                     "C:\Program Files\Amazon\AWSCLIV2\aws" s3 cp --recursive s3://nvidia-gaming/windows/latest/ . --no-sign-request
                     ) || (
-                    curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/windows/552.13_Cloud_Gaming_win10_win11_server2022_dch_64bit_international.exe
+                    curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/windows/581.80_Cloud_Gaming_win10_win11_server2022_dch_64bit_international.exe
                   )
                   reg add "HKLM\SYSTEM\CurrentControlSet\Services\nvlddmkm\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
                   reg add "HKLM\SOFTWARE\NVIDIA Corporation\Global" /v vGamingMarketplace /t REG_DWORD /d 2 /f
@@ -1673,6 +1677,7 @@ Resources:
 
                   @echo ** https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/public-nvidia-driver.html
                   copy \windows\temp\install-if-available.cmd \windows\temp\driver\
+                  install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2022-2025-dch-international.exe
                   install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2022-dch-international.exe
                   install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2019-2022-dch-international.exe
                   install-if-available.cmd https://us.download.nvidia.com/tesla/${teslaDriverVersion}/${teslaDriverVersion}-data-center-tesla-desktop-winserver-2016-2019-2022-dch-international.exe
@@ -1749,7 +1754,7 @@ Resources:
                   echo Download and install
                   curl -s -L %1 -o nvidia-driver.exe
                   start /wait nvidia-driver -s
-                  ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-gpu-install.txt
+                  time /t >> c:\windows\temp\dcv-gpu-install.txt
                   shutdown /r /t 1 /f
                   powershell -Command "Start-Sleep -s 5"
                 ) || (
@@ -1783,7 +1788,7 @@ Resources:
                 powershell -Command "Install-Module -Name Posh-ACME -Force"
                 powershell -NoProfile -File "c:\windows\temp\install-dcv-cert.ps1" 
 
-                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-cert-install.txt
+                time /t >> c:\windows\temp\dcv-cert-install.txt
                 exit
             c:\\windows\\temp\\install-dcv-cert.ps1:
               content: |
@@ -1840,12 +1845,12 @@ Resources:
               content: |
                 @echo off
                 powershell -Command "Start-Sleep -s 10"
+
+                IF EXIST c:\windows\System32\dockerd.exe c:\windows\System32\dockerd.exe --register-service --service-name docker
                 IF EXIST c:\windows\temp\dcv-docker-install.txt EXIT
-                IF EXIST c:\windows\System32\dockerd.exe EXIT
 
                 powershell -NoProfile -File "c:\windows\temp\install-docker-ce.ps1"
-                c:\windows\System32\dockerd.exe --register-service --service-name docker
-                ECHO amazon-ec2-nice-dcv-samples >> c:\windows\temp\dcv-docker-install.txt
+                time /t >> c:\windows\temp\dcv-docker-install.txt
 
                 shutdown /r /t 1 /f
                 powershell -Command "Start-Sleep -s 5"
@@ -1881,14 +1886,16 @@ Resources:
                 $daemonSettingsFile = Join-Path $dockerConfigPath "daemon.json"
                 $daemonSettings | ConvertTo-Json | Out-File -FilePath $daemonSettingsFile -Encoding ASCII
 
-                # Register docker service.
-                # &c:\windows\System32\dockerd.exe --register-service --service-name docker
-
+                # Containers feature 
                 $windowsFeature = "Containers"
                 if (-not (Get-WindowsFeature $windowsFeature).Installed)
                 {
                   Add-WindowsFeature $windowsFeature
                 }
+
+                # Register docker service
+                &c:\windows\System32\dockerd.exe --register-service --service-name docker
+                sc start docker
           commands:
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-init.html#aws-resource-init-commands
             install-docker:
@@ -1930,6 +1937,11 @@ Resources:
           @echo ** install graphics driver
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_gpu_install
 
+          @echo ** install Docker
+          IF ${installDocker} EQU Yes (
+            cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_docker_install
+          )
+
           @echo ** install IP address certificate
           echo "${allowWebServerPorts}" | findstr /C:"HTTP"
           if %ERRORLEVEL% == 0 (
@@ -1938,12 +1950,10 @@ Resources:
             )
           )
 
-          @echo ** install Docker
-          IF ${installDocker} EQU Yes (
-            cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_docker_install
-          )
-
           cfn-signal.exe -e %errorlevel% --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region}
+
+          @echo ** register Docker service
+          IF EXIST c:\windows\System32\dockerd.exe c:\windows\System32\dockerd.exe --register-service --service-name docker  
 
           shutdown /r /t 1 /f
           </script>
