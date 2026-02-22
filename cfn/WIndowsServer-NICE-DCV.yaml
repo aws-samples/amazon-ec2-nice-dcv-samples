@@ -1843,6 +1843,7 @@ Resources:
 
                 $cert = Get-PACertificate -Name "DCV-Cert"
                 if (!$cert) {
+                  Start-Sleep -s 20
                   New-PAAccount -AcceptTOS -Force
                   $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
                   $cert = New-PACertificate $PublicIp -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name "DCV-Cert"
