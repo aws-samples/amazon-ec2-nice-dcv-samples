@@ -1779,10 +1779,10 @@ Resources:
 
                 @echo https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create
                 schtasks /create /sc daily /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert daily" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
-                schtasks /create /sc onstart /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert on start" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
+                schtasks /create /sc onstart /delay 0001:00 /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert on start" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
 
                 @echo Open HTTP port for ACME HTTP-01 challenge
-                netsh advfirewall firewall add rule name="HTTP" dir=in action=allow protocol=tcp localport=80
+                netsh advfirewall firewall add rule name="ACME HTTP-01 challenge" dir=in action=allow protocol=tcp localport=80
 
                 @echo Install Posh-ACME
                 powershell -Command "Install-Module -Name Posh-ACME -Force"
@@ -1790,60 +1790,23 @@ Resources:
                 @echo Verify Posh-ACME
                 powershell -Command "Get-Module -ListAvailable -Name Posh-ACME"
 
-                @echo Install IP address cert
-                powershell -NoProfile -File "c:\windows\temp\install-dcv-cert.ps1" 
-                powershell -NoProfile -File "c:\windows\temp\install-dcv-cert.ps1" 
-
-                @echo Install done
+                @echo Done. To install IP address cert on boot
                 time /t >> c:\windows\temp\dcv-cert-install.txt
-                exit
-            c:\\windows\\temp\\install-dcv-cert.ps1:
-              content: |
-                $global:progressPreference = 'silentlyContinue'
-
-                Write-Output "Install Posh-ACME if not available"
-                $moduleName = "Posh-ACME"
-                if (-not (Get-Module -ListAvailable -Name $moduleName)) {
-                  Install-Module -Name $moduleName -Force
-                }
-
-                Write-Output "Configure Posh-ACME"
-                Import-Module Posh-ACME
-                Set-PAServer LE_PROD
-
-                $cert = Get-PACertificate -Name "DCV-Cert"
-                if (!$cert) {
-                  New-PAAccount -AcceptTOS -Force
-
-                  Write-Output "Get Public IP"
-                  $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
-
-                  Write-Output "Request cert for $PublicIp"
-                  $cert = New-PACertificate $PublicIp -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name "DCV-Cert"
-                  $cert | Format-List
-
-                  Write-Output "Install cert"
-                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.pem -ItemType SymbolicLink -Value $cert.CertFile
-                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.key -ItemType SymbolicLink -Value $cert.KeyFile
-                }
                 exit
             C:\\Windows\\System32\\config\\systemprofile\\AppData\\Local\\NICE\\dcv\\renew-dcv-cert.ps1:
               content: |
                 $global:progressPreference = 'silentlyContinue'
-
-                # Open HTTP port for ACME HTTP-01 challenge
-                netsh advfirewall firewall add rule name="HTTP" dir=in action=allow protocol=tcp localport=80
 
                 $moduleName = "Posh-ACME"               
                 if (-not (Get-Module -ListAvailable -Name $moduleName)) {
                   Install-Module -Name $moduleName -Force
                 }
                 Import-Module Posh-ACME
+                Start-Sleep -s 90
                 Set-PAServer LE_PROD
 
                 $cert = Get-PACertificate -Name "DCV-Cert"
                 if (!$cert) {
-                  Start-Sleep -s 20
                   New-PAAccount -AcceptTOS -Force
                   $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
                   $cert = New-PACertificate $PublicIp -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name "DCV-Cert"

@@ -1563,22 +1563,6 @@ Resources:
                   export CFN_SIGNAL="python2 /usr/local/bin/cfn-signal"
                 fi
 
-                # Create Elastic IP first for association before creating IP address cert
-                if [ "${assignStaticIP}" = "Yes" ]; then
-                  if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
-                    if [ "${displayPublicIP}" = "Yes" ]; then
-                      $CFN_SIGNAL -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
-                      if (systemctl list-units | grep -q nginx); then
-                        systemctl stop nginx
-                      fi
-                      systemctl stop dcvserver
-                      if (! which nvidia-smi); then
-                        sleep 25
-                      fi
-                    fi
-                  fi
-                fi
-
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
                 if (systemctl status firewalld | grep -q firewalld); then
                   if (systemctl status firewalld | grep -q running); then
@@ -1606,12 +1590,16 @@ Resources:
                     systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
                     ;;
                 esac
-                #systemctl enable dcvserver && systemctl restart dcvserver
+                systemctl enable dcvserver && systemctl restart dcvserver
 
 
                 # IP address cert
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
                   if [ "${displayPublicIP}" = "Yes" ]; then
+                    # Some Regions create Elastic IP after EC2 instance is created
+                    $CFN_SIGNAL -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                    sleep 120
+
                     IP_ADDR=$(curl -s checkip.amazonaws.com)
                     certbot certonly -n --agree-tos --standalone --preferred-profile shortlived --ip-address $IP_ADDR
 

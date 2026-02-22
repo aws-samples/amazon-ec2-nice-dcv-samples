@@ -1624,9 +1624,26 @@ Resources:
                   fi
                 fi
 
+                SESSION="${sessionType}"
+                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                case $SESSION in
+                  console*)
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                    ;;
+                  virtual*)
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                esac
+                systemctl enable dcvserver && systemctl restart dcvserver
+
                 # IP address cert
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
                   if [ "${displayPublicIP}" = "Yes" ]; then
+                    # Some Regions create Elastic IP after EC2 instance is created
+                    python2 /usr/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                    sleep 120
+
                     IP_ADDR=$(curl -s checkip.amazonaws.com)
                     certbot certonly -n --agree-tos --standalone --preferred-profile shortlived --ip-address $IP_ADDR
 
@@ -1646,18 +1663,6 @@ Resources:
                   rm /opt/dcv-renew-cert.sh
                 fi
 
-                SESSION="${sessionType}"
-                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-                case $SESSION in
-                  console*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
-                  virtual*)
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                esac
-                systemctl enable dcvserver && systemctl restart dcvserver
 
                 python2 /usr/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 

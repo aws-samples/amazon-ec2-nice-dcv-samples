@@ -1627,22 +1627,6 @@ Resources:
                 #!/bin/bash
                 export DEBIAN_FRONTEND=noninteractive
 
-                # Create Elastic IP first for association before creating IP address cert
-                if [ "${assignStaticIP}" = "Yes" ]; then
-                  if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
-                    if [ "${displayPublicIP}" = "Yes" ]; then
-                      python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
-                      if (systemctl status nginx | grep -q nginx); then
-                        systemctl stop nginx
-                      fi
-                      systemctl stop dcvserver
-                      if (! which nvidia-smi); then
-                        sleep 25
-                      fi
-                    fi
-                  fi
-                fi
-
                 apt-get update -q
                 apt-get upgrade -q -y
 
@@ -1674,7 +1658,7 @@ Resources:
                     systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
                     ;;
                 esac
-                #systemctl enable dcvserver && systemctl restart dcvserver
+                systemctl enable dcvserver && systemctl restart dcvserver
 
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
                 if ( which nvidia-smi ); then
@@ -1705,6 +1689,10 @@ Resources:
                 # IP address cert
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
                   if [ "${displayPublicIP}" = "Yes" ]; then
+                    # Some Regions create Elastic IP after EC2 instance is created
+                    python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                    sleep 120
+
                     IP_ADDR=$(curl -s checkip.amazonaws.com)
                     certbot certonly -n --agree-tos --standalone --preferred-profile shortlived --ip-address $IP_ADDR
 
@@ -1724,17 +1712,13 @@ Resources:
                         rm -f /etc/ssl/private/ssl-cert-snakeoil.key
                         ln -s -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/ssl/certs/ssl-cert-snakeoil.pem
                         ln -s -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/ssl/private/ssl-cert-snakeoil.key
+                        systemctl reload nginx
                       fi
                     fi
                   fi
                 fi
                 if [ -f "/opt/dcv-renew-cert.sh" ]; then
                   rm /opt/dcv-renew-cert.sh
-                fi
-
-                systemctl enable dcvserver && systemctl restart dcvserver
-                if (systemctl status nginx | grep -q nginx); then
-                  systemctl restart nginx
                 fi
 
                 python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}

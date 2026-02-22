@@ -213,9 +213,9 @@ DCV supports [USB remotization](https://docs.aws.amazon.com/dcv/latest/adminguid
 
 Amazon DCV server automatically generates a self-signed certificate. For Windows and some Linux OSs, the template will attempt to use [Posh-ACME](https://poshac.me/docs/latest/) (Windows) or [Certbot](https://certbot.eff.org/) (Linux) to request and [install](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) valid [Let's Encrypt IPv4 address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability). This feature is only available if `displayPublicIP` is `Yes` and `allowWebServerPorts` allows HTTP.
 
-IP address certificates are valid for 160 hours, just over six days, and Certbot/Posh-ACME will attempt to renew them before expiry. To ensure proper operation, use `assignStaticIP`to associate a static IPv4 address. Renewal on Windows is managed through [task scheduler](https://poshac.me/docs/v4/Tutorial/#task-scheduler-cron). Do update the tasks' user credentials if you change administrator password.
+IP address certificates are valid for 160 hours, just over six days, and Certbot/Posh-ACME will attempt to renew them before expiry. To ensure proper operation, use `assignStaticIP`to associate a static IPv4 address. Renewal on Windows is managed through [task scheduler](https://poshac.me/docs/v4/Tutorial/#task-scheduler-cron); do update the tasks' user credentials if you change administrator password.
 
-Let's Encrypt supports both IPv4 and IPv6 address certificates. Refer to [Certbot](https://eff-certbot.readthedocs.io/en/stable/), [Posh-ACME](https://poshac.me/docs/latest/) and [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html) documentation for more details.
+DCV also support domain-validated certificates, including [AWS Certificate Manager](https://aws.amazon.com/certificate-manager/) (ACM) [exportable public certificates](https://aws.amazon.com/blogs/security/aws-certificate-manager-now-supports-exporting-public-certificates/). Refer to [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-cert.html), [ACM](https://docs.aws.amazon.com/acm/latest/userguide/acm-exportable-certificates.html), [Certbot](https://eff-certbot.readthedocs.io/en/stable/) and [Posh-ACME](https://poshac.me/docs/latest/) documentation for more details.
 
 ### Secure centralized access
 
@@ -350,15 +350,16 @@ To use templates in [AWS Local Zones](https://aws.amazon.com/about-aws/global-in
 
 ### Securing
 
-To futher secure your EC2 instance, you may want to
+To secure your EC2 instance, you may want to
 
 - Set a strong login user password
+- Install a valid [TLS certificate](#tls-certificate)
 - Remove [web browser client](#remove-web-browser-client) restricting access to [native clients](https://download.amazondcv.com/) only
 - Restrict DCV/SSH/RDP/Webmin access to your IP address only (`ingressIPv4` and `ingressIPv6`)
-- Linux: Disable SSH access from public internet (`allowSSHport`)
+- Linux: disable SSH access from public internet (`allowSSHport`)
   - Use [EC2 Instance Connect](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-connect-methods.html#ec2-instance-connect-connecting-console) or [SSM Session Manager](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#start-ec2-console) for in-browser terminal access, or
   - Start a session using [AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-cli) or [SSH](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-sessions-start.html#sessions-start-ssh) with [Session Manager plugin for the AWS CLI](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)
-- Windows: Disallow RDP (`allowRDPport`) access from public internet.
+- Windows: disallow RDP (`allowRDPport`) access from public internet.
   - Use [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) for in-browser RDP access.
 - Use [AWS Backup](https://aws.amazon.com/blogs/aws/aws-backup-ec2-instances-efs-single-file-restore-and-cross-region-backup/) (`enableBackup`) data protection
   - Enable [AWS Backup Vault Lock](https://aws.amazon.com/blogs/storage/enhance-the-security-posture-of-your-backups-with-aws-backup-vault-lock/) to prevent backups from accidental or malicious deletion, and for [protection from ransomware](https://aws.amazon.com/blogs/security/updated-ebook-protecting-your-aws-environment-from-ransomware/).
@@ -369,7 +370,7 @@ To futher secure your EC2 instance, you may want to
   - Additional inbound HTTP security groups with [AWS managed prefix list for Amazon CloudFront](https://aws.amazon.com/blogs/networking-and-content-delivery/limit-access-to-your-origins-using-the-aws-managed-prefix-list-for-amazon-cloudfront/) as source are created. Restrict EC2 HTTP and HTTPS inbound access to CloudFront only by removing public internet inbound (0.0.0.0/0) from security group.
   - Use [AWS WAF](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-awswaf.html) to protect your CloudFront distribution
 - Enable [Amazon Inspector](https://aws.amazon.com/inspector/) to [scan EC2 instance](https://docs.aws.amazon.com/inspector/latest/user/scanning-ec2.html) for software vulnerabilities and unintended network exposure.
-- Enable [Amazon GuardDuty](https://aws.amazon.com/guardduty/) security monitoring service with [Malware Protection for EC2](https://docs.aws.amazon.com/guardduty/latest/ug/malware-protection.html)
+- Enable [Amazon GuardDuty](https://aws.amazon.com/guardduty/) security monitoring service with [Runtime Monitoring](https://docs.aws.amazon.com/guardduty/latest/ug/how-runtime-monitoring-works-ec2.html) and [Malware Protection for EC2](https://docs.aws.amazon.com/guardduty/latest/ug/malware-protection.html)
 
 ## Using Cloudwatch agent
 
