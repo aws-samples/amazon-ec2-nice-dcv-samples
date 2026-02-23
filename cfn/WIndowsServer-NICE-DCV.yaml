@@ -1779,7 +1779,7 @@ Resources:
 
                 @echo https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create
                 schtasks /create /sc daily /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert daily" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
-                schtasks /create /sc onstart /delay 0001:00 /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert on start" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
+                schtasks /create /sc onstart /delay 0000:30 /ru administrator /rp %INSTANCEID% /tn "Renew DCV cert on start" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\renew-dcv-cert.ps1" /f /rl:HIGHEST
 
                 @echo Open HTTP port for ACME HTTP-01 challenge
                 netsh advfirewall firewall add rule name="ACME HTTP-01 challenge" dir=in action=allow protocol=tcp localport=80
@@ -1802,7 +1802,7 @@ Resources:
                   Install-Module -Name $moduleName -Force
                 }
                 Import-Module Posh-ACME
-                Start-Sleep -s 90
+                Start-Sleep -s 5
                 Set-PAServer LE_PROD
 
                 $cert = Get-PACertificate -Name "DCV-Cert"
@@ -1828,7 +1828,7 @@ Resources:
             c:\\windows\\temp\\dcv-docker-install.cmd:
               content: |
                 @echo off
-                powershell -Command "Start-Sleep -s 10"
+                powershell -Command "Start-Sleep -s 3"
 
                 IF EXIST c:\windows\temp\dcv-docker-install.txt EXIT
 

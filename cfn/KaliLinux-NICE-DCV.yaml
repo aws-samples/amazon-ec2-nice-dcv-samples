@@ -1691,7 +1691,7 @@ Resources:
                   if [ "${displayPublicIP}" = "Yes" ]; then
                     # Some Regions create Elastic IP after EC2 instance is created
                     python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
-                    sleep 120
+                    sleep 45
 
                     IP_ADDR=$(curl -s checkip.amazonaws.com)
                     certbot certonly -n --agree-tos --standalone --preferred-profile shortlived --ip-address $IP_ADDR
