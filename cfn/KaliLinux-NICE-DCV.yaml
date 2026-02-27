@@ -1690,7 +1690,7 @@ Resources:
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
                   if [ "${displayPublicIP}" = "Yes" ]; then
                     # Some Regions create Elastic IP after EC2 instance is created
-                    python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                    python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
                     sleep 45
 
                     IP_ADDR=$(curl -s checkip.amazonaws.com)
@@ -1721,7 +1721,7 @@ Resources:
                   rm /opt/dcv-renew-cert.sh
                 fi
 
-                python2 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
+                python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
                 rm -f ${!0}
@@ -1872,9 +1872,9 @@ Resources:
 
                 # Kernel headers for GPU and USB remotization
                 if (arch | grep -q x86); then
-                  apt-get install -q -y linux-headers-cloud-amd64
+                  apt-get install -q -y linux-image-cloud-amd64 linux-headers-cloud-amd64
                 else
-                  apt-get install -q -y linux-headers-cloud-arm64
+                  apt-get install -q -y linux-image-cloud-arm64 linux-headers-cloud-arm64
                 fi
                 apt-get install -q -y usbutils
 
@@ -2119,11 +2119,6 @@ Resources:
                 cd /tmp/gpu
                 export DEBIAN_FRONTEND=noninteractive
 
-                if (arch | grep -q x86); then
-                  apt-get install -q -y linux-headers-cloud-amd64
-                else
-                  apt-get install -q -y linux-headers-cloud-arm64
-                fi
                 apt-get install -q -y nvidia-driver nvidia-cuda-toolkit
                 apt-get install -q -y nvidia-xconfig
 
@@ -2187,23 +2182,22 @@ Resources:
           snap start amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-          apt-get install -q -y python2-minimal
-          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-1.4-34.tar.gz
-          tar -xf aws-cfn-bootstrap-1.4-34.tar.gz
-          cd aws-cfn-bootstrap-1.4
-          python2 setup.py build > /var/log/install-cfn-helper.log 2>&1
-          python2 setup.py install > /var/log/install-cfn-helper.log 2>&1
-          curl -s -L -O https://bootstrap.pypa.io/pip/2.7/get-pip.py
-          python2 get-pip.py
-          sed -i "1,1s/python$/python2/g" /usr/local/bin/cfn-*
+          apt-get install -q -y python3 python3-pip python3-setuptools python3-docutils python3-daemon
+          curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
+          tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
+          cd aws-cfn-bootstrap-2.0
+          python3 setup.py build > /var/log/install-cfn-helper.log 2>&1
+          python3 setup.py install >> /var/log/install-cfn-helper.log 2>&1
           cd /tmp/cfn
-          python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
+          export CFN_INIT="python3 /usr/local/bin/cfn-init"
 
-          python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_install
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c setup
 
-          python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_install
 
-          # 
+          $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c console
+
+          #
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
@@ -2213,8 +2207,8 @@ Resources:
             *NVIDIA*) # install GPU driver after reboot
               systemctl disable dcv-post-reboot
 
-              python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
-              python2 /usr/local/bin/cfn-init -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
               systemctl daemon-reload
               systemctl enable dcv-gpu-install
               ;;
