@@ -152,9 +152,11 @@ Parameters:
     Type: String
     #Description: Version and processor architecture
     AllowedValues:
-      - Amazon Linux 2023 (arm64)
-      - Amazon Linux 2023 (x86_64)
-    Default: Amazon Linux 2023 (arm64)
+      - Amazon Linux 2023 (arm64) [kernel 6.1]
+      - Amazon Linux 2023 (arm64) [kernel 6.12]
+      - Amazon Linux 2023 (x86_64) [kernel 6.1]
+      - Amazon Linux 2023 (x86_64) [kernel 6.12]
+    Default: Amazon Linux 2023 (arm64) [kernel 6.12]
 
   ec2Name:
     Type: String
@@ -705,7 +707,12 @@ Parameters:
     Default: "Yes"
 
 Conditions:
-  useAl2023x86: !Equals [!Ref osVersion, "Amazon Linux 2023 (x86_64)"]
+  useAl2023arm64k61:
+    !Equals [!Ref osVersion, "Amazon Linux 2023 (arm64) [kernel 6.1]"]
+  useAl2023arm64k612:
+    !Equals [!Ref osVersion, "Amazon Linux 2023 (arm64) [kernel 6.12]"]
+  useAl2023x86k61:
+    !Equals [!Ref osVersion, "Amazon Linux 2023 (x86_64) [kernel 6.1]"]
 
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   useElasticIP:
@@ -1924,15 +1931,18 @@ Resources:
                 dnf install -q -y dkms
                 systemctl enable dkms
 
-                # block kernel 6.1 packages on kernel 6.12
-                sed -i '$aexclude=kernel-6.1.* kernel-headers-6.1.* kernel-devel-6.1.* kernel-modules-extra-common-6.1.* kernel-modules-extra-6.1.*' /etc/dnf/dnf.conf
-
                 # Kernel headers for GPU and USB remotization
-                if ( dnf search kernel6.12-headers | grep -q kernel ); then
-                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
-                else
-                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
-                fi
+                KVER=$(uname -r)
+                case $KVER in
+                  6.12.*)
+                    dnf install -q -y kernel6.12
+                    dnf install -q -y kernel6.12-headers kernel6.12-devel kernel6.12-modules-extra kernel6.12-modules-extra-common --allowerasing
+                    ;;
+                  *)
+                    dnf install -q -y kernel
+                    dnf install -q -y kernel-headers kernel-devel kernel6.12-modules-extra kernel-modules-extra-common --allowerasing
+                    ;;
+                esac
 
                 # Docker:
                 if [ "${installDocker}" = "Yes" ]; then
@@ -2235,12 +2245,6 @@ Resources:
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
 
-                if ( dnf search kernel6.12-headers | grep -q kernel ); then
-                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
-                else
-                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
-                fi
-
                 aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
                 if [ $? -eq 1 ]; then
                   aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
@@ -2281,12 +2285,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-
-                if ( dnf search kernel6.12-headers | grep -q kernel ); then
-                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
-                else
-                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
-                fi
 
                 aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
                 if [ $? -eq 1 ]; then
@@ -2337,12 +2335,6 @@ Resources:
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
 
-                if ( dnf search kernel6.12-headers | grep -q kernel ); then
-                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
-                else  
-                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
-                fi
-
                 DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
                 if (arch | grep -q x86); then
                   ARCH=x86_64
@@ -2386,12 +2378,6 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
-
-                if ( dnf search kernel6.12-headers | grep -q kernel ); then
-                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
-                else  
-                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
-                fi
 
                 DRIVER_VERSION="${teslaDriverVersion}"
                 ARCH=$( /bin/arch )
@@ -2441,12 +2427,6 @@ Resources:
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
 
-                if ( dnf search kernel6.12-headers | grep -q kernel ); then
-                  dnf install -q -y kernel6.12-headers-$(uname -r) kernel6.12-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel6.12-modules-extra-common-$(uname -r) --allowerasing
-                else
-                  dnf install -q -y kernel-headers-$(uname -r) kernel-devel-$(uname -r) kernel6.12-modules-extra-$(uname -r) kernel-modules-extra-common-$(uname -r) --allowerasing
-                fi
-
                 dnf install -q -y nvidia-release
                 dnf install -q -y nvidia-open
                 dnf install -q -y nvidia-xconfig
@@ -2477,9 +2457,17 @@ Resources:
     Properties:
       ImageId:
         !If [
-          useAl2023x86,
-          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-x86_64}}",
-          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-arm64}}",
+          useAl2023arm64k61,
+          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64}}",
+          !If [
+            useAl2023arm64k612,
+            "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-arm64}}",
+            !If [
+              useAl2023x86k61,
+              "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}",
+              "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-x86_64}}",
+            ],
+          ],
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
