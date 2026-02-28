@@ -205,7 +205,7 @@ Parameters:
     Description: https://docs.nvidia.com/datacenter/tesla/index.html
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 580.126.16
+    Default: 580.126.20
   listenPort:
     Type: Number
     Description: "Number must be higher than 1024: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
@@ -1934,6 +1934,10 @@ Resources:
                 # Kernel headers for GPU and USB remotization
                 KVER=$(uname -r)
                 case $KVER in
+                  6.18.*)
+                    dnf install -q -y kernel6.18
+                    dnf install -q -y kernel6.18-headers kernel6.18-devel kernel6.18-modules-extra kernel6.18-modules-extra-common --allowerasing
+                    ;;
                   6.12.*)
                     dnf install -q -y kernel6.12
                     dnf install -q -y kernel6.12-headers kernel6.12-devel kernel6.12-modules-extra kernel6.12-modules-extra-common --allowerasing

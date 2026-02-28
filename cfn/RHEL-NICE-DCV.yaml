@@ -202,7 +202,7 @@ Parameters:
     Description: https://docs.nvidia.com/datacenter/tesla/index.html
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 580.126.16
+    Default: 580.126.20
   listenPort:
     Type: Number
     Description: "Number must be higher than 1024: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
@@ -1933,7 +1933,8 @@ Resources:
                 systemctl enable dkms
 
                 # Kernel headers for GPU and USB remotization
-                dnf install -q -y kernel-devel
+                dnf install -q -y kernel
+                dnf install -q -y kernel-devel kernel-headers
                 dnf install -q -y kernel-modules-extra
                 dnf install -q -y usbutils
 

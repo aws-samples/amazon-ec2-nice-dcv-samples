@@ -1788,8 +1788,10 @@ Resources:
 
                 # Kernel headers for GPU and USB remotization
                 if (arch | grep -q x86); then
+                  apt-get install -q -y linux-image-cloud-amd64
                   apt-get install -q -y linux-headers-cloud-amd64
                 else
+                  apt-get install -q -y linux-image-cloud-arm64
                   apt-get install -q -y linux-headers-cloud-arm64
                 fi
                 apt-get install -q -y usbutils

@@ -1749,6 +1749,7 @@ Resources:
                 systemctl enable dkms
 
                 # Kernel headers for GPU and USB remotization
+                yum install -q -y kernel
                 yum install -q -y kernel-devel
                 yum install -q -y usbutils
 

@@ -1756,6 +1756,7 @@ Resources:
                 systemctl enable dkms
 
                 # Kernel headers for GPU and USB remotization
+                dnf install -q -y kernel
                 dnf install -q -y kernel-devel
                 dnf install -q -y kernel-modules-extra
                 dnf install -q -y usbutils
