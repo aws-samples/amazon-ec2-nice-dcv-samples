@@ -2328,13 +2328,13 @@ Resources:
 
                 chmod +x NVIDIA-Linux-x86_64*.run
                 if (lsb_release -r -s | grep -q 22); then
-                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
+                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
                   update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
                   update-alternatives --config gcc
                 else
-                  ./NVIDIA-Linux-x86_64*.run -s
+                  ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
                 fi
 
                 touch /etc/modprobe.d/nvidia.conf
@@ -2381,13 +2381,13 @@ Resources:
                 chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
                 cd nvidia-drivers/
                 if (lsb_release -r -s | grep -q 22); then
-                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s
+                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
                   update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
                   update-alternatives --config gcc
                 else
-                  ./NVIDIA-Linux-x86_64*.run -s
+                  ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
                 fi
 
                 cat << EOF | tee -a /etc/nvidia/gridd.conf
@@ -2472,13 +2472,13 @@ Resources:
 
                 chmod +x ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
                 if (lsb_release -r -s | grep -q 22); then
-                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s
+                  CC=/usr/bin/gcc-12 ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s --skip-module-load
                   cd /usr/src/nvidia-*
                   sed -i "s/\"'make'/& CC=\/usr\/bin\/gcc-12 IGNORE_CC_MISMATCH=1/" dkms.conf
                   update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-12 12
                   update-alternatives --config gcc
                 else
-                  ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s
+                  ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s --skip-module-load
                 fi
 
                 # Add access to NVIDIA repo

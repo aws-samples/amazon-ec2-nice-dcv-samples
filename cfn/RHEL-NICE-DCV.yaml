@@ -2237,7 +2237,7 @@ Resources:
                 fi
 
                 chmod +x NVIDIA-Linux-x86_64*.run
-                ./NVIDIA-Linux-x86_64*.run -s
+                ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
 
                 touch /etc/modprobe.d/nvidia.conf
                 echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
@@ -2280,7 +2280,7 @@ Resources:
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
                 cd nvidia-drivers/
-                ./NVIDIA-Linux-x86_64*.run -s
+                ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
 
                 cat << EOF | tee -a /etc/nvidia/gridd.conf
                 vGamingMarketplace=2
@@ -2362,8 +2362,8 @@ Resources:
                 ARCH=$( /bin/arch )
                 curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
 
-                chmod +x ./NVIDIA-Linux-*.run
-                ./NVIDIA-Linux-*.run -s
+                chmod +x ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
+                ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s --skip-module-load
 
                 # Add access to NVIDIA repo
                 DISTRO=$(. /etc/os-release;echo rhel$VERSION_ID | sed -e 's/\..*//g')

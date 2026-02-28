@@ -2089,7 +2089,7 @@ Resources:
                 fi
 
                 chmod +x NVIDIA-Linux-x86_64*.run
-                CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-x86_64*.run -s
+                CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
 
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
                 cd /usr/src/nvidia-*
@@ -2133,7 +2133,7 @@ Resources:
                 unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
                 chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
                 cd nvidia-drivers/
-                CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-x86_64*.run -s
+                CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
 
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
                 cd /usr/src/nvidia-*
@@ -2202,8 +2202,8 @@ Resources:
                 ARCH=$( /bin/arch )
                 curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
 
-                chmod +x ./NVIDIA-Linux-*.run
-                CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-*.run -s
+                chmod +x ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.
+                CC=/usr/bin/gcc10-cc ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.-s --skip-module-load
 
                 # Configure dkms.conf to uses gcc10 and ignore version mismatches
                 cd /usr/src/nvidia-*
