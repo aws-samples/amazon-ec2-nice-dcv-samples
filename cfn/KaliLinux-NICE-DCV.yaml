@@ -187,13 +187,9 @@ Parameters:
     Type: String
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
     AllowedValues:
-      - "virtual_(xfce)"
-      - "virtual_(gnome)"
-      - "virtual-with-NVIDIA_Driver_(xfce)"
-      - "virtual-with-NVIDIA_Driver_(gnome)"
-      - "console_(gnome)"
-      - "console-with-NVIDIA_Driver_(gnome)"
-    Default: "virtual_(xfce)"
+      - "virtual_(Xfce)"
+      - "virtual_(KDE)"
+    Default: "virtual_(Xfce)"
   listenPort:
     Type: Number
     Description: "Number must be higher than 1024: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
@@ -1970,13 +1966,16 @@ Resources:
                 export SESSION="${sessionType}"
                 # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
                 case $SESSION in
-                  *xfce*)
+                  *Xfce*)
                     apt-get install -q -y kali-desktop-xfce
                     # tweaks for installation on Kali xfce
                     mkdir -p /etc/lightdm/lightdm.conf.d
                     ;;
                   *gnome*)
                     apt-get install -q -y kali-desktop-gnome
+                    ;;
+                  *KDE*)
+                    apt-get install -q -y kali-desktop-kde
                     ;;
                 esac
                 apt-get install -q -y firefox
