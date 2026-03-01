@@ -36,6 +36,7 @@ Metadata:
           default: DCV
         Parameters:
           - sessionType
+          - teslaDriverVersion
           - listenPort
           - installReverseProxy
       - Label:
@@ -93,7 +94,9 @@ Metadata:
         default: "Enable EC2 termination protection to prevent accidental deletion"
 
       sessionType:
-        default: "DCV session type"
+        default: "DCV session type and GPU driver"
+      teslaDriverVersion:
+        default: "[*-NVIDIA_runfile_Driver] Tesla driver version"
       listenPort:
         default: "TCP/UDP listen port"
       installReverseProxy:
@@ -185,8 +188,17 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
     AllowedValues:
       - "virtual"
+      - "console-with-NVIDIA_GRID_Driver"
+      - "console-with-NVIDIA_repo_Driver"
+      - "console-with-NVIDIA_runfile_Driver"
       - "console"
     Default: "virtual"
+  teslaDriverVersion:
+    Type: String
+    Description: https://docs.nvidia.com/datacenter/tesla/index.html
+    AllowedPattern: ^[\d\.]+$
+    ConstraintDescription: Specify valid driver version
+    Default: 580.126.20
   listenPort:
     Type: Number
     Description: "Number must be higher than 1024: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
@@ -696,6 +708,13 @@ Conditions:
   useElasticIP:
     !And [!Condition displayPublicIP, !Equals [!Ref assignStaticIP, "Yes"]]
   enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
+  isGPUinstall:
+    !Not [
+      !Or [
+        !Equals [!Ref sessionType, "console"],
+        !Equals [!Ref sessionType, "virtual"],
+      ],
+    ]
 
   hasEIC:
     !Not [
@@ -994,6 +1013,24 @@ Resources:
                 Action:
                   - s3:GetObject
                 Resource: !Sub arn:aws:s3:::dcv-license.${AWS::Region}/*
+        - !If
+          - isGPUinstall
+          - PolicyName: gpuDrivers
+            PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - s3:Get*
+                    - s3:List*
+                  Resource:
+                    - arn:*:s3:::nvidia-gaming
+                    - arn:*:s3:::nvidia-gaming/*
+                    - arn:*:s3:::ec2-linux-nvidia-drivers
+                    - arn:*:s3:::ec2-linux-nvidia-drivers/*
+                    - arn:*:s3:::ec2-amd-linux-drivers
+                    - arn:*:s3:::ec2-amd-linux-drivers/*
+          - !Ref AWS::NoValue
         - !If
           - hasR53Zone
           - PolicyName: R53acmeAccess
@@ -1521,6 +1558,26 @@ Resources:
             - 00_dcv_install
           console:
             - 01_console
+          dcv_gpu_install:
+            - 02_dcv_gpu_install
+          console-with-NVIDIA_GRID_Driver:
+            - 03_gpu_nvidia_grid_install
+          virtual-with-NVIDIA_GRID_Driver:
+            - 03_gpu_nvidia_grid_install
+          virtual-with-NVIDIA_GRID_Driver-GPU_sharing:
+            - 03_gpu_nvidia_grid_install
+          console-with-NVIDIA_Gaming_Driver:
+            - 04_gpu_nvidia_gaming_install
+          console-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
+          virtual-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
+          virtual-with-NVIDIA_repo_Driver-GPU_sharing:
+            - 05_gpu_nvidia_repo_install
+          console-with-NVIDIA_runfile_Driver:
+            - 06_gpu_nvidia_runfile_install
+          virtual-with-NVIDIA_runfile_Driver:
+            - 06_gpu_nvidia_runfile_install
         00_setup: # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
             "/home/admin/update-dcv":
@@ -1624,9 +1681,27 @@ Resources:
                 fi
 
                 SESSION="${sessionType}"
+                case $SESSION in
+                  virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                    ;;
+                  *GPU_sharing*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
+                  console-with-NVIDIA_GRID_Driver)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                    ;;
+                  console-with-NVIDIA*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
+                esac
 
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
+                  *GPU_sharing*)
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
                   console*)
                     systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
                     sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
@@ -1637,6 +1712,31 @@ Resources:
                 esac
                 systemctl enable dcvserver && systemctl restart dcvserver
 
+                # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+                if ( which nvidia-smi ); then
+                  if ( which docker ); then
+                    if (! apt-cache search nvidia-container-toolkit | grep -q nvidia-container-toolkit); then
+                      cd /tmp
+                      curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+                        && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+                        sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+                        sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+                    fi
+                    apt-get update
+                    apt-get install -q -y nvidia-container-toolkit
+                    nvidia-ctk runtime configure --runtime=docker
+                    systemctl restart docker
+                  fi
+                fi
+
+                # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Solution-NVIDIA-GPU-On-EC2.html
+                if ( which nvidia-smi ); then
+                  systemctl stop amazon-cloudwatch-agent
+                  /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json -s
+                  systemctl restart amazon-cloudwatch-agent
+                else
+                  rm -f /opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json
+                fi
 
                 # IP address cert
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
@@ -1742,11 +1842,50 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+            "/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json":
+              content: |
+                {
+                    "agent": {
+                        "metrics_collection_interval": 300,
+                        "run_as_user": "root"
+                    },
+                    "metrics": {
+                        "namespace": "CWAgent",
+                        "append_dimensions": {
+                            "InstanceId": "${aws:InstanceId}"
+                        },
+                        "metrics_collected": {
+                            "mem": {
+                                "measurement": [
+                                    "used_percent"
+                                ]
+                            },
+                            "disk": {
+                                "measurement": [
+                                    "used_percent"
+                                ],
+                                "resources": [
+                                    "/"
+                                ]
+                            },
+                            "nvidia_gpu": {
+                                "measurement": [
+                                    "utilization_gpu",
+                                    "memory_used"
+                                ]
+                            }
+                        }
+                    }
+                }
+              mode: "000644"
+              owner: "root"
+              group: "root"
             "/root/install-sw.sh":
               content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
+                export DEBIAN_FRONTEND=noninteractive
 
                 # Change password
                 PWD=$(cat /var/lib/cloud/data/instance-id)
@@ -1890,6 +2029,7 @@ Resources:
                 #!/bin/bash
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
+                export DEBIAN_FRONTEND=noninteractive
 
                 # Update OS
                 apt-get update -q
@@ -1934,6 +2074,9 @@ Resources:
                 apt-get install -q -y ./nice-xdcv_*.deb
                 if (arch | grep -q x86); then
                   apt-get install -q -y ./nice-dcv-gltest_*.deb
+                fi
+                if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
+                  apt-get install -q -y ./nice-dcv-gl_*.deb
                 fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
@@ -2026,6 +2169,240 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+        02_dcv_gpu_install:
+          files:
+            "/etc/systemd/system/dcv-gpu-install.service":
+              content: |
+                [Unit]
+                Description=Install GPU driver
+                After=default.target network.target
+
+                [Service]
+                ExecStart=/bin/sh -c "/opt/install-gpu-driver 2>&1 | tee -a /var/log/install-gpu-driver.log"
+
+                [Install]
+                WantedBy=default.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/root/install-gpu-sw.sh":
+              content: !Sub |
+                #!/bin/bash
+                export DEBIAN_FRONTEND=noninteractive
+
+                  case $SESSION in
+                    *NVIDIA*) # install GPU driver after reboot
+                      apt-get install -q -y unzip gcc make
+                      apt-get install -q -y libglvnd-dev pkg-config
+
+                      # Disable Nouveau: https://docs.nvidia.com/ai-enterprise/deployment-guide-vmware/0.1.0/nouveau.html#ubuntu
+                      if (! cat /etc/modprobe.d/blacklist.conf | grep -q nouveau); then
+                        echo "blacklist vga16fb" >> /etc/modprobe.d/blacklist.conf
+                        echo "blacklist nouveau" >> /etc/modprobe.d/blacklist.conf
+                        echo "blacklist rivafb" >> /etc/modprobe.d/blacklist.conf
+                        echo "blacklist nvidiafb" >> /etc/modprobe.d/blacklist.conf
+                        echo "blacklist rivatv" >> /etc/modprobe.d/blacklist.conf
+                      fi
+                      sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="/GRUB_CMDLINE_LINUX_DEFAULT="rdblacklist=nouveau /g' /etc/default/grub
+                      update-grub
+
+                      systemctl daemon-reload
+                      systemctl enable dcv-gpu-install
+                      ;;
+                  esac
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"
+          commands:
+            install:
+              command: "/root/install-gpu-sw.sh > /var/log/install-gpu-driver.log 2>&1"
+              ignoreErrors: "true"
+        03_gpu_nvidia_grid_install:
+          files:
+            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html
+              content: |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                export DEBIAN_FRONTEND=noninteractive
+
+                aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --no-sign-request
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ .
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://ec2-linux-nvidia-drivers/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  curl -s -L -O https://ec2-linux-nvidia-drivers.s3.amazonaws.com/grid-18.4/NVIDIA-Linux-x86_64-570.172.08-grid-aws.run
+                fi
+
+                chmod +x NVIDIA-Linux-x86_64*.run
+                ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
+
+                touch /etc/modprobe.d/nvidia.conf
+                echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
+
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID)
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
+                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${0}
+                reboot
+              mode: "000755"
+              owner: "root"
+              group: "root"
+        04_gpu_nvidia_gaming_install:
+          files:
+            "/opt/install-gpu-driver": # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html
+              content: |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                export DEBIAN_FRONTEND=noninteractive
+
+                aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ .
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --region us-east-1
+                fi
+                if [ $? -eq 1 ]; then
+                  aws s3 cp --recursive s3://nvidia-gaming/linux/latest/ . --no-sign-request
+                fi
+                if [ $? -eq 1 ]; then
+                  curl -s -L -O https://nvidia-gaming.s3.amazonaws.com/linux/570.86.16-Jan2025-Cloud_Gaming-Linux-Guest-Drivers.zip
+                fi
+
+                unzip *Gaming-Linux-Guest-Drivers.zip -d nvidia-drivers
+                chmod +x nvidia-drivers/*NVIDIA-Linux-x86_64*.run
+                cd nvidia-drivers/
+                ./NVIDIA-Linux-x86_64*.run -s --skip-module-load
+
+                cat << EOF | tee -a /etc/nvidia/gridd.conf
+                vGamingMarketplace=2
+                EOF
+
+                curl -L -o /etc/nvidia/GridSwCert.txt "https://nvidia-gaming.s3.amazonaws.com/GridSwCert-Archive/GridSwCertLinux_2024_02_22.cert"
+
+                touch /etc/modprobe.d/nvidia.conf
+                echo "options nvidia NVreg_EnableGpuFirmware=0" | tee --append /etc/modprobe.d/nvidia.conf
+
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID)
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
+                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${0}
+                reboot
+              mode: "000755"
+              owner: "root"
+              group: "root"
+        05_gpu_nvidia_repo_install:
+          files: # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#debian
+            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/debian.html
+              content: |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                export DEBIAN_FRONTEND=noninteractive
+
+                # https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/debian.html
+                sed -i "s/\bComponents\: main\b/& contrib/" /etc/apt/sources.list.d/debian.sources
+
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID)
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
+                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
+                apt-get update -q
+                apt-get install -q -y nvidia-open
+                apt-get install -q -y nvidia-settings
+                apt-get install -q -y nvidia-xconfig
+
+                # P instance: https://repost.aws/articles/ARWGxLArMBQ4y1MKoSHTq3gQ/
+                if ( ec2-metadata -t | grep -q " p[0-9]" ); then
+                  apt-get install -q -y nvidia-fabricmanager libnvidia-nscq libnvsdm nvidia-imex
+                  if ( ec2-metadata -t | grep -q " p[6-9]" ); then
+                    apt-get install -q -y nvlsm
+                    apt-get install -q -y infiniband-diags
+                    echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
+                    modprobe ib_umad
+                  fi
+                  systemctl enable --now nvidia-fabricmanager
+                fi
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${0}
+                reboot
+              mode: "000755"
+              owner: "root"
+              group: "root"
+        06_gpu_nvidia_runfile_install:
+          files:
+            "/opt/install-gpu-driver": # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#runfile
+              content: !Sub |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+                export DEBIAN_FRONTEND=noninteractive
+
+                DRIVER_VERSION="${teslaDriverVersion}"
+                ARCH=$( /bin/arch )
+                curl -fSsl -O https://us.download.nvidia.com/tesla/$DRIVER_VERSION/NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
+
+                chmod +x ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run
+                ./NVIDIA-Linux-$ARCH-$DRIVER_VERSION.run -s --skip-module-load
+
+                # Add access to NVIDIA repo
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID)
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
+                apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
+                apt-get update -q
+
+                # P instance: https://repost.aws/articles/ARWGxLArMBQ4y1MKoSHTq3gQ/
+                if ( ec2-metadata -t | grep -q " p[0-9]" ); then
+                  apt-get install -q -y nvidia-fabricmanager libnvidia-nscq libnvsdm nvidia-imex
+                  if ( ec2-metadata -t | grep -q " p[6-9]" ); then
+                    apt-get install -q -y nvlsm
+                    apt-get install -q -y infiniband-diags
+                    echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
+                    modprobe ib_umad
+                  fi
+                  systemctl enable --now nvidia-fabricmanager
+                fi
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${!0}
+                reboot
+              mode: "000755"
+              owner: "root"
+              group: "root"
     Properties:
       ImageId: # https://wiki.debian.org/Cloud/AmazonEC2Image/Bookworm
         !If [
@@ -2070,7 +2447,7 @@ Resources:
           #sysctl -w net.ipv6.conf.all.disable_ipv6=1
           #sysctl -w net.ipv6.conf.default.disable_ipv6=1
 
-          # https://stackoverflow.com/questions/33370297/apt-get-update-non-interactive
+          # https://www.cyberciti.biz/faq/explain-debian_frontend-apt-get-variable-for-ubuntu-debian/
           export DEBIAN_FRONTEND=noninteractive
 
           apt-get clean all
@@ -2112,6 +2489,18 @@ Resources:
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
+
+          export SESSION="${sessionType}"
+          case $SESSION in
+            *NVIDIA*) # install GPU driver after reboot
+              systemctl disable dcv-post-reboot
+
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              systemctl daemon-reload
+              systemctl enable dcv-gpu-install
+              ;;
+          esac
 
           # enable back IPv6
           #sysctl -w net.ipv6.conf.all.disable_ipv6=0
