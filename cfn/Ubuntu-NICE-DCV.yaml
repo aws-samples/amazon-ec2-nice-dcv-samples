@@ -1958,7 +1958,7 @@ Resources:
                 # Kernel headers for GPU and USB remotization
                 apt-get install -q -y linux-image-aws
                 apt-get install -q -y linux-headers-aws
-                apt-get isntall -q -y linux-modules-extra-aws
+                apt-get install -q -y linux-modules-extra-aws
                 apt-get install -q -y usbutils
 
                 # Docker: https://docs.docker.com/engine/install/ubuntu/
