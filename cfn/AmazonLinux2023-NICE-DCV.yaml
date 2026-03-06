@@ -1944,7 +1944,7 @@ Resources:
                     ;;
                   *)
                     dnf install -q -y kernel
-                    dnf install -q -y kernel-headers kernel-devel kernel6.12-modules-extra kernel-modules-extra-common --allowerasing
+                    dnf install -q -y kernel-headers kernel-devel kernel-modules-extra kernel-modules-extra-common --allowerasing
                     ;;
                 esac
 
