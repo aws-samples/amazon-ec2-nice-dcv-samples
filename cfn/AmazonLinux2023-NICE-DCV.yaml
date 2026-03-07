@@ -1974,7 +1974,7 @@ Resources:
                 # Certbot PIP: https://certbot.eff.org/instructions?ws=other&os=pip
                 # Certbot: https://github.com/amazonlinux/amazon-linux-2023/issues/444
                 dnf install -q -y python3.14 python3.14-pip
-                dnf install -q -y augeas-libs
+                dnf install -q -y python3.14-devel augeas-devel
                 python3.14 -m venv /opt/certbot
                 /opt/certbot/bin/pip install --upgrade pip
                 /opt/certbot/bin/pip install certbot
