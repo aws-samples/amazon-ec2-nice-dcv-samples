@@ -1898,6 +1898,11 @@ Resources:
                 USER=ec2-user
                 echo "$USER:$PWD" | chpasswd
 
+                # https://docs.aws.amazon.com/linux/al2023/ug/deterministic-upgrades-usage.html#deterministic-upgrade-override-persist
+                dnf clean all
+                dnf upgrade --releasever=latest
+                echo latest | tee /etc/dnf/vars/releasever
+
                 # Update OS
                 dnf clean all
                 dnf update -q -y
@@ -1909,9 +1914,6 @@ Resources:
                 sed -i 's/apply_updates = no/apply_updates = yes/g' /etc/dnf/automatic.conf
                 sed -i 's/emit_via = stdio/emit_via = motd/g' /etc/dnf/automatic.conf
                 systemctl enable dnf-automatic-install.timer
-
-                # https://docs.aws.amazon.com/linux/al2023/ug/deterministic-upgrades-usage.html#deterministic-upgrade-override-persist
-                echo latest | sudo tee /etc/dnf/vars/releasever
 
                 # CloudWatch agent: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html#download-CloudWatch-Agent-on-EC2-Instance-commandline-fleet
                 dnf install -q -y amazon-cloudwatch-agent
@@ -1971,8 +1973,9 @@ Resources:
 
                 # Certbot PIP: https://certbot.eff.org/instructions?ws=other&os=pip
                 # Certbot: https://github.com/amazonlinux/amazon-linux-2023/issues/444
-                dnf install -q -y python3.13 python3.13-pip
-                python3.13 -m venv /opt/certbot
+                dnf install -q -y python3.14 python3.14-pip
+                dnf install -q -y augeas-libs
+                python3.14 -m venv /opt/certbot
                 /opt/certbot/bin/pip install --upgrade pip
                 /opt/certbot/bin/pip install certbot
                 /opt/certbot/bin/pip install certbot-dns-route53
