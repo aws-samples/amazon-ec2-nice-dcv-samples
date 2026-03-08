@@ -158,16 +158,22 @@ Parameters:
       - AL2023 (Neuron PyTorch 2.9) |/aws/service/neuron/dlami/pytorch-2.9/amazon-linux-2023/latest/image_id
       - AL2023 (Neuron PyTorch 2.8) |/aws/service/neuron/dlami/pytorch-2.8/amazon-linux-2023/latest/image_id
 
+      - AL2023 (Neuron PyTorch Inference vLLM) |/aws/service/neuron/dlami/pytorch-inference-vllm/amazon-linux-2023/latest/image_id
+
       - AL2023 (Neuron Multi framework) |/aws/service/neuron/dlami/multi-framework/amazon-linux-2023/latest/image_id
 
-      - AL2023 (Base) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-amazon-linux-2023/latest/ami-id
+      - AL2023 (Base GPU) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-amazon-linux-2023/latest/ami-id
+
+      - AL2023 (Base with single CUDA) |/aws/service/deeplearning/ami/x86_64/base-with-single-cuda-amazon-linux-2023/latest/ami-id
 
       - AL2023 (PyTorch 2.9) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.9-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.8) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.8-amazon-linux-2023/latest/ami-id
 
       - AL2023 (TensorFlow 2.18) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.18-amazon-linux-2023/latest/ami-id
 
-      - AL2023 (Base) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-amazon-linux-2023/latest/ami-id
+      - AL2023 (Base GPU) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-amazon-linux-2023/latest/ami-id
+
+      - AL2023 (Base with single CUDA) ARM64 |/aws/service/deeplearning/ami/arm64/base-with-single-cuda-amazon-linux-2023/latest/ami-id
 
       - AL2023 (PyTorch 2.9) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.9-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.8) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.8-amazon-linux-2023/latest/ami-id
