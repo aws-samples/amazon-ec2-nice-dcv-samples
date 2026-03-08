@@ -261,7 +261,7 @@ Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devgui
 
 ### Demo
 
-<https://github.com/user-attachments/assets/52918231-376e-424f-b76f-8330cc7c42a2>
+https://github.com/user-attachments/assets/f38b557d-c72b-4ffa-99ae-0e9dc1b2cdc1
 
 ## About Linux templates
 
@@ -407,3 +407,4 @@ To remove created resources,
 - [Disable](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html) EC2 instance termination protection (if enabled)
 - [Delete](https://docs.aws.amazon.com/aws-backup/latest/devguide/deleting-backups.html) any recovery points in created backup vault
 - [Delete](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html) CloudFormation stack
+
