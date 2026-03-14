@@ -158,7 +158,7 @@ Parameters:
       - Amazon Linux 2023 (x86_64) [kernel 6.1]
       - Amazon Linux 2023 (x86_64) [kernel 6.12]
       - Amazon Linux 2023 (x86_64) [kernel 6.18]
-    Default: Amazon Linux 2023 (arm64) [kernel 6.12]
+    Default: Amazon Linux 2023 (arm64) [kernel 6.1]
 
   ec2Name:
     Type: String
@@ -1940,19 +1940,16 @@ Resources:
                 systemctl enable dkms
 
                 # Kernel headers for GPU and USB remotization
-                KVER=$(uname -r)
-                case $KVER in
-                  6.18.*)
-                    dnf install -q -y kernel6.18
-                    dnf install -q -y kernel6.18-headers kernel6.18-devel kernel6.18-modules-extra kernel6.18-modules-extra-common --allowerasing
-                    ;;
-                  6.12.*)
-                    dnf install -q -y kernel6.12
-                    dnf install -q -y kernel6.12-headers kernel6.12-devel kernel6.12-modules-extra kernel6.12-modules-extra-common --allowerasing
+                K_VER=$(uname -r)
+                K_MAJOR_VER=$(echo $K_VER | cut -d. -f1-2)
+                case $K_VER in
+                  6.1.*)
+                    dnf install -q -y kernel
+                    dnf install -q -y kernel-headers kernel-devel kernel-modules-extra --allowerasing
                     ;;
                   *)
-                    dnf install -q -y kernel
-                    dnf install -q -y kernel-headers kernel-devel kernel-modules-extra kernel-modules-extra-common --allowerasing
+                    dnf install -q -y kernel$K_MAJOR_VER
+                    dnf install -q -y kernel$K_MAJOR_VER-headers kernel$K_MAJOR_VER-devel kernel$K_MAJOR_VER-modules-extra --allowerasing
                     ;;
                 esac
 
