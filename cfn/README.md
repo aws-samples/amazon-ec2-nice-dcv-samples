@@ -102,7 +102,7 @@ Network
 Remote Access
 
 - `ingressIPv4` : allowed IPv4 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports, e.g. `1.2.3.4/32`. Get your source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
-- `ingressIPv6` : allowed IPv6 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports. Use `::1/128` to block all incoming IPv6 access. Default is `::/0`
+- `ingressIPv6` : allowed IPv6 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports. Default is `::/0`. Subnets in [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) do not have [IPv6 CIDR blocks](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/working-with-ipv6-addresses.html) associated. Specify `fe80::/10` link local prefix to allow internal access only, or `::1/128` to block all inbound IPv6 access.
 - `allowRDPport` (Windows) : allow inbound RDP. Option is not related to [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) access. Default is `No`
 - `allowSSHport` (Linux) : allow inbound SSH. Option is not related to [EC2 Instance Connect](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) access. Default is `Yes`
 - `installWebmin` (some Linux OS) : install [Webmin](https://webmin.com/) web-based system administration tool. Default is `No`
