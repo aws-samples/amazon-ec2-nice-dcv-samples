@@ -2296,7 +2296,7 @@ Outputs:
 
   ReverseProxyURL:
     Condition: installReverseProxy
-    Description: Reverse Proxy URL (login as administrator)
+    Description: DCV Reverse Proxy URL (login as administrator)
     Value: !Sub
       - "https://${IpAddress}/?username=administrator     ( dcv://administrator:@${IpAddress}:443 )"
       - IpAddress:

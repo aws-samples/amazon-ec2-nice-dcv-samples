@@ -2047,7 +2047,7 @@ Resources:
                   rm -f /etc/nginx/sites-enabled/default
                   
                   # HTTPS proxy
-                  cp /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
+                  mv /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
                   ln -s /etc/nginx/sites-available/ReverseProxy /etc/nginx/sites-enabled/ReverseProxy
 
                   systemctl enable --now nginx
@@ -2568,7 +2568,7 @@ Outputs:
 
   ReverseProxyURL:
     Condition: installReverseProxy
-    Description: Reverse Proxy URL (login as kali)
+    Description: DCV Reverse Proxy URL (login as kali)
     Value: !Sub
       - "https://${IpAddress}/?username=kali     ( dcv://kali:@${IpAddress}:443 )"
       - IpAddress:

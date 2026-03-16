@@ -2148,7 +2148,7 @@ Resources:
                   cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default."`date +"%Y-%m-%d"`"
 
                   # HTTPS proxy
-                  cp /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
+                  mv /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
                   ln -s /etc/nginx/sites-available/ReverseProxy /etc/nginx/sites-enabled/ReverseProxy
 
                   # SELINUX
@@ -2882,7 +2882,7 @@ Outputs:
 
   ReverseProxyURL:
     Condition: installReverseProxy
-    Description: Reverse Proxy URL (login as ec2-user)
+    Description: DCV Reverse Proxy URL (login as ec2-user)
     Value: !Sub
       - "https://${IpAddress}/?username=ec2-user     ( dcv://ec2-user:@${IpAddress}:443 )"
       - IpAddress:
