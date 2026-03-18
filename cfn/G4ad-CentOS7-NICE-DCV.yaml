@@ -1603,7 +1603,7 @@ Resources:
                 yum update -q -y
 
                 # Add DCV ports (https://firewalld.org/documentation/man-pages/firewall-offline-cmd.html)
-                if (systemctl status firewalld | grep -q firewalld); then
+                if (systemctl status firewalld | grep -q Loaded); then
                   if (systemctl status firewalld | grep -q running); then
                     firewall-cmd --permanent --add-port ${listenPort}/tcp
                     firewall-cmd --permanent --add-port ${listenPort}/udp
@@ -1681,6 +1681,9 @@ Resources:
                   cp -f /etc/letsencrypt/live/$CERT_FOLDER/privkey.pem /etc/dcv/dcv.key
                   chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
                   chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  if (systemctl status nginx | grep -q running); then
+                    systemctl reload nginx
+                  fi
                 fi
               mode: "000755"
               owner: "root"
