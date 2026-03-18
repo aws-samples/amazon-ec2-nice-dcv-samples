@@ -11,6 +11,8 @@ Refer to [DCV Requirements page](https://docs.aws.amazon.com/dcv/latest/admingui
 - EC2 instances *must* be provisioned in a subnet with *outbound IPv4 internet connectivity*
 - To use [Amazon CloudFront](https://aws.amazon.com/cloudfront/), [VPC DNS](https://docs.aws.amazon.com/vpc/latest/userguide/AmazonDNS-concepts.html#vpc-dns-support) attributes `enableDnsSupport` and `enableDnsHostnames` must be enabled.
 
+Above configuration are enabled in [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html)
+
 ### Availability
 
 - Verify instance type [Region](https://docs.aws.amazon.com/ec2/latest/instancetypes/ec2-instance-regions.html) and [AZ](https://repost.aws/knowledge-center/ec2-instance-type-not-supported-az-error) availability.
@@ -399,6 +401,12 @@ After `config.json` file is created, [start CloudWatch agent](https://docs.aws.a
   - `.\amazon-cloudwatch-agent-ctl.ps1 -a fetch-config -m ec2 -c file:config.json`
 
 Refer to [How do I install and configure the unified CloudWatch agent to push metrics and logs from my EC2 instance to CloudWatch?](https://repost.aws/knowledge-center/cloudwatch-push-metrics-unified-agent) for details. To collect GPU metrics, refer to [How do I send NVIDIA GPU metrics from my EC2 Linux instances to CloudWatch?](https://repost.aws/knowledge-center/send-ec2-nvidia-gpu-metrics-cloudwatch) and [Collect NVIDIA GPU metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-NVIDIA-GPU.html)
+
+## Cost
+
+There is no additional charge for using [AWS CloudFormation](https://aws.amazon.com/cloudformation/pricing/). You pay for AWS resources created using the template the same as if you had created them manually. You only pay for what you use, with no minimum fees and no required upfront commitments.
+
+Where possible, template assigns all created resources with user-defined tags of key names `StackName` and `StackId`. You can [activate](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html) them as [cost-allocation tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html) to track your AWS costs on a detailed level. Refer to [AWS Billing User Guide](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/billing-what-is.html) for more information.
 
 ## Clean Up
 
