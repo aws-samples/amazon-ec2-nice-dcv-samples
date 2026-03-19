@@ -20,7 +20,7 @@ The CloudFormation templates provision EC2 instances running DCV server with the
   - Managed virtual or console [sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html) (Linux)
   - Valid [IP address certificate](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability)
   - Custom [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html)
-  - Web proxy for remote access through HTTPS port 443 (optional)
+  - HTTPS reverse proxy for port 443 remote access (optional)
 - GPU
   - [NVIDIA GRID, Gaming, Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types) or [AMD](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html) driver install (optional)
   - [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/) to run GPU-accelerated containers (optional)
