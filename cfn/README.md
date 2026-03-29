@@ -49,7 +49,7 @@ In most cases, the default values are sufficient. You will need to specify value
 
 *You can use [VPC-NICE-DCV.yaml](VPC-NICE-DCV.yaml) to create a dual-stack public subnet*
 
-EC2
+#### EC2
 
 - `ec2Name` : name of EC2 instance
 - `ec2KeyPair` (Linux) : [EC2 key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) for [SSH access](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/connect-linux-inst-ssh.html#connect-linux-inst-sshClient). [Create a key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html) if you do not have one
@@ -58,7 +58,7 @@ EC2
 - `instanceType` : appropriate [instance type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html). *The instance type you specify must matches the selected processor architecture.*  Default is `t4g.medium` and `t3.medium` for arm64 and x86_64 architecture respectively
 - `ec2TerminationProtection` : enable [EC2 termination protection](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html) to prevent accidental deletion. Default is `Yes`
 
-DCV
+#### DCV
 
 - `driverType` (Windows) : graphics driver to install
   - [DCV-IDD](https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2023-1-16220) (Windows Server 2019 or later) : Indirect Display Driver (IDD) that optimizes the graphics pipeline for higher frame rates and significantly reduces overall CPU usage (default)
@@ -94,22 +94,22 @@ DCV
 - `listenPort` : DCV server TCP and UDP [listen ports](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html). Number must be higher than 1024 and default is `8443`
 - `installReverseProxy` (Windows and most Linux): install reverse web proxy to allow DCV access on standard HTTPS port 443. This option does not support QUIC UDP transport protocol.  Default is `No`
 
-Network
+#### Network
 
 - `vpcID` : [VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html) with internet connectivity. Select [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) if unsure
 - `subnetID` : subnet in selected VPC with internet connectivity. Select subnet in default VPC if unsure. Ensure your specified `instanceType` is available in your selected subnet AZ
 - `displayPublicIP` : set this to `No` for EC2 instance in a subnet that will not receive [public IPv4 address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing.html#concepts-public-addresses). EC2 private IP will be displayed in CloudFormation Outputs section instead. Default is `Yes`
 - `assignStaticIP` : associates a static public IPv4 address using [Elastic IP address](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html) to prevent assigned IPv4 address from changing every time EC2 instance is stopped and started. Associated charges are listed on [Elastic IP Addresses on Amazon EC2 Pricing, On-Demand Pricing](https://aws.amazon.com/ec2/pricing/on-demand/#Elastic_IP_Addresses) page. Default is `Yes`
 
-Remote Access
+#### Remote Access
 
 - `ingressIPv4` : allowed IPv4 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports, e.g. `1.2.3.4/32`. Get your source IP from [https://checkip.amazonaws.com](https://checkip.amazonaws.com). Default is `0.0.0.0/0`
-- `ingressIPv6` : allowed IPv6 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports. Default is `::/0`. Subnets in [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) do not have [IPv6 CIDR blocks](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/working-with-ipv6-addresses.html) associated. Specify `fe80::/10` link local prefix to allow internal access only, or `::1/128` to block all inbound IPv6 access.
+- `ingressIPv6` : allowed IPv6 source prefix to DCV, SSH(Linux), RDP(Windows) and Webmin(Linux) ports. Default is `::/0`. Subnets in [default VPC](https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html) do not have [IPv6 CIDR blocks](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/working-with-ipv6-addresses.html) associated. Specify `::1/128` to block all inbound IPv6 access.
 - `allowRDPport` (Windows) : allow inbound RDP. Option is not related to [Fleet Manager Remote Desktop](https://aws.amazon.com/blogs/mt/console-based-access-to-windows-instances-using-aws-systems-manager-fleet-manager/) access. Default is `No`
 - `allowSSHport` (Linux) : allow inbound SSH. Option is not related to [EC2 Instance Connect](https://aws.amazon.com/blogs/compute/new-using-amazon-ec2-instance-connect-for-ssh-access-to-your-ec2-instances/) access. Default is `Yes`
 - `installWebmin` (some Linux OS) : install [Webmin](https://webmin.com/) web-based system administration tool. Default is `No`
 
-Web Server
+#### Web Server
 
 - `enableCloudFront`: [create](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/distribution-web-creating-console.html) a [Amazon CloudFront](https://aws.amazon.com/cloudfront/) distribution to your EC2 instance. Associated charges are listed on [Amazon CloudFront pricing](https://aws.amazon.com/cloudfront/pricing/) page. Default is `No`
 - `originType`: either `EC2` [custom origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/DownloadDistS3AndCustomOrigins.html#concept_CustomOrigin) or `VPC origin`. Most [AWS Regions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-vpc-origins.html#vpc-origins-supported-regions) support [VPC Origins](https://aws.amazon.com/blogs/networking-and-content-delivery/introducing-cloudfront-virtual-private-cloud-vpc-origins-shield-your-web-applications-from-public-internet/), which allow CloudFront to deliver content even if your EC2 instance is in a VPC private subnet. Enable `assignStaticIP` if using `EC2` origin. Default is `EC2`
@@ -117,12 +117,12 @@ Web Server
 
 *CloudFormation template does not install web server on EC2 instance.*
 
-EBS
+#### EBS
 
 - `volumeSize` : EBS root volume size in GiB
 - `volumeType` : `gp2` or `gp3` [general purpose](https://aws.amazon.com/ebs/general-purpose/) EBS type. Default is `gp3`
 
-Backup
+#### Backup
 
 - `enableBackup` : EC2 data protection with [AWS Backup](https://aws.amazon.com/backup/). Associated charges are listed on [AWS Backup pricing](https://aws.amazon.com/backup/pricing) page. Default is `No`
 - `scheduleExpression` : start time of backup using [CRON expression](https://en.wikipedia.org/wiki/Cron#CRON_expression). Default is 1 am daily
@@ -131,13 +131,13 @@ Backup
 
 *Verify AWS Backup [Region availability](https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services/) before enabling this service.*
 
-AWS Global Accelerator (AGA)
+#### AWS Global Accelerator (AGA)
 
 - `enableAGA` : deploy [AWS Global Accelerator (AGA)](https://aws.amazon.com/global-accelerator/) network accelerator, which can optimize streaming traffic especially when connecting over long distances or over unreliable networks. You can use the [AWS Global Accelerator Speed Comparison Tool](https://speedtest.globalaccelerator.aws) to see the performance difference when transferring data using Global Accelerator. Associated charges are listed on [AWS Global Accelerator pricing](https://aws.amazon.com/global-accelerator/pricing/) page. Default is `No`
 
 *Verify AGA [Region and Availability Zone (AZ) availability](https://docs.aws.amazon.com/global-accelerator/latest/dg/preserve-client-ip-address.regions.html) before enabling this service.*
 
-Others
+#### Others
 
 - `installDocker` : install [Docker Engine](https://docs.docker.com/engine/) (also known as Docker CE) from [Docker repository](https://download.docker.com/) or Linux OS package repository. On Linux, [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html) will be installed and configured if NVIDIA driver install option is selected. On [Windows](https://docs.docker.com/engine/install/binaries/#install-server-and-client-binaries-on-windows), you can run Windows containers in [process isolation](https://learn.microsoft.com/en-us/virtualization/windowscontainers/manage-containers/hyperv-container#process-isolation) mode. Default is `Yes` for Linux OSs
 
@@ -263,7 +263,7 @@ Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devgui
 
 ### Demo
 
-https://github.com/user-attachments/assets/f38b557d-c72b-4ffa-99ae-0e9dc1b2cdc1
+<https://github.com/user-attachments/assets/f38b557d-c72b-4ffa-99ae-0e9dc1b2cdc1>
 
 ## About Linux templates
 
@@ -402,9 +402,9 @@ After `config.json` file is created, [start CloudWatch agent](https://docs.aws.a
 
 Refer to [How do I install and configure the unified CloudWatch agent to push metrics and logs from my EC2 instance to CloudWatch?](https://repost.aws/knowledge-center/cloudwatch-push-metrics-unified-agent) for details. To collect GPU metrics, refer to [How do I send NVIDIA GPU metrics from my EC2 Linux instances to CloudWatch?](https://repost.aws/knowledge-center/send-ec2-nvidia-gpu-metrics-cloudwatch) and [Collect NVIDIA GPU metrics](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-NVIDIA-GPU.html)
 
-## Cost
+## Pricing
 
-There is no additional charge for using [AWS CloudFormation](https://aws.amazon.com/cloudformation/pricing/). You pay for AWS resources created using the template the same as if you had created them manually. You only pay for what you use, with no minimum fees and no required upfront commitments.
+There is [no additional charge](https://aws.amazon.com/cloudformation/pricing/) for using AWS CloudFormation. You pay for AWS resources created using the template the same as if you had created them manually. You only pay for what you use, with no minimum fees and no required upfront commitments.
 
 Where possible, template assigns all created resources with user-defined tags of key names `StackName` and `StackId`. You can [activate](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/activating-tags.html) them as [cost-allocation tags](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/cost-alloc-tags.html) to track your AWS costs on a detailed level. Refer to [AWS Billing User Guide](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/billing-what-is.html) for more information.
 
@@ -413,6 +413,5 @@ Where possible, template assigns all created resources with user-defined tags of
 To remove created resources,
 
 - [Disable](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_ChangingDisableAPITermination.html) EC2 instance termination protection (if enabled)
-- [Delete](https://docs.aws.amazon.com/aws-backup/latest/devguide/deleting-backups.html) any recovery points in created backup vault
+- [Delete](https://docs.aws.amazon.com/aws-backup/latest/devguide/deleting-backups.html) any recovery points in created backup vault (if enabled)
 - [Delete](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html) CloudFormation stack
-
