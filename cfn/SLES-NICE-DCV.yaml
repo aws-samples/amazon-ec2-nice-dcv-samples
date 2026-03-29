@@ -253,7 +253,7 @@ Parameters:
       - HTTP-and-HTTPS
       - HTTP
       - HTTPS
-    Default: "No"
+    Default: "HTTP"
 
   volumeSize:
     Type: Number
@@ -1736,6 +1736,7 @@ Resources:
                 # Install Certbot via Python 3.11: https://www.suse.com/c/python-3-11-stack-for-suse-linux-enterprise-15/
                 if (cat /etc/os-release | grep -q 15\.); then
                   zypper -n install -y python311 python311-pip
+                  zypper -n install -y python311-devel augeas-devel
                   /usr/bin/python3.11 -m venv /opt/certbot/
                   /opt/certbot/bin/pip install --upgrade pip
                   /opt/certbot/bin/pip install certbot
