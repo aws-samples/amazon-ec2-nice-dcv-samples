@@ -1765,7 +1765,7 @@ Resources:
                       chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
 
                       # post cert renewal hook
-                      mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/post/
+                      mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/deploy/
 
                       # HTTPS reverse proxy
                       if [ "${installReverseProxy}" = "Yes" ]; then
