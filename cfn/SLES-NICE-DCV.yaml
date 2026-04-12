@@ -1635,7 +1635,7 @@ Resources:
                   cp -f /etc/letsencrypt/live/$CERT_FOLDER/privkey.pem /etc/dcv/dcv.key
                   chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
                   chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
-                  if (systemctl status nginx | grep -q running); then
+                  if (systemctl list-units | grep -q nginx); then
                     systemctl reload nginx
                   fi
                 fi
