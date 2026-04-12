@@ -1876,16 +1876,19 @@ Resources:
                 echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
 
                 # Certbot: https://certbot.eff.org/instructions?ws=other&os=pip
-                yum install -q -y augeas-libs
                 amazon-linux-extras install -q -y python3.8
+                yum install -q -y augeas-libs
 
                 /usr/bin/python3.8 -m venv /opt/certbot/
+                # Certbot-apache throws "NoInstallationError('Problem in Augeas installation')" error with python-augeas v1.2.0
                 /opt/certbot/bin/pip install --upgrade pip
+                /opt/certbot/bin/pip install python-augeas==1.1.0
                 /opt/certbot/bin/pip install certbot
                 /opt/certbot/bin/pip install certbot-dns-route53
                 /opt/certbot/bin/pip install certbot-apache
                 /opt/certbot/bin/pip install certbot-nginx
-                ln -s /opt/certbot/bin/certbot /usr/bin/certbot
+
+                ln -sf /opt/certbot/bin/certbot /usr/bin/certbot
 
                 touch /etc/sysconfig/certbot
                 chmod og-rwx /etc/sysconfig/certbot
