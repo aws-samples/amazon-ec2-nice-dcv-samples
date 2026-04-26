@@ -1932,6 +1932,8 @@ Resources:
             VolumeSize: !Ref volumeSize
             DeleteOnTermination: true
             Encrypted: true
+      MetadataOptions:
+        HttpTokens: required
       UserData: !Base64
         Fn::Sub: |
           <script>
