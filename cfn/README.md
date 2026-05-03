@@ -287,11 +287,32 @@ With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server inst
 
 The CloudFormation templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` session, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types.
 
+#### Multiple virtual sessions
+
+To configure multiple virtual sessions, create additional user and append user name to `/opt/dcv/dcv-users.txt`.
+
+```
+USER=newuser
+
+sudo useradd -m $USER
+sudo passwd $USER
+echo $USER | sudo tee -a /opt/dcv/dcv-users.txt
+```
+
+To verify that the virtual sessions have been created
+
+```
+sudo cat /opt/dcv/dcv-users.txt
+sudo dcv list-sessions
+```
+
 ### GPU Linux instances
 
 On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) with drivers [installed](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) (`*-with-NVIDIA-*`), DCV (`/usr/libexec/dcv/dcvagent`) can use GPU for hardware based video streaming encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan graphics as illustrated in `nvidia-smi` screen shot below
 
 <img alternate="DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
+
+#### Display resolution limits
 
 There are limits to display resolution and multi-screen support per GPU for console sessions based on selected `sessionType` option:
 
