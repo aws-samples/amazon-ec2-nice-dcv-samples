@@ -1600,30 +1600,37 @@ Resources:
                 After=default.target network.target
 
                 [Service]
-                ExecStart=/opt/dcv-virtual-session.sh
+                ExecStart=/opt/dcv/dcv-virtual-session.sh
 
                 [Install]
                 WantedBy=default.target
               mode: "000644"
               owner: "root"
               group: "root"
-            "/opt/dcv-virtual-session.sh":
+            "/opt/dcv/dcv-virtual-session.sh":
               content: |
                 #!/bin/bash
-                dcvUsers=( "ubuntu" )
                 while true;
                 do
-                  for dcvUser in "${dcvUsers[@]}"
-                  do
-                    if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                      /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root %home% --type virtual
+                  while IFS= read -r dcvUser; do
+                    if (id -u "$dcvUser" >/dev/null 2>&1); then
+                      if (! /usr/bin/dcv list-sessions | grep -q "$dcvUser"); then
+                        /usr/bin/dcv create-session "$dcvUser" --owner "$dcvUser" --storage-root %home% --type virtual
+                      fi
                     fi
-                  done
+                  done < /opt/dcv/dcv-users.txt
                   date
                   /usr/bin/dcv list-sessions
                   sleep 5
                 done
-              mode: "000744"
+              mode: "000740"
+              owner: "root"
+              group: "root"
+            "/opt/dcv/dcv-users.txt":
+              content: |
+                # List of DCV users, one per line. Virtual sessions will be created for these users
+                ubuntu
+              mode: "000640"
               owner: "root"
               group: "root"
             "/etc/systemd/system/dcv-post-reboot.service":

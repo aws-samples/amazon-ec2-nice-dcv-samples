@@ -1570,30 +1570,37 @@ Resources:
                 After=default.target network.target
 
                 [Service]
-                ExecStart=/opt/dcv-virtual-session.sh
+                ExecStart=/opt/dcv/dcv-virtual-session.sh
 
                 [Install]
                 WantedBy=default.target
               mode: "000644"
               owner: "root"
               group: "root"
-            "/opt/dcv-virtual-session.sh":
+            "/opt/dcv/dcv-virtual-session.sh":
               content: |
                 #!/bin/bash
-                dcvUsers=( "ec2-user" )
                 while true;
                 do
-                  for dcvUser in "${dcvUsers[@]}"
-                  do
-                    if (! /usr/bin/dcv list-sessions | grep -q $dcvUser); then
-                      /usr/bin/dcv create-session $dcvUser --owner $dcvUser --storage-root %home% --type virtual
+                  while IFS= read -r dcvUser; do
+                    if (id -u "$dcvUser" >/dev/null 2>&1); then
+                      if (! /usr/bin/dcv list-sessions | grep -q "$dcvUser"); then
+                        /usr/bin/dcv create-session "$dcvUser" --owner "$dcvUser" --storage-root %home% --type virtual
+                      fi
                     fi
-                  done
+                  done < /opt/dcv/dcv-users.txt
                   date
                   /usr/bin/dcv list-sessions
                   sleep 5
                 done
-              mode: "000744"
+              mode: "000740"
+              owner: "root"
+              group: "root"
+            "/opt/dcv/dcv-users.txt":
+              content: |
+                # List of DCV users, one per line. Virtual sessions will be created for these users
+                ec2-user
+              mode: "000640"
               owner: "root"
               group: "root"
             "/etc/systemd/system/dcv-post-reboot.service":
@@ -1915,10 +1922,7 @@ Resources:
                 # Certbot PIP: https://certbot.eff.org/instructions?ws=other&os=pip
                 # Certbot: https://github.com/amazonlinux/amazon-linux-2023/issues/444
                 dnf install -q -y python3.14 python3.14-pip
-                # AL2023 python3-augeas version is 1.1.0
-                # https://github.com/certbot/certbot/blob/main/tools/requirements.txt: python-augeas==1.2.0 ; python_version >= "3.10
-                dnf install -q -y python3.14-devel augeas-devel augeas-libs
-
+                dnf install -q -y python3.14-devel augeas-devel
                 python3.14 -m venv /opt/certbot
                 /opt/certbot/bin/pip install --upgrade pip
                 /opt/certbot/bin/pip install certbot

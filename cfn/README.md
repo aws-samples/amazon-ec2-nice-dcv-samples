@@ -281,13 +281,15 @@ The login user name depends on Linux distributions as follows:
 
 DCV offers [console and virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html) on Linux OS.
 
-With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server instance, `Xdcv`, and runs a desktop environment inside the X server. Multiple user sessions are supported for virtual sessions.
-
 With console sessions  (`console`, `console-with-*`), DCV directly captures the content of the desktop screen. Only one console session can be hosted at a time.
+
+With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server instance, `Xdcv`, and runs a desktop environment inside the X server. Amazon DCV starts a new dedicated X server instance for each virtual session. Multiple virtual sessions are allowed on a single DCV server.
+
+The CloudFormation templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` session, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types.
 
 ### GPU Linux instances
 
-On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) with drivers [installed](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) (`*-with-NVIDIA-*`), DCV server (`/usr/libexec/dcv/dcvagent`) can use GPU for hardware based video streaming encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan graphics as illustrated in `nvidia-smi` screen shot below
+On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) with drivers [installed](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) (`*-with-NVIDIA-*`), DCV (`/usr/libexec/dcv/dcvagent`) can use GPU for hardware based video streaming encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan graphics as illustrated in `nvidia-smi` screen shot below
 
 <img alternate="DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
 
@@ -297,7 +299,7 @@ There are limits to display resolution and multi-screen support per GPU for cons
 - Gaming driver (`console-with-NVIDIA_Gaming_Driver`) : one display of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 - GRID driver (`console-with-NVIDIA_GRID_Driver`) : four displays of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 
-You can use virtual session option (`virtual-with-NVIDIA-*`) when using GPU primarily for compute workloads. The CloudFormation templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` session, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types.
+You can use virtual session option (`virtual-with-NVIDIA-*`) when using GPU primarily for compute workloads.
 
 ### Installing NVIDIA CUDA Toolkit and other software
 
