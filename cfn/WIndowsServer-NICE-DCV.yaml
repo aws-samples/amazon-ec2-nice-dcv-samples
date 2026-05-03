@@ -292,7 +292,8 @@ Parameters:
     Description: https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-scheduled-rule-pattern.html
     AllowedPattern: .+
     Default: "cron(0 1 ? * * *)"
-  scheduleExpressionTimezone: # https://nodatime.org/TimeZones?version=2024a&format=json
+  scheduleExpressionTimezone:
+    # https://nodatime.org/TimeZones?version=2024a&format=json
     Type: String
     Description: https://docs.aws.amazon.com/scheduler/latest/UserGuide/schedule-types.html#time-zones
     AllowedValues:
@@ -678,48 +679,18 @@ Parameters:
 
 Conditions:
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
-  useElasticIP:
-    !And [!Condition displayPublicIP, !Equals [!Ref assignStaticIP, "Yes"]]
+  useElasticIP: !And [!Condition displayPublicIP, !Equals [!Ref assignStaticIP, "Yes"]]
   enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
-  isGPUinstall:
-    !Not [
-      !Or [
-        !Equals [!Ref driverType, "none"],
-        !Equals [!Ref driverType, "DCV-IDD"],
-      ],
-    ]
+  isGPUinstall: !Not [!Or [!Equals [!Ref driverType, "none"], !Equals [!Ref driverType, "DCV-IDD"]]]
 
-  createSgHTTP:
-    !Or [
-      !Equals [!Ref allowWebServerPorts, HTTP],
-      !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
-    ]
+  createSgHTTP: !Or [!Equals [!Ref allowWebServerPorts, HTTP], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]
   installReverseProxy: !Equals [!Ref installReverseProxy, "Yes"]
-  createSgHTTPS:
-    !Or [
-      !Condition installReverseProxy,
-      !Or [
-        !Equals [!Ref allowWebServerPorts, HTTPS],
-        !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS],
-      ],
-    ]
-  hasCFprefix:
-    !Not [
-      !Equals [
-        !FindInMap [
-          CFprefixMap,
-          !Ref AWS::Region,
-          PrefixList,
-          DefaultValue: pl-none,
-        ],
-        pl-none,
-      ],
-    ]
+  createSgHTTPS: !Or [!Condition installReverseProxy, !Or [!Equals [!Ref allowWebServerPorts, HTTPS], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]]
+  hasCFprefix: !Not [!Equals [!FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList, {DefaultValue: pl-none}], pl-none]]
   createCFsgHTTP: !And [!Condition createCloudFront, !Condition hasCFprefix]
 
   createCloudFront: !Equals [!Ref enableCloudFront, "Yes"]
-  cfVPCOrigin:
-    !And [!Condition createCloudFront, !Equals [!Ref originType, "VPC Origin"]]
+  cfVPCOrigin: !And [!Condition createCloudFront, !Equals [!Ref originType, "VPC Origin"]]
 
   createSgRDP: !Equals [!Ref allowRDPport, "Yes"]
   createBackup: !Equals [!Ref enableBackup, "Yes"]
@@ -729,7 +700,8 @@ Conditions:
   createAGA: !Equals [!Ref enableAGA, "Yes"]
 
 Mappings:
-  CFprefixMap: # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
+  CFprefixMap:
+    # aws ec2 describe-managed-prefix-lists --query "PrefixLists[?PrefixListName=='com.amazonaws.global.cloudfront.origin-facing']" --region <REGION>
     af-south-1:
       PrefixList: pl-c0aa4fa9
       Ipv6PrefixList: pl-08e545c506fc11b3d
@@ -854,7 +826,8 @@ Resources:
       Path: /
       Policies:
         - PolicyName: dcvLicensing
-          PolicyDocument: # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
+          PolicyDocument:
+            # https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-license.html
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
@@ -864,7 +837,8 @@ Resources:
         - !If
           - isGPUinstall
           - PolicyName: gpuDrivers
-            PolicyDocument: # https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html
+            PolicyDocument:
+              # https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-nvidia-driver.html https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/install-amd-driver.html
               Version: "2012-10-17"
               Statement:
                 - Effect: Allow
@@ -882,9 +856,11 @@ Resources:
         - !If
           - hasR53Zone
           - PolicyName: R53acmeAccess
-            PolicyDocument: # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
+            PolicyDocument:
+              # Certbot dns_route53 : https://certbot-dns-route53.readthedocs.io/en/stable/
               Version: "2012-10-17"
-              Statement: # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
+              Statement:
+                # https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/specifying-rrset-conditions.html
                 - Effect: Allow
                   Action:
                     - route53:ListHostedZones
@@ -900,8 +876,7 @@ Resources:
                     ForAllValues:StringEquals:
                       route53:ChangeResourceRecordSetsRecordTypes: [TXT]
                     ForAllValues:StringLike:
-                      route53:ChangeResourceRecordSetsNormalizedRecordNames:
-                        [_acme-challenge.*]
+                      route53:ChangeResourceRecordSetsNormalizedRecordNames: [_acme-challenge.*]
           - !Ref AWS::NoValue
       ManagedPolicyArns:
         - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
@@ -1010,11 +985,7 @@ Resources:
         - Key: Name
           Value: !Sub
             - "${AWS::StackName}-securityGroup-${UID}"
-            - UID:
-                !Select [
-                  3,
-                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-                ]
+            - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -1029,15 +1000,13 @@ Resources:
           IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          SourcePrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+          SourcePrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       SecurityGroupEgress:
         - Description: Ping (CloudFront origin IPv4)
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          DestinationPrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+          DestinationPrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName
@@ -1046,11 +1015,7 @@ Resources:
         - Key: Name
           Value: !Sub
             - "${AWS::StackName}-CloudFrontHTTP-IPv4-${UID}"
-            - UID:
-                !Select [
-                  3,
-                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-                ]
+            - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -1065,15 +1030,13 @@ Resources:
           IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          SourcePrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, Ipv6PrefixList]
+          SourcePrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, Ipv6PrefixList]
       SecurityGroupEgress:
         - Description: Ping (CloudFront origin IPv6)
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          DestinationPrefixListId:
-            !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+          DestinationPrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName
@@ -1082,11 +1045,7 @@ Resources:
         - Key: Name
           Value: !Sub
             - "${AWS::StackName}-CloudFrontHTTP-IPv6-${UID}"
-            - UID:
-                !Select [
-                  3,
-                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-                ]
+            - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -1351,11 +1310,7 @@ Resources:
         - Key: Name
           Value: !Sub
             - "${AWS::StackName}-R53HealthChecks-${UID}"
-            - UID:
-                !Select [
-                  3,
-                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-                ]
+            - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -1993,11 +1948,7 @@ Resources:
         - Key: Name
           Value: !Sub
             - "${AWS::StackName}-elasticIP-${UID}"
-            - UID:
-                !Select [
-                  3,
-                  !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-                ]
+            - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
@@ -2008,30 +1959,17 @@ Resources:
       BackupPlan:
         BackupPlanName: !Sub
           - "${AWS::StackName}-backupPlan-${UID}"
-          - UID:
-              !Select [
-                3,
-                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-              ]
+          - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
         BackupPlanRule:
           - RuleName: !Sub
               - "${AWS::StackName}-backupRule-${UID}"
-              - UID:
-                  !Select [
-                    3,
-                    !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-                  ]
+              - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
             TargetBackupVault: !Ref backupVault
             ScheduleExpression: !Ref scheduleExpression
             ScheduleExpressionTimezone: !Ref scheduleExpressionTimezone
             Lifecycle:
               DeleteAfterDays: !Ref deleteAfterDays
-      BackupPlanTags:
-        {
-          "StackName": !Ref AWS::StackName,
-          "StackId": !Ref AWS::StackId,
-          "GitHub": "https://github.com/aws-samples/amazon-ec2-nice-dcv-samples",
-        }
+      BackupPlanTags: {"StackName": !Ref AWS::StackName, "StackId": !Ref AWS::StackId, "GitHub": "https://github.com/aws-samples/amazon-ec2-nice-dcv-samples"}
 
   backupVault:
     Type: AWS::Backup::BackupVault
@@ -2040,17 +1978,8 @@ Resources:
     Properties:
       BackupVaultName: !Sub
         - "${AWS::StackName}-backupVault-${UID}"
-        - UID:
-            !Select [
-              3,
-              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-            ]
-      BackupVaultTags:
-        {
-          "StackName": !Ref AWS::StackName,
-          "StackId": !Ref AWS::StackId,
-          "GitHub": "https://github.com/aws-samples/amazon-ec2-nice-dcv-samples",
-        }
+        - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
+      BackupVaultTags: {"StackName": !Ref AWS::StackName, "StackId": !Ref AWS::StackId, "GitHub": "https://github.com/aws-samples/amazon-ec2-nice-dcv-samples"}
 
   backupSelection:
     Type: AWS::Backup::BackupSelection
@@ -2063,11 +1992,7 @@ Resources:
           - !Sub arn:${AWS::Partition}:ec2:${AWS::Region}:${AWS::AccountId}:instance/${ec2Instance}
         SelectionName: !Sub
           - "${AWS::StackName}-backupSelection-${UID}"
-          - UID:
-              !Select [
-                3,
-                !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-              ]
+          - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
 
   backupRestoreRole:
     Type: AWS::IAM::Role
@@ -2082,7 +2007,8 @@ Resources:
             Action: sts:AssumeRole
       Policies:
         - PolicyName: restore-EC2-instance-profile
-          PolicyDocument: # https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-ec2.html
+          PolicyDocument:
+            # https://docs.aws.amazon.com/aws-backup/latest/devguide/restoring-ec2.html
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
@@ -2106,11 +2032,7 @@ Resources:
     Properties:
       Name: !Sub
         - "${AWS::StackName}-AGA-${UID}"
-        - UID:
-            !Select [
-              3,
-              !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]],
-            ]
+        - UID: !Select [3, !Split ["-", !Select [2, !Split ["/", !Ref AWS::StackId]]]]
       IpAddressType: IPV4
       Tags:
         - Key: StackName
@@ -2238,75 +2160,38 @@ Outputs:
     Description: Fleet Manager Remote Desktop
     Value: !Sub
       - "https://${AWS::Region}.${url}/systems-manager/fleet-manager/remote-desktop?region=${AWS::Region}&nodeIds=${ec2Instance}&authType=USER_CREDENTIALS"
-      - url:
-          !FindInMap [
-            ConsoleUrl,
-            !Ref "AWS::Partition",
-            url,
-            DefaultValue: "console.aws.amazon.com",
-          ]
+      - url: !FindInMap [ConsoleUrl, !Ref "AWS::Partition", url, {DefaultValue: "console.aws.amazon.com"}]
 
   EC2console:
     Description: EC2 console
     Value: !Sub
       - "https://${AWS::Region}.${url}/ec2/home?region=${AWS::Region}#InstanceDetails:instanceId=${ec2Instance}"
-      - url:
-          !FindInMap [
-            ConsoleUrl,
-            !Ref "AWS::Partition",
-            url,
-            DefaultValue: "console.aws.amazon.com",
-          ]
+      - url: !FindInMap [ConsoleUrl, !Ref "AWS::Partition", url, {DefaultValue: "console.aws.amazon.com"}]
 
   EC2iamRole:
     Description: EC2 IAM role
     Value: !Sub
       - "https://${url}/iam/home#/roles/details/${role}"
-      - {
-          role: !Select [1, !Split ["/", !GetAtt instanceIamRole.Arn]],
-          url:
-            !FindInMap [
-              ConsoleUrl,
-              !Ref "AWS::Partition",
-              url,
-              DefaultValue: "console.aws.amazon.com",
-            ],
-        }
+      - {role: !Select [1, !Split ["/", !GetAtt instanceIamRole.Arn]], url: !FindInMap [ConsoleUrl, !Ref "AWS::Partition", url, {DefaultValue: "console.aws.amazon.com"}]}
 
   SSMsessionManager:
     Description: SSM Session Manager (" net user administrator changeStr@ongPass0rd " to change password)
     Value: !Sub
       - "https://${AWS::Region}.${url}/systems-manager/session-manager/${ec2Instance}"
-      - url:
-          !FindInMap [
-            ConsoleUrl,
-            !Ref "AWS::Partition",
-            url,
-            DefaultValue: "console.aws.amazon.com",
-          ]
+      - url: !FindInMap [ConsoleUrl, !Ref "AWS::Partition", url, {DefaultValue: "console.aws.amazon.com"}]
 
   DCVUrl:
     Description: DCV URL (login as administrator)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}/?username=administrator     ( dcv://administrator:@${IpAddress}:${listenPort} )"
-      - IpAddress:
-          !If [
-            displayPublicIP,
-            !GetAtt ec2Instance.PublicIp,
-            !GetAtt ec2Instance.PrivateIp,
-          ]
+      - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
 
   ReverseProxyURL:
     Condition: installReverseProxy
     Description: DCV Reverse Proxy URL (login as administrator)
     Value: !Sub
       - "https://${IpAddress}/?username=administrator     ( dcv://administrator:@${IpAddress}:443 )"
-      - IpAddress:
-          !If [
-            displayPublicIP,
-            !GetAtt ec2Instance.PublicIp,
-            !GetAtt ec2Instance.PrivateIp,
-          ]
+      - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
 
   DCVUrlAGA:
     Condition: createAGA
@@ -2336,13 +2221,7 @@ Outputs:
     Description: Global Accelerator console
     Value: !Sub
       - https://${url}/globalaccelerator/home#AcceleratorDetails:AcceleratorArn=${aga}
-      - url:
-          !FindInMap [
-            ConsoleUrl,
-            !Ref "AWS::Partition",
-            url,
-            DefaultValue: "console.aws.amazon.com",
-          ]
+      - url: !FindInMap [ConsoleUrl, !Ref "AWS::Partition", url, {DefaultValue: "console.aws.amazon.com"}]
 
   AGAipv4Addresses:
     Condition: createAGA
@@ -2354,13 +2233,7 @@ Outputs:
     Description: CloudFront console
     Value: !Sub
       - "https://${url}/cloudfront/home#/distributions/${cfDistribution.Id}?region=${AWS::Region}"
-      - url:
-          !FindInMap [
-            ConsoleUrl,
-            !Ref "AWS::Partition",
-            url,
-            DefaultValue: "console.aws.amazon.com",
-          ]
+      - url: !FindInMap [ConsoleUrl, !Ref "AWS::Partition", url, {DefaultValue: "console.aws.amazon.com"}]
 
   CloudFrontUrl:
     Condition: createCloudFront

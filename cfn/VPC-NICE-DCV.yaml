@@ -132,8 +132,7 @@ Resources:
       CidrBlock: !Ref vpcIPv4Cidr
       MapPublicIpOnLaunch: true
       AssignIpv6AddressOnCreation: true
-      Ipv6CidrBlock:
-        !Select [0, !Cidr [!Select [0, !GetAtt vpcID.Ipv6CidrBlocks], 3, 64]]
+      Ipv6CidrBlock: !Select [0, !Cidr [!Select [0, !GetAtt vpcID.Ipv6CidrBlocks], 3, 64]]
       PrivateDnsNameOptionsOnLaunch:
         EnableResourceNameDnsAAAARecord: true
         EnableResourceNameDnsARecord: true
@@ -168,13 +167,7 @@ Outputs:
     Description: VPC console
     Value: !Sub
       - "https://${url}/vpcconsole/home?region=${AWS::Region}#VpcDetails:VpcId=${vpcID}"
-      - url:
-          !FindInMap [
-            ConsoleUrl,
-            !Ref AWS::Partition,
-            url,
-            DefaultValue: "console.aws.amazon.com",
-          ]
+      - url: !FindInMap [ConsoleUrl, !Ref AWS::Partition, url, {DefaultValue: "console.aws.amazon.com"}]
     Export:
       Name: !Sub ${AWS::StackName}-vpcConsole
 
@@ -182,12 +175,6 @@ Outputs:
     Description: Subnet console
     Value: !Sub
       - "https://${url}/vpcconsole/home?region=${AWS::Region}#SubnetDetails:subnetId=${subnetID}"
-      - url:
-          !FindInMap [
-            ConsoleUrl,
-            !Ref AWS::Partition,
-            url,
-            DefaultValue: "console.aws.amazon.com",
-          ]
+      - url: !FindInMap [ConsoleUrl, !Ref AWS::Partition, url, {DefaultValue: "console.aws.amazon.com"}]
     Export:
       Name: !Sub ${AWS::StackName}-subnetConsole
