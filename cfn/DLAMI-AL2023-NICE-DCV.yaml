@@ -1608,7 +1608,7 @@ Resources:
                 while true;
                 do
                   while IFS= read -r dcvUser; do
-                    if (id -u "$dcvUser" >/dev/null 2>&1); then
+                    if (getent passwd "$dcvUser"); then
                       if (! /usr/bin/dcv list-sessions | grep -q "$dcvUser"); then
                         /usr/bin/dcv create-session "$dcvUser" --owner "$dcvUser" --storage-root %home% --type virtual
                       fi
