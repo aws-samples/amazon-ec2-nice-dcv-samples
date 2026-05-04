@@ -294,7 +294,7 @@ To configure multiple virtual sessions, create additional user and append user n
 ```
 USER=newuser
 
-sudo useradd -m $USER
+sudo useradd -m -s /bin/bash $USER
 echo $USER | sudo tee -a /opt/dcv/dcv-users.txt
 sudo passwd $USER
 ```
