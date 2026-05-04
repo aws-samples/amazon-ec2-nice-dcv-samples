@@ -289,7 +289,7 @@ The CloudFormation templates configure *multi-user.target* [run level](https://t
 
 #### Multiple virtual sessions
 
-To configure multiple virtual sessions, create additional user and append user name to `/opt/dcv/dcv-users.txt`.
+To configure multiple virtual sessions, create additional user (e.g. `newuser`), append user name to `/opt/dcv/dcv-users.txt`, and set a strong password
 
 ```
 USER=newuser
