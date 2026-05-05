@@ -179,6 +179,7 @@ Parameters:
 
       - Ubuntu 22.04 (Base with single CUDA) ARM64 |/aws/service/deeplearning/ami/arm64/base-with-single-cuda-ubuntu-22.04/latest/ami-id
 
+      - Ubuntu 24.04 (PyTorch 2.11) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.11-ubuntu-24.04/latest/ami-id
       - Ubuntu 24.04 (PyTorch 2.10) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.10-ubuntu-24.04/latest/ami-id
       - Ubuntu 24.04 (PyTorch 2.9) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.9-ubuntu-24.04/latest/ami-id
 
@@ -1871,7 +1872,6 @@ Resources:
                 sudo -u ubuntu code --install-extension ms-vscode-remote.remote-ssh
                 sudo -u ubuntu code --install-extension ms-toolsai.datawrangler
                 sudo -u ubuntu code --install-extension amazonwebservices.aws-toolkit-vscode
-                sudo -u ubuntu code --install-extension amazonwebservices.amazon-q-vscode
                 sudo -u ubuntu code --install-extension ms-azuretools.vscode-docker
                 sudo -u ubuntu code --install-extension ms-vscode-remote.remote-containers
                 sudo -u ubuntu code --install-extension ms-toolsai.tensorboard

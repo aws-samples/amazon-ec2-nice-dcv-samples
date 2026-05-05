@@ -166,6 +166,7 @@ Parameters:
 
       - AL2023 (Base with single CUDA) |/aws/service/deeplearning/ami/x86_64/base-with-single-cuda-amazon-linux-2023/latest/ami-id
 
+      - AL2023 (PyTorch 2.11) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.11-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.10) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.10-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.9) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.9-amazon-linux-2023/latest/ami-id
 
@@ -175,10 +176,11 @@ Parameters:
 
       - AL2023 (Base with single CUDA) ARM64 |/aws/service/deeplearning/ami/arm64/base-with-single-cuda-amazon-linux-2023/latest/ami-id
 
+      - AL2023 (PyTorch 2.11) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.11-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.10) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.10-amazon-linux-2023/latest/ami-id
       - AL2023 (PyTorch 2.9) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.9-amazon-linux-2023/latest/ami-id
 
-    Default: "AL2023 (PyTorch 2.10) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.10-amazon-linux-2023/latest/ami-id"
+    Default: "AL2023 (PyTorch 2.11) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.11-amazon-linux-2023/latest/ami-id"
 
   ec2Name:
     Type: String
@@ -1848,8 +1850,9 @@ Resources:
 
                 # Certbot PIP: https://certbot.eff.org/instructions?ws=other&os=pip
                 # Certbot: https://github.com/amazonlinux/amazon-linux-2023/issues/444
-                dnf install -q -y python3.13 python3.13-pip
-                python3.13 -m venv /opt/certbot
+                dnf install -q -y python3.14 python3.14-pip
+                dnf install -q -y python3.14-devel augeas-devel
+                python3.14 -m venv /opt/certbot
                 /opt/certbot/bin/pip install --upgrade pip
                 /opt/certbot/bin/pip install certbot
                 /opt/certbot/bin/pip install certbot-dns-route53
@@ -1873,7 +1876,6 @@ Resources:
                 sudo -u ec2-user code --install-extension ms-vscode-remote.remote-ssh
                 sudo -u ec2-user code --install-extension ms-toolsai.datawrangler
                 sudo -u ec2-user code --install-extension amazonwebservices.aws-toolkit-vscode
-                sudo -u ec2-user code --install-extension amazonwebservices.amazon-q-vscode
                 sudo -u ec2-user code --install-extension ms-azuretools.vscode-docker
                 sudo -u ec2-user code --install-extension ms-vscode-remote.remote-containers
                 sudo -u ec2-user code --install-extension ms-toolsai.tensorboard
