@@ -37,6 +37,7 @@ Metadata:
         Parameters:
           - sessionType
           - listenPort
+          - installReverseProxy
       - Label:
           default: Network
         Parameters:
@@ -94,6 +95,8 @@ Metadata:
         default: "DCV session type and GPU driver"
       listenPort:
         default: "TCP/UDP listen port"
+      installReverseProxy:
+        default: "Install HTTPS reverse proxy"
 
       vpcID:
         default: "VPC with outbound internet connectivity"
@@ -1069,7 +1072,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIp: 0.0.0.0/0
+            CidrIp: !Ref ingressIPv4
           - !Ref AWS::NoValue
         - !If
           - createSgHTTPS
@@ -1077,7 +1080,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIpv6: ::/0
+            CidrIpv6: !Ref ingressIPv6
           - !Ref AWS::NoValue
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
