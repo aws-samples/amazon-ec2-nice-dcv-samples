@@ -37,6 +37,7 @@ Metadata:
         Parameters:
           - sessionType
           - listenPort
+          - installReverseProxy
       - Label:
           default: Network
         Parameters:
@@ -95,6 +96,8 @@ Metadata:
         default: "DCV session type"
       listenPort:
         default: "TCP/UDP listen port"
+      installReverseProxy:
+        default: "Install HTTPS reverse proxy"
 
       vpcID:
         default: "VPC with outbound internet connectivity"
@@ -185,6 +188,13 @@ Parameters:
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
+  installReverseProxy:
+    Type: String
+    Description: Reverse web proxy on port 443
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
   vpcID:
     Type: AWS::EC2::VPC::Id
@@ -681,7 +691,8 @@ Conditions:
   hasEIC: !Not [!Equals [!FindInMap [EICprefixMap, !Ref AWS::Region, IpPrefix, {DefaultValue: 127.0.0.1/32}], 127.0.0.1/32]]
   createSgEIC: !And [!Condition hasEIC, !Condition displayPublicIP]
   createSgHTTP: !Or [!Equals [!Ref allowWebServerPorts, HTTP], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]
-  createSgHTTPS: !Or [!Equals [!Ref allowWebServerPorts, HTTPS], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]
+  installReverseProxy: !Equals [!Ref installReverseProxy, "Yes"]
+  createSgHTTPS: !Or [!Condition installReverseProxy, !Or [!Equals [!Ref allowWebServerPorts, HTTPS], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]]
   hasCFprefix: !Not [!Equals [!FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList, {DefaultValue: pl-none}], pl-none]]
   createCFsgHTTP: !And [!Condition createCloudFront, !Condition hasCFprefix]
 
@@ -1082,7 +1093,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIp: 0.0.0.0/0
+            CidrIp: !Ref ingressIPv4
           - !Ref AWS::NoValue
         - !If
           - createSgHTTPS
@@ -1090,7 +1101,7 @@ Resources:
             IpProtocol: tcp
             FromPort: 443
             ToPort: 443
-            CidrIpv6: ::/0
+            CidrIpv6: !Ref ingressIPv6
           - !Ref AWS::NoValue
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
@@ -1567,7 +1578,9 @@ Resources:
                   fi
                 fi
 
+                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
+
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
@@ -1599,6 +1612,15 @@ Resources:
 
                       # post cert renewal hook
                       mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/deploy/
+
+                      # HTTPS reverse proxy
+                      if [ "${installReverseProxy}" = "Yes" ]; then
+                        rm -f /etc/pki/tls/nginx/cert.pem
+                        rm -f /etc/pki/tls/nginx/key.pem
+                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/pki/tls/nginx/cert.pem
+                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/pki/tls/nginx/key.pem
+                        systemctl reload nginx
+                      fi
                     fi
                   fi
                 fi
@@ -1734,7 +1756,9 @@ Resources:
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                dnf remove -q -y awscli
+                dnf remove -q -y awscli awscli2
+                # Removing awscli may remove python3-docutils
+                dnf install -q -y python3-docutils
                 sudo snap install aws-cli --classic
                 if [ -e /snap/bin/aws ]; then
                   rm -f /home/ec2-user/update-awscli
@@ -1763,6 +1787,47 @@ Resources:
               ignoreErrors: "true"
         00_dcv_install:
           files:
+            "/opt/ReverseProxy":
+              content: !Sub |
+                # 
+                server {                      
+                  # HTTPS
+                  listen 443 ssl http2 default_server;
+                  listen [::]:443 ssl http2 default_server;
+                  server_name  _;
+
+                  ssl_certificate "/etc/pki/tls/nginx/cert.pem";
+                  ssl_certificate_key "/etc/pki/tls/nginx/key.pem";
+
+                  ssl_protocols TLSv1.3;
+                  ssl_prefer_server_ciphers on;
+
+                  ssl_session_cache shared:SSL:1m;
+                  ssl_session_timeout  10m;
+
+                  location / {
+                    proxy_pass https://localhost:${listenPort};
+                    proxy_redirect https://localhost:${listenPort} $scheme://$http_host/;
+
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade $http_upgrade;
+                    proxy_set_header Connection "upgrade";
+
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+
+                    proxy_buffering off;
+                    
+                    client_max_body_size 20M;
+                    proxy_read_timeout 10m;
+                    proxy_send_timeout 10m;
+                  }
+                }
+              mode: "000644"
+              owner: "root"
+              group: "root"
             "/root/install-dcv.sh":
               content: !Sub |
                 #!/bin/bash
@@ -1825,6 +1890,37 @@ Resources:
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
+
+                # Nginx reverse proxy to DCV
+                if [ "${installReverseProxy}" = "Yes" ]; then
+                  dnf install -q -y nginx
+                  systemctl enable nginx
+                  cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf."`date +"%Y-%m-%d"`"
+
+                  # enable sites-enabled and sites-available folders
+                  mkdir -p /etc/nginx/sites-enabled
+                  mkdir -p /etc/nginx/sites-available
+
+                  # nginx.conf: comment out http site
+                  sed -i "37,54s/^/##/g" /etc/nginx/nginx.conf
+                  sed -i "/^http/a \    \include /etc/nginx/sites-enabled/*;" /etc/nginx/nginx.conf
+
+                  # dummy HTTPS cert
+                  mkdir -p /etc/pki/tls/nginx
+                  openssl req -x509 -newkey rsa:2048 -keyout /etc/pki/tls/nginx/key.pem -out /etc/pki/tls/nginx/cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=State/L=City/O=Company/OU=Dept/CN=Host"
+
+                  # HTTPS proxy
+                  mv /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
+                  ln -s /etc/nginx/sites-available/ReverseProxy /etc/nginx/sites-enabled/ReverseProxy
+
+                  # SELINUX
+                  dnf install -q -y policycoreutils
+                  setsebool -P httpd_can_network_connect 1
+
+                  systemctl enable --now nginx
+                else
+                  rm -f /opt/ReverseProxy
+                fi
 
                 rm -f ${!0}
               mode: "000740"
@@ -2213,6 +2309,13 @@ Outputs:
     Description: DCV URL (login as ec2-user)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}/?username=ec2-user     ( dcv://ec2-user:@${IpAddress}:${listenPort} )"
+      - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
+
+  ReverseProxyURL:
+    Condition: installReverseProxy
+    Description: DCV Reverse Proxy URL (login as ec2-user)
+    Value: !Sub
+      - "https://${IpAddress}/?username=ec2-user     ( dcv://ec2-user:@${IpAddress}:443 )"
       - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
 
   DCVUrlAGA:
