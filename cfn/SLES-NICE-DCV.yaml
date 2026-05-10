@@ -91,7 +91,7 @@ Metadata:
         default: "Enable EC2 termination protection to prevent accidental deletion"
 
       sessionType:
-        default: "DCV session type"
+        default: "DCV session type and GPU driver"
       listenPort:
         default: "TCP/UDP listen port"
 
@@ -178,6 +178,8 @@ Parameters:
     AllowedValues:
       - "virtual"
       - "console"
+      - "console-with-NVIDIA_repo_Driver"
+      - "virtual-with-NVIDIA_repo_Driver"
     Default: "virtual"
   listenPort:
     Type: Number
@@ -185,6 +187,13 @@ Parameters:
     MinValue: 1024
     MaxValue: 65535
     Default: 8443
+  installReverseProxy:
+    Type: String
+    Description: Reverse web proxy on port 443
+    AllowedValues:
+      - "Yes"
+      - "No"
+    Default: "No"
 
   vpcID:
     Type: AWS::EC2::VPC::Id
@@ -676,7 +685,8 @@ Conditions:
   hasEIC: !Not [!Equals [!FindInMap [EICprefixMap, !Ref AWS::Region, IpPrefix, {DefaultValue: 127.0.0.1/32}], 127.0.0.1/32]]
   createSgEIC: !And [!Condition hasEIC, !Condition displayPublicIP]
   createSgHTTP: !Or [!Equals [!Ref allowWebServerPorts, HTTP], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]
-  createSgHTTPS: !Or [!Equals [!Ref allowWebServerPorts, HTTPS], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]
+  installReverseProxy: !Equals [!Ref installReverseProxy, "Yes"]
+  createSgHTTPS: !Or [!Condition installReverseProxy, !Or [!Equals [!Ref allowWebServerPorts, HTTPS], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]]
   hasCFprefix: !Not [!Equals [!FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList, {DefaultValue: pl-none}], pl-none]]
   createCFsgHTTP: !And [!Condition createCloudFront, !Condition hasCFprefix]
 
@@ -1428,6 +1438,12 @@ Resources:
             - 00_dcv_install
           console:
             - 01_console
+          dcv_gpu_install:
+            - 02_dcv_gpu_install
+          console-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
+          virtual-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
         00_setup:
           # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -1541,6 +1557,14 @@ Resources:
                 fi
 
                 SESSION="${sessionType}"
+                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
+                SESSION="${sessionType}"
+                case $SESSION in
+                  console-*-NVIDIA*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
+                esac
+
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
                   console*)
@@ -1553,6 +1577,23 @@ Resources:
                 esac
                 systemctl enable dcvserver && systemctl restart dcvserver
 
+                # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+                if ( which nvidia-smi ); then
+                  if ( which docker ); then
+                    zypper -n install -y nvidia-container-toolkit
+                    nvidia-ctk runtime configure --runtime=docker
+                    systemctl restart docker
+                  fi
+                fi
+
+                # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Solution-NVIDIA-GPU-On-EC2.html
+                if ( which nvidia-smi ); then
+                  systemctl stop amazon-cloudwatch-agent
+                  /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json -s
+                  systemctl restart amazon-cloudwatch-agent
+                else
+                  rm -f /opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json
+                fi
 
                 # IP address cert
                 if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
@@ -1573,12 +1614,22 @@ Resources:
 
                       # post cert renewal hook
                       mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/deploy/
+
+                      # HTTPS reverse proxy
+                      if [ "${installReverseProxy}" = "Yes" ]; then
+                        rm -f /etc/pki/tls/nginx/cert.pem
+                        rm -f /etc/pki/tls/nginx/key.pem
+                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/fullchain.pem /etc/pki/tls/nginx/cert.pem
+                        ln -s -f /etc/letsencrypt/live/$IP_ADDR/privkey.pem /etc/pki/tls/nginx/key.pem
+                        systemctl reload nginx
+                      fi
                     fi
                   fi
                 fi
                 if [ -f "/opt/dcv-renew-cert.sh" ]; then
                   rm /opt/dcv-renew-cert.sh
                 fi
+
                 $CFN_SIGNAL -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
 
                 rm -f /etc/systemd/system/dcv-post-reboot.service
@@ -1635,6 +1686,44 @@ Resources:
               mode: "000644"
               owner: "root"
               group: "root"
+            "/opt/aws/amazon-cloudwatch-agent/bin/nvidia-config.json":
+              content: |
+                {
+                    "agent": {
+                        "metrics_collection_interval": 300,
+                        "run_as_user": "root"
+                    },
+                    "metrics": {
+                        "namespace": "CWAgent",
+                        "append_dimensions": {
+                            "InstanceId": "${aws:InstanceId}"
+                        },
+                        "metrics_collected": {
+                            "mem": {
+                                "measurement": [
+                                    "used_percent"
+                                ]
+                            },
+                            "disk": {
+                                "measurement": [
+                                    "used_percent"
+                                ],
+                                "resources": [
+                                    "/"
+                                ]
+                            },
+                            "nvidia_gpu": {
+                                "measurement": [
+                                    "utilization_gpu",
+                                    "memory_used"
+                                ]
+                            }
+                        }
+                    }
+                }
+              mode: "000644"
+              owner: "root"
+              group: "root"
             "/root/install-sw.sh":
               content: !Sub |
                 #!/bin/bash
@@ -1669,7 +1758,7 @@ Resources:
                 fi
 
                 # Kernel headers for GPU and USB remotization
-                zypperinstall -y kernel-devel
+                zypper -n install -y kernel-default-devel
                 zypper -n install -y usbutils
 
                 # USB remotization: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-usb-remote.html
@@ -1764,6 +1853,48 @@ Resources:
               ignoreErrors: "true"
         00_dcv_install:
           files:
+            "/opt/ReverseProxy":
+              content: !Sub |
+                # 
+                server {                      
+                  # HTTPS
+                  listen 443 ssl http2 default_server;
+                  listen [::]:443 ssl http2 default_server;
+
+                  server_name  _;
+
+                  ssl_certificate "/etc/pki/tls/nginx/cert.pem";
+                  ssl_certificate_key "/etc/pki/tls/nginx/key.pem";
+
+                  ssl_protocols TLSv1.3;
+                  ssl_prefer_server_ciphers on;
+
+                  ssl_session_cache shared:SSL:1m;
+                  ssl_session_timeout  10m;
+
+                  location / {
+                    proxy_pass https://localhost:${listenPort};
+                    proxy_redirect https://localhost:${listenPort} $scheme://$http_host/;
+
+                    proxy_http_version 1.1;
+                    proxy_set_header Upgrade $http_upgrade;
+                    proxy_set_header Connection "upgrade";
+
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+
+                    proxy_buffering off;
+                    
+                    client_max_body_size 20M;
+                    proxy_read_timeout 10m;
+                    proxy_send_timeout 10m;
+                  }
+                }
+              mode: "000644"
+              owner: "root"
+              group: "root"
             "/root/install-dcv.sh":
               content: !Sub |
                 #!/bin/bash
@@ -1815,7 +1946,7 @@ Resources:
 
                 # glxinfo : https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-tools
                 zypper -n install -y Mesa-demo-x
-                zypper -n install -y libva2 libva-drm2 libva-utils
+                zypper -n install -y vulkan-tools
 
                 # QUIC: https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
                 cp /etc/dcv/dcv.conf /etc/dcv/dcv.conf."`date +"%Y-%m-%d"`"
@@ -1834,6 +1965,33 @@ Resources:
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
+
+                # Nginx reverse proxy to DCV
+                if [ "${installReverseProxy}" = "Yes" ]; then
+                  zypper -n install -y nginx
+                  systemctl enable nginx
+                  cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf."`date +"%Y-%m-%d"`"
+
+                  # enable sites-enabled and sites-available folders
+                  mkdir -p /etc/nginx/sites-enabled
+                  mkdir -p /etc/nginx/sites-available
+
+                  # nginx.conf: comment out http site
+                  sed -i "47,91s/^/##/g" /etc/nginx/nginx.conf
+                  sed -i "/^http/a \    \include /etc/nginx/sites-enabled/*;" /etc/nginx/nginx.conf
+
+                  # dummy HTTPS cert
+                  mkdir -p /etc/pki/tls/nginx
+                  openssl req -x509 -newkey rsa:2048 -keyout /etc/pki/tls/nginx/key.pem -out /etc/pki/tls/nginx/cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=State/L=City/O=Company/OU=Dept/CN=Host"
+
+                  # HTTPS proxy
+                  mv /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
+                  ln -s /etc/nginx/sites-available/ReverseProxy /etc/nginx/sites-enabled/ReverseProxy
+
+                  systemctl enable --now nginx
+                else
+                  rm -f /opt/ReverseProxy
+                fi
 
                 rm -f ${!0}
               mode: "000740"
@@ -1874,6 +2032,78 @@ Resources:
                     EndSubSection
                 EndSection
               mode: "000644"
+              owner: "root"
+              group: "root"
+        02_dcv_gpu_install:
+          files:
+            "/etc/systemd/system/dcv-gpu-install.service":
+              content: |
+                [Unit]
+                Description=Install GPU driver
+                After=default.target network.target
+
+                [Service]
+                ExecStart=/bin/sh -c "/opt/install-gpu-driver 2>&1 | tee -a /var/log/install-gpu-driver.log"
+
+                [Install]
+                WantedBy=default.target
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/root/install-gpu-sw.sh":
+              content: !Sub |
+                #!/bin/bash
+
+                rm -f ${!0}
+              mode: "000740"
+              owner: "root"
+              group: "root"
+          commands:
+            install:
+              command: "/root/install-gpu-sw.sh > /var/log/install-gpu-driver.log 2>&1"
+              ignoreErrors: "true"
+        05_gpu_nvidia_repo_install:
+          files:
+            # https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/suse.html
+            "/opt/install-gpu-driver":
+              content: |
+                #!/bin/bash
+                mkdir -p /tmp/gpu
+                cd /tmp/gpu
+
+                DISTRO=$(. /etc/os-release;echo sles$VERSION_ID | sed -e 's/\..*//g')
+                if (arch | grep -q x86); then
+                  ARCH=x86_64
+                else
+                  ARCH=sbsa
+                fi
+                zypper addrepo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
+                zypper -n --gpg-auto-import-keys refresh
+
+                # Need NVIDIA's dkms which is newer at 3.4.0
+                zypper -n remove -y dkms
+
+                zypper -n install -y nvidia-open
+                zypper -n install -y nvidia-settings
+                zypper -n install -y nvidia-xconfig
+
+                # P instance: https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/
+                if ( ec2metadata --instance-type | grep -q " p[0-9]" ); then
+                  zypper -n install -y nvidia-fabricmanager libnvidia-nscq libnvsdm nvidia-imex
+                  if ( ec2metadata --instance-type | grep -q " p[6-9]" ); then
+                    zypper -n install -y nvlsm
+                    zypper -n install -y nvlink5
+                    echo "ib_umad" | tee -a /etc/modules-load.d/modules.conf
+                    modprobe ib_umad
+                  fi
+                  systemctl enable --now nvidia-fabricmanager
+                fi
+
+                systemctl enable dcv-post-reboot
+                rm -f /etc/systemd/system/dcv-gpu-install.service
+                rm -f ${0}
+                reboot
+              mode: "000755"
               owner: "root"
               group: "root"
     Properties:
@@ -1958,6 +2188,18 @@ Resources:
           systemctl set-default multi-user.target
           systemctl daemon-reload
           systemctl enable dcv-post-reboot
+
+          export SESSION="${sessionType}"
+          case $SESSION in
+            *NVIDIA*) # install GPU driver after reboot
+              systemctl disable dcv-post-reboot
+
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
+              $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c $SESSION
+              systemctl daemon-reload
+              systemctl enable dcv-gpu-install
+              ;;
+          esac
 
           # enable back IPv6
           #sysctl -w net.ipv6.conf.all.disable_ipv6=0
@@ -2232,6 +2474,13 @@ Outputs:
     Description: DCV URL (login as ec2-user)
     Value: !Sub
       - "https://${IpAddress}:${listenPort}/?username=ec2-user     ( dcv://ec2-user:@${IpAddress}:${listenPort} )"
+      - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
+
+  ReverseProxyURL:
+    Condition: installReverseProxy
+    Description: DCV Reverse Proxy URL (login as ec2-user)
+    Value: !Sub
+      - "https://${IpAddress}/?username=ec2-user     ( dcv://ec2-user:@${IpAddress}:443 )"
       - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
 
   DCVUrlAGA:
