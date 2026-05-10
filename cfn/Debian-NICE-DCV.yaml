@@ -188,10 +188,10 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
     AllowedValues:
       - "virtual"
+      - "console"
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
-      - "console"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
@@ -1642,10 +1642,10 @@ Resources:
                   *GPU_sharing*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
-                  console-with-NVIDIA_GRID_Driver)
+                  console-*-NVIDIA_GRID*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
                     ;;
-                  console-with-NVIDIA*)
+                  console-*-NVIDIA*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
@@ -2296,6 +2296,7 @@ Resources:
                 curl -s -L -O https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-keyring_1.1-1_all.deb
                 apt-get install -q -y ./cuda-keyring_1.1-1_all.deb
                 apt-get update -q
+
                 apt-get install -q -y nvidia-open
                 apt-get install -q -y nvidia-settings
                 apt-get install -q -y nvidia-xconfig
@@ -2373,10 +2374,10 @@ Resources:
           useDebian13x86,
           "{{resolve:ssm:/aws/service/debian/release/13/latest/amd64}}",
           !If [
-              useDebian13arm64,
-              "{{resolve:ssm:/aws/service/debian/release/13/latest/arm64}}",
-              !If [useDebian12x86, "{{resolve:ssm:/aws/service/debian/release/12/latest/amd64}}", "{{resolve:ssm:/aws/service/debian/release/12/latest/arm64}}"]
-            ]
+            useDebian13arm64,
+            "{{resolve:ssm:/aws/service/debian/release/13/latest/arm64}}",
+            !If [useDebian12x86, "{{resolve:ssm:/aws/service/debian/release/12/latest/amd64}}", "{{resolve:ssm:/aws/service/debian/release/12/latest/arm64}}"]
+          ]
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile

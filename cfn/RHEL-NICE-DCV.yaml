@@ -186,11 +186,11 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
     AllowedValues:
       - "virtual"
+      - "console"
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
-      - "console"
       - "virtual-with-NVIDIA_GRID_Driver"
       - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
@@ -1655,10 +1655,10 @@ Resources:
                   *GPU_sharing*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
-                  console-with-NVIDIA_GRID_Driver)
+                  console-*-NVIDIA_GRID*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
                     ;;
-                  console-with-NVIDIA*)
+                  console-*-NVIDIA*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
@@ -1904,7 +1904,9 @@ Resources:
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                dnf remove -q -y awscli
+                dnf remove -q -y awscli awscli2
+                # Removing awscli may remove python3-docutils
+                dnf install -q -y python3-docutils
                 sudo snap install aws-cli --classic
                 if [ -e /snap/bin/aws ]; then
                   rm -f /home/ec2-user/update-awscli
@@ -2055,7 +2057,6 @@ Resources:
                   # enable sites-enabled and sites-available folders
                   mkdir -p /etc/nginx/sites-enabled
                   mkdir -p /etc/nginx/sites-available
-                  cp /etc/nginx/nginx.conf /etc/nginx/sites-available/default
 
                   # nginx.conf: comment out http site
                   sed -i "37,54s/^/##/g" /etc/nginx/nginx.conf
@@ -2067,11 +2068,6 @@ Resources:
                   # dummy HTTPS cert
                   mkdir -p /etc/pki/tls/nginx
                   openssl req -x509 -newkey rsa:2048 -keyout /etc/pki/tls/nginx/key.pem -out /etc/pki/tls/nginx/cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=State/L=City/O=Company/OU=Dept/CN=Host"
-
-                  # build sites-available/default
-                  sed -i "1,36s/^/#/g" /etc/nginx/sites-available/default
-                  sed -i "80s/^#//g" /etc/nginx/sites-available/default
-                  cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default."`date +"%Y-%m-%d"`"
 
                   # HTTPS proxy
                   mv /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
@@ -2360,19 +2356,18 @@ Resources:
               owner: "root"
               group: "root"
     Properties:
-      ImageId:
-        !If [
+      ImageId: !If [
           useRhel8x86,
           "{{resolve:ssm:/aws/service/marketplace/prod-aht4stwdth2ls/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-kv5mi3ksb2mma
           !If [
-              useRhel8arm64,
-              "{{resolve:ssm:/aws/service/marketplace/prod-ly3mqgzc5ajak/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-fvgsywc5jqlkw
-              !If [
-                  useRhel9x86,
-                  "{{resolve:ssm:/aws/service/marketplace/prod-zajqq6vxyggys/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-b5psjqk4f5f3k
-                  "{{resolve:ssm:/aws/service/marketplace/prod-xtovizizqqkn4/latest}}"
-                ] # https://aws.amazon.com/marketplace/pp/prodview-jugq2ewzbalue
-            ]
+            useRhel8arm64,
+            "{{resolve:ssm:/aws/service/marketplace/prod-ly3mqgzc5ajak/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-fvgsywc5jqlkw
+            !If [
+              useRhel9x86,
+              "{{resolve:ssm:/aws/service/marketplace/prod-zajqq6vxyggys/latest}}", # https://aws.amazon.com/marketplace/pp/prodview-b5psjqk4f5f3k
+              "{{resolve:ssm:/aws/service/marketplace/prod-xtovizizqqkn4/latest}}"
+            ] # https://aws.amazon.com/marketplace/pp/prodview-jugq2ewzbalue
+          ]
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
@@ -2435,7 +2430,7 @@ Resources:
           systemctl enable --now amazon-ssm-agent
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
-          dnf install -q -y python3 python3-pip python3-setuptools
+          dnf install -q -y python3 python3-pip python3-setuptools python3-docutils
           curl -s -L -O https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz
           tar -xf aws-cfn-bootstrap-py3-latest.tar.gz
           cd aws-cfn-bootstrap-2.0

@@ -1670,20 +1670,21 @@ Resources:
                 # Use NVIDIA for console and virtual (x86_64)
                 SESSION="${sessionType}"
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+
                 case $SESSION in
-                  console*)
-                    if (which nvidia-xconfig); then
-                      nvidia-xconfig --preserve-busid --enable-all-gpus
-                    fi
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
                   *GPU_sharing*)
                     if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then  # GPU sharing
                       nvidia-xconfig --preserve-busid --enable-all-gpus
                       systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
                     fi
                     systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                  console*)
+                    if (which nvidia-xconfig); then
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                    fi
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
                     ;;
                   virtual*)
                     systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session

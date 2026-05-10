@@ -1681,20 +1681,21 @@ Resources:
 
                 SESSION="${sessionType}"
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+
                 case $SESSION in
-                  console*)
-                    if (which nvidia-xconfig); then
-                      nvidia-xconfig --preserve-busid --enable-all-gpus
-                    fi
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
                   *GPU_sharing*)
                     if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then  # GPU sharing
                       nvidia-xconfig --preserve-busid --enable-all-gpus
                       systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
                     fi
                     systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
+                  console*)
+                    if (which nvidia-xconfig); then
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                    fi
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
                     ;;
                   virtual*)
                     systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
@@ -2079,7 +2080,6 @@ Resources:
                   # enable sites-enabled and sites-available folders
                   mkdir -p /etc/nginx/sites-enabled
                   mkdir -p /etc/nginx/sites-available
-                  cp /etc/nginx/nginx.conf /etc/nginx/sites-available/default
 
                   # nginx.conf: comment out http site
                   sed -i "37,54s/^/##/g" /etc/nginx/nginx.conf
@@ -2088,11 +2088,6 @@ Resources:
                   # dummy HTTPS cert
                   mkdir -p /etc/pki/tls/nginx
                   openssl req -x509 -newkey rsa:2048 -keyout /etc/pki/tls/nginx/key.pem -out /etc/pki/tls/nginx/cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=State/L=City/O=Company/OU=Dept/CN=Host"
-
-                  # build sites-available/default
-                  sed -i "1,36s/^/#/g" /etc/nginx/sites-available/default
-                  sed -i "80s/^#//g" /etc/nginx/sites-available/default
-                  cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default."`date +"%Y-%m-%d"`"
 
                   # HTTPS proxy
                   mv /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy

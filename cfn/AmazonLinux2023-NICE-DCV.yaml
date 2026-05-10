@@ -188,12 +188,12 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
     AllowedValues:
       - "virtual"
+      - "console"
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_repo_Driver"
       - "console-with-AL2023_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
-      - "console"
       - "virtual-with-NVIDIA_GRID_Driver"
       - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-AL2023_repo_Driver"
@@ -1518,9 +1518,9 @@ Resources:
             - 02_dcv_gpu_install
           console-with-NVIDIA_GRID_Driver:
             - 03_gpu_nvidia_grid_install
-          virtual-with-NVIDIA_GRID_Driver-GPU_sharing:
-            - 03_gpu_nvidia_grid_install
           virtual-with-NVIDIA_GRID_Driver:
+            - 03_gpu_nvidia_grid_install
+          virtual-with-NVIDIA_GRID_Driver-GPU_sharing:
             - 03_gpu_nvidia_grid_install
           console-with-NVIDIA_Gaming_Driver:
             - 04_gpu_nvidia_gaming_install
@@ -1661,13 +1661,13 @@ Resources:
                   *GPU_sharing*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
-                  console-with-NVIDIA_GRID_Driver)
+                  console-*-NVIDIA_GRID*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
                     ;;
-                  console-with-NVIDIA*)
+                  console-*-NVIDIA*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
-                  console-with-AL2023*)
+                  console-*-AL2023*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
@@ -2094,7 +2094,6 @@ Resources:
                   # enable sites-enabled and sites-available folders
                   mkdir -p /etc/nginx/sites-enabled
                   mkdir -p /etc/nginx/sites-available
-                  cp /etc/nginx/nginx.conf /etc/nginx/sites-available/default
 
                   # nginx.conf: comment out http site
                   sed -i "37,54s/^/##/g" /etc/nginx/nginx.conf
@@ -2104,11 +2103,6 @@ Resources:
                   mkdir -p /etc/pki/tls/nginx
                   openssl req -x509 -newkey rsa:2048 -keyout /etc/pki/tls/nginx/key.pem -out /etc/pki/tls/nginx/cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=State/L=City/O=Company/OU=Dept/CN=Host"
 
-                  # build sites-available/default
-                  sed -i "1,36s/^/#/g" /etc/nginx/sites-available/default
-                  sed -i "80s/^#//g" /etc/nginx/sites-available/default
-                  cp /etc/nginx/sites-available/default /etc/nginx/sites-available/default."`date +"%Y-%m-%d"`"
-
                   # HTTPS proxy
                   mv /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
                   ln -s /etc/nginx/sites-available/ReverseProxy /etc/nginx/sites-enabled/ReverseProxy
@@ -2117,7 +2111,6 @@ Resources:
                 else
                   rm -f /opt/ReverseProxy
                 fi
-
 
                 rm -f ${!0}
               mode: "000740"
@@ -2426,18 +2419,22 @@ Resources:
           useAl2023arm64k61,
           "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-arm64}}",
           !If [
-              useAl2023arm64k612,
-              "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-arm64}}",
+            useAl2023arm64k612,
+            "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-arm64}}",
+            !If [
+              useAl2023arm64k618,
+              "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.18-arm64}}",
               !If [
-                  useAl2023arm64k618,
-                  "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.18-arm64}}",
-                  !If [
-                      useAl2023x86k61,
-                      "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}",
-                      !If [useAl2023x86k612, "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-x86_64}}", "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.18-x86_64}}"]
-                    ]
+                useAl2023x86k61,
+                "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64}}",
+                !If [
+                  useAl2023x86k612,
+                  "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.12-x86_64}}",
+                  "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.18-x86_64}}"
                 ]
+              ]
             ]
+          ]
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile

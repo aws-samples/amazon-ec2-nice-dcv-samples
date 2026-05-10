@@ -198,12 +198,12 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
     AllowedValues:
       - "virtual"
+      - "console"
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_repo_Driver"
       - "console-with-Ubuntu_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
-      - "console"
       - "virtual-with-NVIDIA_GRID_Driver"
       - "virtual-with-NVIDIA_repo_Driver"
       - "virtual-with-Ubuntu_repo_Driver"
@@ -1677,13 +1677,13 @@ Resources:
                   *GPU_sharing*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
-                  console-with-NVIDIA_GRID_Driver)
+                  console-*-NVIDIA_GRID*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
                     ;;
-                  console-with-NVIDIA*)
+                  console-*-NVIDIA*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
-                  console-with-Ubuntu*)
+                  console-*-Ubuntu*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
@@ -1861,7 +1861,7 @@ Resources:
               group: "root"
             "/etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf":
               content: |
-                
+
                 [Service]
                 ExecStart=
                 ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --timeout=3
@@ -2525,54 +2525,54 @@ Resources:
           useUbuntu2404x86,
           "{{resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
           !If [
-              useUbuntu2404arm64,
-              "{{resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
+            useUbuntu2404arm64,
+            "{{resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
+            !If [
+              useUbuntu2204x86,
+              "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
               !If [
-                  useUbuntu2204x86,
-                  "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                useUbuntu2204arm64,
+                "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                !If [
+                  useUbuntu2004x86,
+                  "{{resolve:ssm:/aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
                   !If [
-                      useUbuntu2204arm64,
-                      "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                    useUbuntu1804x86,
+                    "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                    !If [
+                      useUbuntu1804arm64,
+                      "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
                       !If [
-                          useUbuntu2004x86,
-                          "{{resolve:ssm:/aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                        useUbuntuPro2404x86,
+                        "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
+                        !If [
+                          useUbuntuPro2404arm64,
+                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
                           !If [
-                              useUbuntu1804x86,
-                              "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                            useUbuntuPro2204x86,
+                            "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                            !If [
+                              useUbuntuPro2204arm64,
+                              "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
                               !If [
-                                  useUbuntu1804arm64,
-                                  "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
-                                  !If [
-                                      useUbuntuPro2404x86,
-                                      "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
-                                      !If [
-                                          useUbuntuPro2404arm64,
-                                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
-                                          !If [
-                                              useUbuntuPro2204x86,
-                                              "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
-                                              !If [
-                                                  useUbuntuPro2204arm64,
-                                                  "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
-                                                  !If [
-                                                      useUbuntuPro2004x86,
-                                                      "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
-                                                      !If [
-                                                          useUbuntuPro1804x86,
-                                                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
-                                                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}"
-                                                        ]
-                                                    ]
-                                                ]
-                                            ]
-                                        ]
-                                    ]
+                                useUbuntuPro2004x86,
+                                "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                                !If [
+                                  useUbuntuPro1804x86,
+                                  "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                                  "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}"
                                 ]
+                              ]
                             ]
+                          ]
                         ]
+                      ]
                     ]
+                  ]
                 ]
+              ]
             ]
+          ]
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
