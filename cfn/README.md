@@ -61,13 +61,13 @@ In most cases, the default values are sufficient. You will need to specify value
 #### DCV
 
 - `driverType` (Windows) : graphics driver to install
-  - [DCV-IDD](https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2023-1-16220) (Windows Server 2019 or later) : Indirect Display Driver (IDD) that optimizes the graphics pipeline for higher frame rates and significantly reduces overall CPU usage (default)
-  - [DCV](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)
-  - [NVIDIA-GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html) ([G7e](https://aws.amazon.com/ec2/instance-types/g7e/), [G6, G6f, Gr6, Gr6f](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : for professional visualization applications
-  - [NVIDIA-Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html) ([G7e](https://aws.amazon.com/ec2/instance-types/g7e/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances)  instance) : contain optimizations for gaming
-  - [NVIDIA-Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance) : for compute workloads. Windows graphics will be handled by IDD driver
+  - [`DCV-IDD`](https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2023-1-16220) (default) : Indirect Display Driver (IDD) that optimizes the graphics pipeline for higher frame rates and significantly reduces overall CPU usage
+  - [`DCV`](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) (Windows Server 2016)
+  - [`NVIDIA-GRID`](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html) ([G7e](https://aws.amazon.com/ec2/instance-types/g7e/), [G6, G6f, Gr6, Gr6f](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : for professional visualization applications
+  - [`NVIDIA-Gaming`](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html) ([G7e](https://aws.amazon.com/ec2/instance-types/g7e/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances)  instance) : contain optimizations for gaming
+  - [`NVIDIA-Tesla`](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#public-nvidia-driver) ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance) : for compute workloads. Windows graphics will be handled by IDD driver
     - Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install.
-  - [AMD](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
+  - [`AMD`](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver) ([G4ad](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4ad_instances) instance)
   - `none` : do not install any driver
 
 *IDD, DCV and NVIDIA GRID driver [supports](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-general) custom display resolution, up to four monitors and 4K resolution.*
@@ -76,9 +76,9 @@ In most cases, the default values are sufficient. You will need to specify value
   
 *If GPU driver installation does not work, you can select `DCV-IDD` or `none` option, and install driver manually. Refer to [Prerequisites for accelerated computing instances](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-graphics) for GPU driver installation and configuration guidance.*
 
-- `sessionType` (Linux) : `virtual` (default) or `console` [session type](#console-and-virtual-sessions). Virtual sessions support custom resolution, [multi-screen](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html) across up to [four monitors](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-num-heads), and up to [4K resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-head-resolution) per display.
-    [GPU driver installation](#gpu-linux-instances) option may be available for some Linux OSs
-([AlmaLinux](AlmaLinux-NICE-DCV.yaml),  [Amazon Linux 2023](AmazonLinux2023-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [Rocky Linux](RockyLinux-NICE-DCV.yaml), [Ubuntu](Ubuntu-NICE-DCV.yaml)) as follows:
+- `sessionType` (Linux) : [session type](#console-and-virtual-sessions) and [GPU driver installation](#gpu-linux-instances) option
+  - `virtual`(default) or `virtual*`: uses dedicated X server instance, `Xdcv`, and runs a desktop environment inside the X server. Virtual session supports [multi-screen](https://docs.aws.amazon.com/dcv/latest/userguide/using-multiple-screens.html) across up to [four monitors](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-num-heads), and up to [4K resolution](https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#paramref.display.max-head-resolution). [Multiple virtual sessions](#multiple-virtual-sessions) are allowed on a single DCV server
+  - `console*`: DCV captures content of desktop screen which is normally rendered by X server (Xorg)
   - `*-with-NVIDIA_GRID_Driver` ([G7e](https://aws.amazon.com/ec2/instance-types/g7e/), [G6, G6f, Gr6, Gr6f](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html) driver ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode)
   - `console-with-NVIDIA_Gaming_Driver` ([G7e](https://aws.amazon.com/ec2/instance-types/g7e/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : install [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html) driver
   - `*-with-NVIDIA_repo_Driver` ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance, e.g. [P4](https://aws.amazon.com/ec2/instance-types/p4/), [G5g](https://aws.amazon.com/ec2/instance-types/g5g/)) : install latest [NVIDIA Tesla](https://docs.nvidia.com/datacenter/tesla/) (also know as NVIDIA Data Center GPU) driver from [NVIDIA repository](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#package-manager-installation). Refer to [NVIDIA Driver Installation Guide](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/introduction.html) for supported OS (`$distro`) and architecture (`$arch`)
@@ -87,7 +87,9 @@ In most cases, the default values are sufficient. You will need to specify value
   - `*-with-NVIDIA_runfile_Driver` (NVIDIA [GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)) : install NVIDIA Tesla driver using [runfile installer](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile-installation) from [driver downloads](https://www.nvidia.com/Download/Find.aspx).
     - Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
   - `virtual-with-*-GPU_Sharing` (x86_64 NVIDIA [GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)) :  install NVIDIA drivers with [GPU sharing](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html) enabled
-  
+
+*Templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` session, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types.*
+
 *Due to various combinations of drivers, OSs and instance types, GPU driver installation may not work. You can [troubleshoot](#troubleshooting) the installation, or select `console` or `virtual` option to install driver manually. Refer to [Prerequisites for Linux DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) for GPU driver installation and configuration guidance.*
 
 - `teslaDriverVersion` (where applicable) : [Tesla driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install when `NVIDIA-Tesla` or `*-NVIDIA_runfile_Driver` option is selected
@@ -267,6 +269,8 @@ Refer to [DLAMI Developer Guide](https://docs.aws.amazon.com/dlami/latest/devgui
 
 ## About Linux templates
 
+### Login user name
+
 The login user name depends on Linux distributions as follows:
 
 - [AlmaLinux](AlmaLinux-NICE-DCV.yaml), [Amazon Linux 2](AmazonLinux2-NICE-DCV.yaml),  [Amazon Linux 2023](AmazonLinux2023-NICE-DCV.yaml), [CentOS Stream 9](CentOSstream9-NICE-DCV.yaml), [RHEL](RHEL-NICE-DCV.yaml), [SLES](SLES-NICE-DCV.yaml) : ec2-user
@@ -277,17 +281,7 @@ The login user name depends on Linux distributions as follows:
 - [Rocky Linux](RockyLinux-NICE-DCV.yaml) : rocky
 - [Ubuntu, Ubuntu Pro](Ubuntu-NICE-DCV.yaml) : ubuntu
 
-### Console and virtual sessions
-
-DCV offers [console and virtual sessions](https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html) on Linux OS.
-
-With console sessions  (`console`, `console-with-*`), DCV directly captures the content of the desktop screen. Only one console session can be hosted at a time.
-
-With virtual sessions (`virtual`, `virtual-with-*`), DCV starts an X server instance, `Xdcv`, and runs a desktop environment inside the X server. Amazon DCV starts a new dedicated X server instance for each virtual session. Multiple virtual sessions are allowed on a single DCV server.
-
-The CloudFormation templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` session, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types.
-
-#### Multiple virtual sessions
+### Multiple virtual sessions
 
 To configure multiple virtual sessions, create additional user (e.g. `newuser`), append user name to `/opt/dcv/dcv-users.txt`, and set a strong password
 
@@ -302,25 +296,25 @@ sudo passwd $USER
 To verify that the virtual sessions have been created
 
 ```
-sudo cat /opt/dcv/dcv-users.txt
 sudo dcv list-sessions
 ```
 
-### GPU Linux instances
+### GPU instances
 
-On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) with drivers [installed](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) (`*-with-NVIDIA-*`), DCV (`/usr/libexec/dcv/dcvagent`) can use GPU for hardware based video streaming encoding. Console sessions have direct access to GPU accelerated OpenCL, OpenGL, and Vulkan graphics as illustrated in `nvidia-smi` screen shot below
+On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) with GPU drivers [installed](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) (`*-with-NVIDIA-*`), DCV (`dcvagent`) can use GPU for hardware based video streaming encoding. Template [configures](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#gpu-nvidia) Xorg console sessions direct access to GPU accelerated OpenGL graphics as illustrated in `nvidia-smi` screen shot below
 
 <img alternate="DCV server on g4dn with NVIDA GRID drive" src="../images/nice-dcv-nvidia-grid-60fps.png">
 
-#### Display resolution limits
+### Display resolution and multi-screen support
 
-There are limits to display resolution and multi-screen support per GPU for console sessions based on selected `sessionType` option:
+There are limits to display resolution and multi-screen support for Xorg console sessions depending on `sessionType` option:
 
-- Tesla driver (`console-with-NVIDIA_repo_Driver`, `console-with-NVIDIA_runfile_Driver`, `console-with-Ubuntu_repo_Driver`) : one display of up to [2560x1600 resolution](https://docs.nvidia.com/datacenter/tesla/tesla-release-notes-565-57-01/index.html#virtualization)
+- `console`: one display of up to 4K resolution. You can [modify](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-nongpu) `/etc/X11/xorg.conf` to support other resolutions and more than one display
+- Tesla driver (`console-with-NVIDIA_repo_Driver`, `console-with-NVIDIA_runfile_Driver`, `console-with-Ubuntu_repo_Driver`, `console-with-AL2023_repo_Driver`) : one display of up to [2560x1600 resolution](https://docs.nvidia.com/datacenter/tesla/tesla-release-notes-580-65-06/index.html#virtualization)
 - Gaming driver (`console-with-NVIDIA_Gaming_Driver`) : one display of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 - GRID driver (`console-with-NVIDIA_GRID_Driver`) : four displays of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 
-You can use virtual session option (`virtual-with-NVIDIA-*`) when using GPU primarily for compute workloads.
+You can use `virtual-with-NVIDIA-*` when using GPU primarily for compute workloads.
 
 ### Installing NVIDIA CUDA Toolkit and other software
 
