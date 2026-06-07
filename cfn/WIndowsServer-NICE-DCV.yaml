@@ -1492,6 +1492,9 @@ Resources:
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-all
                 choco install --no-progress -y vcredist140
 
+                @echo ** disable Microsoft Edge first run experience (https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/hidefirstrunexperience)
+                reg add HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge /v HideFirstRunExperience /t REG_DWORD /d 1 /f
+
                 time /t >> c:\windows\temp\dcv-sw-install.txt
 
                 exit
