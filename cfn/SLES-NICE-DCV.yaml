@@ -180,8 +180,10 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
     AllowedValues:
       - "virtual"
+      - "console-(Xdcv)"
       - "console"
       - "console-with-NVIDIA_repo_Driver"
+      - "console-(Xdcv)-with-NVIDIA_repo_Driver"
       - "virtual-with-NVIDIA_repo_Driver"
     Default: "virtual"
   listenPort:
@@ -1444,11 +1446,17 @@ Resources:
             - 00_dcv_install
           console:
             - 01_console
+          console-(Xdcv):
+            - 01_console
           dcv_gpu_install:
             - 02_dcv_gpu_install
           console-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
+          console-(Xdcv)-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
           virtual-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
+          virtual-with-NVIDIA_repo_Driver-GPU_sharing:
             - 05_gpu_nvidia_repo_install
         00_setup:
           # in the following order: packages, groups, users, sources, files, commands, and then services.
@@ -1566,13 +1574,28 @@ Resources:
                 # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
                 case $SESSION in
+                  *GPU_sharing*)
+                    nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
                   console-*-NVIDIA*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
                     ;;
                 esac
 
+                systemctl isolate multi-user.target
+                case $SESSION in
+                  console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-rhel
+                    systemctl enable --now xdcv-console-update.service
+                    systemctl enable xdcv-console.path
+                    ;;
+                esac
+
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
+                  *GPU_sharing*)
+                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                    ;;
                   console*)
                     systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
                     sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
@@ -1942,6 +1965,9 @@ Resources:
                 zypper -n install -y ./nice-dcv-web-viewer-*.rpm
                 zypper -n install -y ./nice-xdcv-*.rpm
                 zypper -n install -y ./nice-dcv-gltest-*.rpm
+                if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
+                  zypper -n install -y ./nice-dcv-gl-*.rpm
+                fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
                 zypper -n install -y cups

@@ -294,6 +294,7 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
     AllowedValues:
       - "console"
+      - "console-(Xdcv)"
       - "virtual"
       - "virtual-with-GPU_sharing"
     Default: "virtual"
@@ -1573,6 +1574,8 @@ Resources:
             - 00_dcv_install
           console:
             - 01_console
+          console-(Xdcv):
+            - 01_console
         00_setup:
           # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -1673,6 +1676,14 @@ Resources:
                 # Use NVIDIA for console and virtual (x86_64)
                 SESSION="${sessionType}"
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+
+                systemctl isolate multi-user.target
+                case $SESSION in
+                  console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-ubuntu
+                    dpkg-divert --package nice-xdcv --divert /usr/bin/Xorg.orig --rename /usr/bin/Xorg
+                    ln -sf /usr/bin/Xdcv-console /usr/bin/Xorg
+                    ;;
+                esac
 
                 case $SESSION in
                   *GPU_sharing*)

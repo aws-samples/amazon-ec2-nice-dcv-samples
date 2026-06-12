@@ -188,6 +188,7 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
     AllowedValues:
       - "virtual"
+      - "console-(Xdcv)"
       - "console"
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_repo_Driver"
@@ -1506,6 +1507,8 @@ Resources:
             - 00_dcv_install
           console:
             - 01_console
+          console-(Xdcv):
+            - 01_console
           dcv_gpu_install:
             - 02_dcv_gpu_install
           console-with-NVIDIA_GRID_Driver:
@@ -1518,11 +1521,15 @@ Resources:
             - 04_gpu_nvidia_gaming_install
           console-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
+          console-(Xdcv)-with-NVIDIA_repo_Driver:
+            - 05_gpu_nvidia_repo_install
           virtual-with-NVIDIA_repo_Driver:
             - 05_gpu_nvidia_repo_install
           virtual-with-NVIDIA_repo_Driver-GPU_sharing:
             - 05_gpu_nvidia_repo_install
           console-with-NVIDIA_runfile_Driver:
+            - 06_gpu_nvidia_runfile_install
+          console-(Xdcv)-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
           virtual-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
@@ -1640,7 +1647,7 @@ Resources:
                 SESSION="${sessionType}"
                 case $SESSION in
                   virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                    onfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3nvidia-xc
                     ;;
                   *GPU_sharing*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
@@ -1650,6 +1657,14 @@ Resources:
                     ;;
                   console-*-NVIDIA*)
                     nvidia-xconfig --preserve-busid --enable-all-gpus
+                    ;;
+                esac
+
+                systemctl isolate multi-user.target
+                case $SESSION in
+                  console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-ubuntu
+                    dpkg-divert --package nice-xdcv --divert /usr/bin/Xorg.orig --rename /usr/bin/Xorg
+                    ln -sf /usr/bin/Xdcv-console /usr/bin/Xorg
                     ;;
                 esac
 

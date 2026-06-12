@@ -291,6 +291,7 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
     AllowedValues:
       - "console"
+      - "console-(Xdcv)"
       - "virtual"
       - "virtual-with-GPU_sharing"
     Default: "virtual"
@@ -1570,6 +1571,8 @@ Resources:
             - 00_dcv_install
           console:
             - 01_console
+          console-(Xdcv):
+            - 01_console
         00_setup:
           # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -1684,6 +1687,14 @@ Resources:
 
                 SESSION="${sessionType}"
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+
+                systemctl isolate multi-user.target
+                case $SESSION in
+                  console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-al2023
+                    update-alternatives --install /usr/bin/X xdcv /usr/bin/Xdcv-console 11
+                    update-alternatives --set X /usr/bin/Xdcv-console
+                    ;;
+                esac
 
                 case $SESSION in
                   *GPU_sharing*)

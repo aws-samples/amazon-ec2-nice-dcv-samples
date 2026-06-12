@@ -180,6 +180,7 @@ Parameters:
     Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
     AllowedValues:
       - "virtual"
+      - "console-(Xdcv)"
       - "console"
     Default: "virtual"
   listenPort:
@@ -1465,6 +1466,8 @@ Resources:
             - 00_dcv_install
           console:
             - 01_console
+          console-(Xdcv):
+            - 01_console
         00_setup:
           # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -1583,6 +1586,14 @@ Resources:
 
                 # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
+
+                systemctl isolate multi-user.target
+                case $SESSION in
+                  console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-rhel
+                    systemctl enable --now xdcv-console-update.service
+                    systemctl enable xdcv-console.path
+                    ;;
+                esac
 
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 case $SESSION in
