@@ -2520,16 +2520,16 @@ Outputs:
       - "https://${IpAddress}:${listenPort}/?username=ubuntu     ( dcv://ubuntu:@${IpAddress}:${listenPort} )"
       - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
 
-  ReverseProxyURL:
+  DCVhttpsUrl:
     Condition: installReverseProxy
     Description: DCV Reverse Proxy URL (login as ubuntu)
     Value: !Sub
       - "https://${IpAddress}/?username=ubuntu     ( dcv://ubuntu:@${IpAddress}:443 )"
       - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
 
-  DCVUrlAGA:
+  DCVagaUrl:
     Condition: createAGA
-    Description: DCV web browser client through AGA (login as ubuntu)
+    Description: DCV URL through Global Accelerator (login as ubuntu)
     Value: !Sub "https://${aga.DnsName}:${listenPort}/?username=ubuntu    ( dcv://ubuntu:@${aga.DnsName}:${listenPort} )"
 
   SecurityGroup:

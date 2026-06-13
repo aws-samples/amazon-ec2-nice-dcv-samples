@@ -171,7 +171,7 @@ The following URLs are available in **Outputs** section
 
 If `installReverseProxy` is `Yes`
 
-- `reverseProxyURL` : DCV [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) and [native client](https://docs.aws.amazon.com/dcv/latest/userguide/client.html) HTTPS URL
+- `DCVhttpsUrl` : DCV HTTPS reverse proxy URLs
 
 *Reverse proxy does not support QUIC and may not provide optimal user experience*
 
@@ -181,7 +181,7 @@ If `installWebmin` is `Yes`
 
 If `enableAGA` is `Yes`
 
-- `DCVUrlAGA` :  DCV [web browser client](https://docs.aws.amazon.com/dcv/latest/userguide/client-web.html) and [native client](https://docs.aws.amazon.com/dcv/latest/userguide/client.html) URLs through AGA
+- `DCVagaUrl` :  DCV URLs through Global Accelerator
 - `AGAconsole` : Global Accelerator console URL link
 - `AGAipv4Addresses` : IPv4 addresses
 
