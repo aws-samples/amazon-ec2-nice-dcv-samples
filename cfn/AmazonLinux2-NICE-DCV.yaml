@@ -1840,8 +1840,10 @@ Resources:
 
                 /usr/bin/python3.8 -m venv /opt/certbot/
                 # Certbot-apache throws "NoInstallationError('Problem in Augeas installation')" error with python-augeas v1.2.0
+                # pyOpenSSL 26.2.0 remove crypto.X509Extension support, 26.1.0 warns about Python 3.8 support
                 /opt/certbot/bin/pip install --upgrade pip
                 /opt/certbot/bin/pip install python-augeas==1.1.0
+                /opt/certbot/bin/pip install pyOpenSSL==26.0.0
                 /opt/certbot/bin/pip install certbot
                 /opt/certbot/bin/pip install certbot-dns-route53
                 /opt/certbot/bin/pip install certbot-apache
