@@ -1770,7 +1770,7 @@ Resources:
                       chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
                       chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
 
-                      # post cert renewal hook
+                      # certbot deploy hook
                       mv /opt/dcv-renew-cert.sh /etc/letsencrypt/renewal-hooks/deploy/
 
                       # HTTPS reverse proxy
@@ -1805,6 +1805,7 @@ Resources:
                   cp -f /etc/letsencrypt/live/$CERT_FOLDER/privkey.pem /etc/dcv/dcv.key
                   chown dcv /etc/dcv/dcv.pem /etc/dcv/dcv.key
                   chmod 600 /etc/dcv/dcv.pem /etc/dcv/dcv.key
+                  systemctl daemon-reload
                   if (systemctl list-units | grep -q nginx); then
                     systemctl reload nginx
                   fi
