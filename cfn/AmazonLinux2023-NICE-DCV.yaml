@@ -1932,7 +1932,7 @@ Resources:
                 if [ "${installDocker}" = "Yes" ]; then
                   dnf install -q -y docker
                   systemctl enable docker
-                  usermod -aG docker ec2-user
+                  usermod -aG docker $USER
 
                   # docker-compose: https://github.com/amazonlinux/amazon-linux-2023/issues/186
                   mkdir -p /usr/local/lib/docker/cli-plugins
@@ -1941,7 +1941,11 @@ Resources:
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/ec2-user/.bashrc
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/$USER/.bashrc
+
+                # Separate AWS profile to use EC2 metadata: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-metadata.html
+                su - $USER -c "aws configure set --profile EC2 credential_source Ec2InstanceMetadata"
+                su - $USER -c "aws configure set --profile EC2 region ${AWS::Region}"
 
                 # Certbot PIP: https://certbot.eff.org/instructions?ws=other&os=pip
                 # Certbot: https://github.com/amazonlinux/amazon-linux-2023/issues/444
@@ -2060,6 +2064,7 @@ Resources:
 
                 # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
                 dnf groupinstall "Desktop" -y -q
+                dnf install -q -y gnome-software
 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
@@ -2104,10 +2109,13 @@ Resources:
                 # X11 dummy driver for non GPU instance console session
                 dnf install -q -y xorg-x11-drv-dummy
 
+                # User
+                USER=ec2-user
+
                 # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
-                sed -i "/^\[session-management\/automatic-console-session/a owner=\"ec2-user\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
+                sed -i "/^\[session-management\/automatic-console-session/a owner=\"$USER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
                 # Nginx reverse proxy to DCV
                 if [ "${installReverseProxy}" = "Yes" ]; then

@@ -1747,18 +1747,22 @@ Resources:
                   yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
                   yum install -q -y docker-ce
                   systemctl enable docker
-                  usermod -aG docker centos
+                  usermod -aG docker $USER
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
                 yum remove -q -y awscli
                 sudo snap install aws-cli --classic
                 if [ -e /snap/bin/aws ]; then
-                  rm -f /home/centos/update-awscli
+                  rm -f /home/$USER/update-awscli
                 else
-                  /home/centos/update-awscli
+                  /home/$USER/update-awscli
                 fi
                 echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/centos/.bashrc
+
+                # Separate AWS profile to use EC2 metadata: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-metadata.html
+                su - $USER -c "aws configure set --profile EC2 credential_source Ec2InstanceMetadata"
+                su - $USER -c "aws configure set --profile EC2 region ${AWS::Region}"
 
                 # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
                 sudo snap install certbot --classic
@@ -1936,10 +1940,13 @@ Resources:
                 sed -i "/^\[connectivity\]/a web-port=${listenPort}" /etc/dcv/dcv.conf
                 sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
+                # User
+                USER=centos
+
                 # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
-                sed -i "/^\[session-management\/automatic-console-session/a owner=\"centos\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
+                sed -i "/^\[session-management\/automatic-console-session/a owner=\"$USER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
                 rm -f ${!0}
               mode: "000740"

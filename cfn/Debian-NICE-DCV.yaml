@@ -1924,19 +1924,23 @@ Resources:
                   apt-get update
                   apt-get install -q -y docker-ce
                   systemctl enable docker
-                  usermod -aG docker admin
+                  usermod -aG docker $USER
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
                 apt-get remove -q -y awscli
                 sudo snap install aws-cli --classic
                 if [ -e /snap/bin/aws ]; then
-                  rm -f /home/admin/update-awscli
+                  rm -f /home/$USER/update-awscli
                   ln -s /snap/bin/aws /usr/bin/aws
                 else
-                  /home/admin/update-awscli
+                  /home/$USER/update-awscli
                 fi
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/admin/.bashrc
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/$USER/.bashrc
+
+                # Separate AWS profile to use EC2 metadata: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-metadata.html
+                su - $USER -c "aws configure set --profile EC2 credential_source Ec2InstanceMetadata"
+                su - $USER -c "aws configure set --profile EC2 region ${AWS::Region}"
 
                 # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
                 sudo snap install certbot --classic
@@ -2015,6 +2019,7 @@ Resources:
                 apt-get install -q -y gnome-core
                 apt-get install -q -y gdm3
                 apt-get install -q -y amazon-ec2-utils
+                apt-get install -q -y gnome-software
 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/daemon.conf
@@ -2078,10 +2083,13 @@ Resources:
                 # X11 dummy driver for non GPU instance console session
                 apt-get install -q -y xserver-xorg-video-dummy
 
+                # User
+                USER=admin
+
                 # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
-                sed -i "/^\[session-management\/automatic-console-session/a owner=\"admin\"\nstorage-root=\"\%home%\"" /etc/dcv/dcv.conf
+                sed -i "/^\[session-management\/automatic-console-session/a owner=\"$USER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
                 # Nginx reverse proxy to DCV
                 if [ "${installReverseProxy}" = "Yes" ]; then
