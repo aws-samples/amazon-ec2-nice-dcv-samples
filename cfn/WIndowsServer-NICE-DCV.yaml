@@ -271,7 +271,7 @@ Parameters:
     Description: https://docs.aws.amazon.com/ebs/latest/userguide/volume_constraints.html
     MinValue: 30
     MaxValue: 16384
-    Default: 50
+    Default: 100
   volumeType:
     Type: String
     Description: https://aws.amazon.com/ebs/general-purpose/
@@ -1331,6 +1331,8 @@ Resources:
             - 01_dcv_sw_install
           dcv_gpu_install:
             - 03_dcv_gpu_install
+          dcv_configure_aws:
+            - 05_dcv_aws_configure
           dcv_docker_install:
             - 08_dcv_docker_install
           dcv_cert_install:
@@ -1344,13 +1346,7 @@ Resources:
                 del \windows\temp\nice-dcv-*.msi
                 del \windows\temp\dcv-install-msi.log
                 powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-server-x64-Release.msi', 'nice-dcv-server-x64-Release.msi')"
-                wmic product where "name like '%%DCV%%'" get name,version
                 start /wait msiexec.exe /i nice-dcv-server-x64-Release.msi /quiet /norestart /l*v dcv-install-msi.log
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
-                wmic product where "name like '%%DCV%%'" get name,version
             c:\\Users\\Administrator\\update-awscli.cmd:
               content: |
                 @echo off
@@ -1494,6 +1490,10 @@ Resources:
 
                 @echo ** disable Microsoft Edge first run experience (https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/hidefirstrunexperience)
                 reg add HKEY_LOCAL_MACHINE\SOFTWARE\Policies\Microsoft\Edge /v HideFirstRunExperience /t REG_DWORD /d 1 /f
+
+                @echo ** Disable Internet Explorer Enhanced Security Configuration
+                reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}" /v IsInstalled /t REG_DWORD /d 0 /f
+                reg add "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Active Setup\Installed Components\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}" /v IsInstalled /t REG_DWORD /d 0 /f
 
                 time /t >> c:\windows\temp\dcv-sw-install.txt
 
@@ -1723,6 +1723,42 @@ Resources:
               command: c:\windows\temp\dcv-gpu-install.cmd >> c:\windows\temp\dcv-gpu-install.log 2>>&1
               ignoreErrors: true
               waitAfterCompletion: forever
+        05_dcv_aws_configure:
+          files:
+            c:\\windows\\temp\\dcv-aws-configure.cmd:
+              content: |
+                @echo off
+                powershell -Command "Start-Sleep -s 3"
+
+                IF EXIST c:\windows\temp\dcv-aws-configure.txt EXIT
+
+                @echo ** get administrator password
+                IF NOT EXIST c:\windows\temp\instanceid.txt (
+                  powershell -Command "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
+                )
+                set /p INSTANCEID=<c:\windows\temp\instanceid.txt
+
+                @echo https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create
+                schtasks /create /sc onstart /ru administrator /rp %INSTANCEID% /tn "Configure AWS Profile" /tr "C:\Windows\temp\configure-aws.cmd >> c:\windows\temp\dcv-aws-configure.log 2>>&1" /f /rl:HIGHEST
+
+                @echo Install done
+                time /t >> c:\windows\temp\dcv-aws-configure.txt
+
+                exit
+            c:\\windows\\temp\\configure-aws.cmd:
+              content: !Sub |
+                @echo off
+                C:\ProgramData\chocolatey\bin\choco install -y awscli
+                aws configure set --profile EC2 credential_source Ec2InstanceMetadata
+                aws configure set --profile EC2 region ${AWS::Region}"
+                setx /M AWS_REGION ${AWS::Region}
+
+                schtasks /delete /tn "Configure AWS Profile" /f
+                exit
+          commands:
+            install-cert:
+              command: c:\windows\temp\dcv-aws-configure.cmd >> c:\windows\temp\dcv-aws-configure.log 2>>&1
+              ignoreErrors: true
         06_dcv_cert_install:
           files:
             c:\\windows\\temp\\dcv-cert-install.cmd:
@@ -1732,7 +1768,9 @@ Resources:
                 IF EXIST c:\windows\temp\dcv-cert-install.txt EXIT
 
                 @echo ** get administrator password
-                powershell -Command "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
+                IF NOT EXIST c:\windows\temp\instanceid.txt (
+                  powershell -Command "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
+                )
                 set /p INSTANCEID=<c:\windows\temp\instanceid.txt
 
                 @echo https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/schtasks-create
@@ -1803,7 +1841,9 @@ Resources:
                 time /t >> c:\windows\temp\dcv-docker-install.txt
 
                 @echo Create task to register docker daemon on reboot
-                powershell -Command "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
+                IF NOT EXIST c:\windows\temp\instanceid.txt (
+                  powershell -Command "Get-EC2InstanceMetadata -Category InstanceId" > c:\windows\temp\instanceid.txt
+                )
                 set /p INSTANCEID=<c:\windows\temp\instanceid.txt
                 schtasks /create /sc onstart /ru administrator /rp %INSTANCEID% /tn "DCV Register Docker" /tr "c:\windows\temp\dcv-register-docker.cmd > c:\windows\temp\dcv-register-docker.log 2>>&1" /f /rl:HIGHEST
 
@@ -1906,6 +1946,9 @@ Resources:
 
           @echo ** install graphics driver
           cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_gpu_install
+
+          @echo ** configure AWS profile
+          cfn-init.exe -v --stack ${AWS::StackId} --resource ec2Instance --region ${AWS::Region} --configsets dcv_configure_aws
 
           @echo ** install IP address certificate
           echo "${allowWebServerPorts}" | findstr /C:"HTTP"
