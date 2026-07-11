@@ -23,7 +23,7 @@ Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
-          default: AL2 (Amazon Linux 2) EOL (End of Life) on 2026-06-30
+          default: This OS has EOL (end of life) and is not supported
       - Label:
           default: EC2
         Parameters:
@@ -1931,8 +1931,10 @@ Resources:
 
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-amzn2-$(arch).tgz
-                tar -xvzf nice-dcv-amzn2-$(arch).tgz && cd nice-dcv-*-amzn2-$(arch)
+                # AL2 has EOL: https://docs.aws.amazon.com/AL2/latest/relnotes/relnotes-20260710.html
+                rm -f /home/ec2-user/update-dcv
+                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2025.0/Servers/nice-dcv-2025.0-20103-amzn2-$(arch).tgz
+                tar -xvzf nice-dcv-*-amzn2-$(arch).tgz && cd nice-dcv-*-amzn2-$(arch)
                 yum install -q -y ./nice-dcv-server-*.rpm
                 yum install -q -y ./nice-dcv-web-viewer-*.rpm
                 yum install -q -y ./nice-xdcv-*.rpm
