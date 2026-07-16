@@ -2337,7 +2337,7 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
-  agaListener1:
+  agaTcpListener:
     Type: AWS::GlobalAccelerator::Listener
     Condition: createAGA
     Properties:
@@ -2357,8 +2357,18 @@ Resources:
           - FromPort: 10000
             ToPort: 10000
           - !Ref AWS::NoValue
+        - !If
+          - createSgHTTP
+          - FromPort: 80
+            ToPort: 80
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTPS
+          - FromPort: 443
+            ToPort: 443
+          - !Ref AWS::NoValue
 
-  agaListener2:
+  agaUdpListener:
     Type: AWS::GlobalAccelerator::Listener
     Condition: createAGA
     Properties:
@@ -2369,11 +2379,11 @@ Resources:
         - FromPort: !Ref listenPort
           ToPort: !Ref listenPort
 
-  agaEndpointGroup1:
+  agaTcpEndpointGroup:
     Type: AWS::GlobalAccelerator::EndpointGroup
     Condition: createAGA
     Properties:
-      ListenerArn: !GetAtt agaListener1.ListenerArn
+      ListenerArn: !GetAtt agaTcpListener.ListenerArn
       EndpointGroupRegion: !Ref AWS::Region
       HealthCheckPort: !Ref listenPort
       HealthCheckProtocol: TCP
@@ -2381,11 +2391,11 @@ Resources:
       EndpointConfigurations:
         - EndpointId: !Ref ec2Instance
 
-  agaEndpointGroup2:
+  agaUdpEndpointGroup:
     Type: AWS::GlobalAccelerator::EndpointGroup
     Condition: createAGA
     Properties:
-      ListenerArn: !GetAtt agaListener2.ListenerArn
+      ListenerArn: !GetAtt agaUdpListener.ListenerArn
       EndpointGroupRegion: !Ref AWS::Region
       HealthCheckPort: !Ref listenPort
       HealthCheckProtocol: TCP

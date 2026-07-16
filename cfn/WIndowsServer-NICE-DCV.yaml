@@ -1781,6 +1781,7 @@ Resources:
                 netsh advfirewall firewall add rule name="ACME HTTP-01 challenge" dir=in action=allow protocol=tcp localport=80
 
                 @echo Install Posh-ACME
+                powershell -Command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
                 powershell -Command "Install-Module -Name Posh-ACME -Force"
 
                 @echo Verify Posh-ACME
@@ -1795,17 +1796,20 @@ Resources:
 
                 $moduleName = "Posh-ACME"               
                 if (-not (Get-Module -ListAvailable -Name $moduleName)) {
+                  Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
                   Install-Module -Name $moduleName -Force
                 }
                 Import-Module Posh-ACME
                 Start-Sleep -s 5
                 Set-PAServer LE_PROD
 
-                $cert = Get-PACertificate -Name "DCV-Cert"
+                $acmeName = "DCV-Cert"
+                $cert = Get-PACertificate -Name $acmeName
                 if (!$cert) {
                   New-PAAccount -AcceptTOS -Force
                   $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
-                  $cert = New-PACertificate $PublicIp -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name "DCV-Cert"
+                  $certNames = @($PublicIp)
+                  $cert = New-PACertificate $certNames -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name $acmeName
                   $cert | Format-List
 
                   New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.pem -ItemType SymbolicLink -Value $cert.CertFile -Force
@@ -1813,7 +1817,7 @@ Resources:
                 }
                 else {
                   Set-PAAccount
-                  Submit-Renewal -Name "DCV-Cert"
+                  Submit-Renewal -Name $acmeName
                 }
           commands:
             install-cert:
@@ -2088,7 +2092,7 @@ Resources:
         - Key: GitHub
           Value: https://github.com/aws-samples/amazon-ec2-nice-dcv-samples
 
-  agaListener1:
+  agaTcpListener:
     Type: AWS::GlobalAccelerator::Listener
     Condition: createAGA
     Properties:
@@ -2103,8 +2107,18 @@ Resources:
           - FromPort: 3389
             ToPort: 3389
           - !Ref AWS::NoValue
+        - !If
+          - createSgHTTP
+          - FromPort: 80
+            ToPort: 80
+          - !Ref AWS::NoValue
+        - !If
+          - createSgHTTPS
+          - FromPort: 443
+            ToPort: 443
+          - !Ref AWS::NoValue
 
-  agaListener2:
+  agaUdpListener:
     Type: AWS::GlobalAccelerator::Listener
     Condition: createAGA
     Properties:
@@ -2115,11 +2129,11 @@ Resources:
         - FromPort: !Ref listenPort
           ToPort: !Ref listenPort
 
-  agaEndpointGroup1:
+  agaTcpEndpointGroup:
     Type: AWS::GlobalAccelerator::EndpointGroup
     Condition: createAGA
     Properties:
-      ListenerArn: !GetAtt agaListener1.ListenerArn
+      ListenerArn: !GetAtt agaTcpListener.ListenerArn
       EndpointGroupRegion: !Ref AWS::Region
       HealthCheckPort: !Ref listenPort
       HealthCheckProtocol: TCP
@@ -2127,11 +2141,11 @@ Resources:
       EndpointConfigurations:
         - EndpointId: !Ref ec2Instance
 
-  agaEndpointGroup2:
+  agaUdpEndpointGroup:
     Type: AWS::GlobalAccelerator::EndpointGroup
     Condition: createAGA
     Properties:
-      ListenerArn: !GetAtt agaListener2.ListenerArn
+      ListenerArn: !GetAtt agaUdpListener.ListenerArn
       EndpointGroupRegion: !Ref AWS::Region
       HealthCheckPort: !Ref listenPort
       HealthCheckProtocol: TCP
