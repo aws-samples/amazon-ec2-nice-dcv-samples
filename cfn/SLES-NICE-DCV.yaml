@@ -243,7 +243,7 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
-    Default: "Yes"
+    Default: "No"
 
   enableCloudFront:
     Type: String
@@ -1010,7 +1010,11 @@ Resources:
             FromPort: 22
             ToPort: 22
             CidrIp: !Ref ingressIPv4
-          - !Ref AWS::NoValue
+          - Description: SSH (IPv4)
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIp: 127.0.0.1/32
         - !If
           - createSgSSH
           - Description: SSH (IPv6)
@@ -1018,7 +1022,11 @@ Resources:
             FromPort: 22
             ToPort: 22
             CidrIpv6: !Ref ingressIPv6
-          - !Ref AWS::NoValue
+          - Description: SSH (IPv6)
+            IpProtocol: tcp
+            FromPort: 22
+            ToPort: 22
+            CidrIpv6: ::1/128
         - Description: DCV (IPv4)
           IpProtocol: tcp
           FromPort: !Ref listenPort
