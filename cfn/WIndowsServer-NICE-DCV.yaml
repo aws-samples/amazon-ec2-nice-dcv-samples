@@ -961,7 +961,11 @@ Resources:
             FromPort: 3389
             ToPort: 3389
             CidrIp: !Ref ingressIPv4
-          - !Ref AWS::NoValue
+          - Description: RDP (IPv4)
+            IpProtocol: tcp
+            FromPort: 3389
+            ToPort: 3389
+            CidrIp: 127.0.0.1/32
         - !If
           - createSgRDP
           - Description: RDP (IPv6)
@@ -969,7 +973,11 @@ Resources:
             FromPort: 3389
             ToPort: 3389
             CidrIpv6: !Ref ingressIPv6
-          - !Ref AWS::NoValue
+          - Description: RDP (IPv6)
+            IpProtocol: tcp
+            FromPort: 3389
+            ToPort: 3389
+            CidrIpv6: ::1/128
       SecurityGroupEgress:
         - Description: Allow all outbound traffic (IPv4)
           IpProtocol: "-1"
@@ -1485,6 +1493,10 @@ Resources:
                 @Echo ** install 7-zip
                 choco install --no-progress -y 7zip.install
 
+                @echo Install Posh-ACME
+                powershell -Command "Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force"
+                powershell -Command "Install-Module -Name Posh-ACME -Force"
+
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-winprereq.html#setting-up-installing-all
                 choco install --no-progress -y vcredist140
 
@@ -1800,7 +1812,6 @@ Resources:
                   Install-Module -Name $moduleName -Force
                 }
                 Import-Module Posh-ACME
-                Start-Sleep -s 5
                 Set-PAServer LE_PROD
 
                 $acmeName = "DCV-Cert"
@@ -1819,6 +1830,14 @@ Resources:
                   Set-PAAccount
                   Submit-Renewal -Name $acmeName
                 }
+                $cert = Get-PACertificate -Name $acmeName
+                $password = ConvertTo-SecureString -String "poshacme" -AsPlainText -Force
+                Import-PfxCertificate -FilePath $cert.PfxFullChain -CertStoreLocation Cert:\LocalMachine\My -Password $password
+                $tsgs = gwmi -class "Win32_TSGeneralSetting" -Namespace root\cimv2\terminalservices -Filter "TerminalName='RDP-tcp'"
+                $thumb = $cert.Thumbprint
+                swmi -path $tsgs.__path -argument @{SSLCertificateSHA1Hash="$thumb"}
+                Restart-Service -Name TermService -Force
+                exit
           commands:
             install-cert:
               command: c:\windows\temp\dcv-cert-install.cmd >> c:\windows\temp\dcv-cert-install.log 2>>&1
