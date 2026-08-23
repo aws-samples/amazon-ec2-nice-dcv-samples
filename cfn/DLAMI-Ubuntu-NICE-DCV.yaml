@@ -2009,7 +2009,7 @@ Resources:
                 apt-get install -q -y ubuntu-desktop-minimal
                 apt-get install -q -y gdm3
                 apt-get install -q -y amazon-ec2-utils
-                dnf install -q -y gnome-software
+                apt-get install -q -y gnome-software
 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/custom.conf
@@ -2021,7 +2021,6 @@ Resources:
                 apt-get install -q -y pulseaudio-utils
                 apt-get install -q -y gnome-tweaks gnome-shell-extension-ubuntu-dock
                 apt-get install -q -y gnome-shell-extension-manager
-                apt-get install -q -y gnome-software
 
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY

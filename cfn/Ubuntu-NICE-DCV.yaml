@@ -2068,7 +2068,7 @@ Resources:
                 fi                
                 apt-get install -q -y gdm3
                 apt-get install -q -y amazon-ec2-utils
-                dnf install -q -y gnome-software
+                apt-get install -q -y gnome-software
 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/custom.conf
