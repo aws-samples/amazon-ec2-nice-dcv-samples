@@ -31,7 +31,7 @@ Metadata:
           - ec2KeyPair
           - osVersion
           - instanceType
-          - ec2TerminationProtection
+          - ec2TerminationProtectiona
       - Label:
           default: DCV
         Parameters:
@@ -67,6 +67,8 @@ Metadata:
       - Label:
           default: AMI ID
         Parameters:
+          - rockyLinux10arm64
+          - rockyLinux10x86
           - rockyLinux9arm64
           - rockyLinux9x86
           - rockyLinux8arm64
@@ -161,8 +163,10 @@ Parameters:
     Type: String
     #Description: Version and processor architecture
     AllowedValues:
+      - Rocky Linux 10 (arm64)
       - Rocky Linux 9 (arm64)
       - Rocky Linux 8 (arm64)
+      - Rocky Linux 10 (x86_64)
       - Rocky Linux 9 (x86_64)
       - Rocky Linux 8 (x86_64)
     Default: Rocky Linux 9 (arm64)
@@ -319,6 +323,14 @@ Parameters:
       - gp2
     Default: gp3
 
+  rockyLinux10arm64:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Rocky Linux 10 (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-77vz5zvv3ndiy
+    Default: /aws/service/marketplace/prod-3xyej43miofh4/latest
+  rockyLinux10x86:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: Rocky Linux 10 (x86_64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-z7hzo3jvdgrmi
+    Default: /aws/service/marketplace/prod-pylp32ang23ec/latest
   rockyLinux9arm64:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Description: Rocky Linux 9 (arm64). Subscribe at https://aws.amazon.com/marketplace/pp/prodview-6ihwigagrts66
@@ -734,16 +746,19 @@ Parameters:
     Default: "Yes"
 
 Conditions:
-  useRockyLinux8x86: !Equals [!Ref osVersion, "Rocky Linux 8 (x86_64)"]
-  useRockyLinux8arm64: !Equals [!Ref osVersion, "Rocky Linux 8 (arm64)"]
+  useRockyLinux10arm64: !Equals [!Ref osVersion, "Rocky Linux 10 (arm64)"]
+  useRockyLinux10x86: !Equals [!Ref osVersion, "Rocky Linux 10 (x86_64)"]
+  useRockyLinux9arm64: !Equals [!Ref osVersion, "Rocky Linux 9 (arm64)"]
   useRockyLinux9x86: !Equals [!Ref osVersion, "Rocky Linux 9 (x86_64)"]
+  useRockyLinux8x86: !Equals [!Ref osVersion, "Rocky Linux 8 (x86_64)"]
+  isNotEL10: !Not [!Or [!Condition useRockyLinux10arm64, !Condition useRockyLinux10x86]]
 
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   useElasticIP: !And [!Condition displayPublicIP, !Equals [!Ref assignStaticIP, "Yes"]]
   enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
   isGPUinstall: !Not [!Or [!Equals [!Ref sessionType, "console"], !Equals [!Ref sessionType, "virtual"]]]
 
-  hasEIC: !Not [!Equals [!FindInMap [EICprefixMap, !Ref AWS::Region, IpPrefix, {DefaultValue: 127.0.0.1/32}], 127.0.0.1/32]]
+  hasEIC: !And [!Condition isNotEL10, !Not [!Equals [!FindInMap [EICprefixMap, !Ref AWS::Region, IpPrefix, {DefaultValue: 127.0.0.1/32}], 127.0.0.1/32]]]
   createSgEIC: !And [!Condition hasEIC, !Condition displayPublicIP]
   createSgHTTP: !Or [!Equals [!Ref allowWebServerPorts, HTTP], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]
   installReverseProxy: !Equals [!Ref installReverseProxy, "Yes"]
@@ -1586,7 +1601,9 @@ Resources:
                 tar -xvzf nice-dcv-el$OS_VERSION-$(arch).tgz && cd nice-dcv-*-el$OS_VERSION-$(arch)
                 sudo dnf install -y ./nice-dcv-server-*.rpm
                 sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
-                sudo dnf install -y ./nice-xdcv-*.rpm
+                if (! echo $OS_VERSION | grep -q "1[0-9]" ); then 
+                  sudo dnf install -y ./nice-xdcv-*.rpm
+                fi
                 if (arch | grep -q x86); then
                   sudo dnf install -y ./nice-dcv-gltest-*.rpm
                 fi
@@ -1692,45 +1709,57 @@ Resources:
                   fi
                 fi
 
-                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
-                case $SESSION in
-                  virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
-                    ;;
-                  *GPU_sharing*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                  console-*-NVIDIA_GRID*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
-                    ;;
-                  console-*-NVIDIA*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                esac
+                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
+                if ( which nvidia-xconfig ); then
+                  case $SESSION in
+                    virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                      ;;
+                    *GPU_sharing*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                      ;;
+                    console-*-NVIDIA_GRID*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                      ;;
+                    console-*-NVIDIA*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                      ;;
+                  esac
+                fi
 
+                # RHEL 10+ is Wayland
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')               
                 systemctl isolate multi-user.target
-                case $SESSION in
-                  console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-rhel
-                    systemctl enable --now xdcv-console-update.service
-                    systemctl enable xdcv-console.path
-                    ;;
-                esac
 
-                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-                case $SESSION in
-                  *GPU_sharing*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                  console*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
-                  virtual*)
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                esac
+                # Wayland: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-wayland-prerequisites.html
+                if (echo $OS_VERSION | grep -q "1[0-9]" ); then
+                  systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                  systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                else 
+                  case $SESSION in
+                    console-*Xdcv*) # https://docs.aws.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-rhel
+                      systemctl enable --now xdcv-console-update.service
+                      systemctl enable xdcv-console.path
+                      ;;
+                  esac
+
+                  # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                  case $SESSION in
+                    *GPU_sharing*)
+                      systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                      systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                      ;;
+                    console*)
+                      systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                      sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                      ;;
+                    virtual*)
+                      systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                      ;;
+                  esac
+                fi
+
                 systemctl enable dcvserver && systemctl restart dcvserver
 
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
@@ -1911,6 +1940,8 @@ Resources:
                 sleep 10
                 pkill "^dnf$"
 
+                #
+                dnf install -q -y kernel-modules-$(uname -r)
                 # Snap: https://snapcraft.io/docs/installing-snap-on-rocky
                 dnf install -q -y snapd
                 systemctl enable --now snapd snapd.socket
@@ -2066,8 +2097,13 @@ Resources:
                 fi
                 dnf install -q -y firefox
 
+                # RHEL 10+ is Wayland
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')                
+                
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
-                sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
+                if (! echo $OS_VERSION | grep -q "1[0-9]" ); then
+                  sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
+                fi
 
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
@@ -2076,7 +2112,9 @@ Resources:
                 tar -xzf nice-dcv-el$OS_VERSION-$(arch).tgz && cd nice-dcv-*-el$OS_VERSION-$(arch)
                 dnf install -q -y ./nice-dcv-server-*.rpm
                 dnf install -q -y ./nice-dcv-web-viewer-*.rpm
-                dnf install -q -y ./nice-xdcv-*.rpm
+                if (! echo $OS_VERSION | grep -q "1[0-9]" ); then
+                  dnf install -q -y ./nice-xdcv-*.rpm
+                fi
                 if (arch | grep -q x86); then
                   dnf install -q -y ./nice-dcv-gltest-*.rpm
                 fi
@@ -2148,7 +2186,6 @@ Resources:
                 else
                   rm -f /opt/ReverseProxy
                 fi
-
 
                 rm -f ${!0}
               mode: "000740"
@@ -2347,9 +2384,14 @@ Resources:
                 fi
                 dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 dnf clean all
-                dnf -q -y module install nvidia-driver:open-dkms
+                if ( dnf module list | grep nvidia-driver | grep -q open-dkms ); then
+                  dnf module enable -y nvidia-driver:open-dkms
+                fi
+                dnf install -q -y nvidia-open
+                if ( dnf search nvidia-xconfig | grep -q nvidia-xconfig ); then
+                  dnf install -q -y nvidia-xconfig
+                fi
                 dnf install -q -y nvidia-settings
-                dnf install -q -y nvidia-xconfig
 
                 # P instance: https://repost.aws/articles/ARpmJcNiCtST2A3hrrM_4R4A/
                 if ( ec2-metadata -t | grep -q " p[0-9]" ); then
@@ -2423,7 +2465,16 @@ Resources:
               owner: "root"
               group: "root"
     Properties:
-      ImageId: !If [useRockyLinux8x86, !Ref rockyLinux8x86, !If [useRockyLinux8arm64, !Ref rockyLinux8arm64, !If [useRockyLinux9x86, !Ref rockyLinux9x86, !Ref rockyLinux9arm64]]]
+      ImageId:
+        !If [
+          useRockyLinux10x86,
+          !Ref rockyLinux10x86,
+          !If [
+            useRockyLinux10arm64,
+            !Ref rockyLinux10arm64,
+            !If [useRockyLinux9x86, !Ref rockyLinux9x86, !If [useRockyLinux9arm64, !Ref rockyLinux9arm64, !If [useRockyLinux8x86, !Ref rockyLinux8x86, !Ref rockyLinux8arm64]]]
+          ]
+        ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
       KeyName: !Ref ec2KeyPair
@@ -2749,7 +2800,7 @@ Resources:
         HttpVersion: http2and3
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-          MinimumProtocolVersion: TLSv1.2_2021
+          MinimumProtocolVersion: TLSv1.3_2025
         DefaultCacheBehavior:
           AllowedMethods: !Split [",", "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE"]
           CachedMethods:

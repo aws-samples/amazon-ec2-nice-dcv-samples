@@ -154,16 +154,20 @@ Parameters:
     Type: String
     #Description: Version and processor architecture
     AllowedValues:
+      - Ubuntu 26.04 (arm64)
       - Ubuntu 24.04 (arm64)
       - Ubuntu 22.04 (arm64)
       - Ubuntu 18.04 (arm64) [EOL]
+      - Ubuntu Pro 26.04 (arm64)
       - Ubuntu Pro 24.04 (arm64)
       - Ubuntu Pro 22.04 (arm64)
       - Ubuntu Pro 18.04 (arm64)
+      - Ubuntu 26.04 (x86_64)
       - Ubuntu 24.04 (x86_64)
       - Ubuntu 22.04 (x86_64)
       - Ubuntu 20.04 (x86_64) [EOL]
       - Ubuntu 18.04 (x86_64) [EOL]
+      - Ubuntu Pro 26.04 (x86_64)
       - Ubuntu Pro 24.04 (x86_64)
       - Ubuntu Pro 22.04 (x86_64)
       - Ubuntu Pro 20.04 (x86_64)
@@ -724,6 +728,8 @@ Parameters:
     Default: "Yes"
 
 Conditions:
+  useUbuntu2604x86: !Equals [!Ref osVersion, "Ubuntu 26.04 (x86_64)"]
+  useUbuntu2604arm64: !Equals [!Ref osVersion, "Ubuntu 26.04 (arm64)"]
   useUbuntu2404x86: !Equals [!Ref osVersion, "Ubuntu 24.04 (x86_64)"]
   useUbuntu2404arm64: !Equals [!Ref osVersion, "Ubuntu 24.04 (arm64)"]
   useUbuntu2204x86: !Equals [!Ref osVersion, "Ubuntu 22.04 (x86_64)"]
@@ -731,6 +737,8 @@ Conditions:
   useUbuntu2004x86: !Equals [!Ref osVersion, "Ubuntu 20.04 (x86_64) [EOL]"]
   useUbuntu1804x86: !Equals [!Ref osVersion, "Ubuntu 18.04 (x86_64) [EOL]"]
   useUbuntu1804arm64: !Equals [!Ref osVersion, "Ubuntu 18.04 (arm64) [EOL]"]
+  useUbuntuPro2604x86: !Equals [!Ref osVersion, "Ubuntu Pro 26.04 (x86_64)"]
+  useUbuntuPro2604arm64: !Equals [!Ref osVersion, "Ubuntu Pro 26.04 (arm64)"]
   useUbuntuPro2404x86: !Equals [!Ref osVersion, "Ubuntu Pro 24.04 (x86_64)"]
   useUbuntuPro2404arm64: !Equals [!Ref osVersion, "Ubuntu Pro 24.04 (arm64)"]
   useUbuntuPro2204x86: !Equals [!Ref osVersion, "Ubuntu Pro 22.04 (x86_64)"]
@@ -1594,7 +1602,9 @@ Resources:
                 tar -xvzf nice-dcv-ubuntu$OS_VERSION-$(arch).tgz && cd nice-dcv-*-ubuntu$OS_VERSION-$(arch)
                 sudo apt-get install -y ./nice-dcv-server_*.deb
                 sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
-                sudo apt-get install -y ./nice-xdcv_*.deb
+                if (! echo $OS_VERSION | grep -q "2[6-8]"); then
+                  sudo apt-get install -y ./nice-xdcv_*.deb
+                fi
                 if (arch | grep -q x86); then
                   sudo apt-get install -y ./nice-dcv-gltest_*.deb
                 fi
@@ -1691,48 +1701,60 @@ Resources:
                   fi
                 fi
 
-                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
-                case $SESSION in
-                  virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
-                    ;;
-                  *GPU_sharing*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                  console-*-NVIDIA_GRID*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
-                    ;;
-                  console-*-NVIDIA*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                  console-*-Ubuntu*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                esac
+                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
+                if ( which nvidia-xconfig ); then                  
+                  case $SESSION in
+                    virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                      ;;
+                    *GPU_sharing*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                      ;;
+                    console-*-NVIDIA_GRID*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                      ;;
+                    console-*-NVIDIA*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                      ;;
+                    console-*-Ubuntu*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                      ;;
+                  esac
+                fi
 
+                # Ubuntu 26+ is Wayland
+                OS_VERSION=$(lsb_release -r -s)               
                 systemctl isolate multi-user.target
-                case $SESSION in
-                  console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-ubuntu
-                    dpkg-divert --package nice-xdcv --divert /usr/bin/Xorg.orig --rename /usr/bin/Xorg
-                    ln -sf /usr/bin/Xdcv-console /usr/bin/Xorg
-                    ;;
-                esac
 
-                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-                case $SESSION in
-                  *GPU_sharing*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                  console*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
-                  virtual*)
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                esac
+                # Wayland: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-wayland-prerequisites.html
+                if (echo $OS_VERSION | grep -q "2[6-8]"); then
+                  systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                  systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                else
+                  case $SESSION in
+                    console-*Xdcv*) # https://docs.aws.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-ubuntu
+                      dpkg-divert --package nice-xdcv --divert /usr/bin/Xorg.orig --rename /usr/bin/Xorg
+                      ln -sf /usr/bin/Xdcv-console /usr/bin/Xorg
+                      ;;
+                  esac
+
+                  # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                  case $SESSION in
+                    *GPU_sharing*)
+                      systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                      systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                      ;;
+                    console*)
+                      systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                      sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                      ;;
+                    virtual*)
+                      systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                      ;;
+                  esac
+                fi
+
                 systemctl enable dcvserver && systemctl restart dcvserver
 
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
@@ -1989,8 +2011,8 @@ Resources:
                   apt-get install -q -y python3-certbot python3-certbot-apache python3-certbot-nginx python3-certbot-dns-route53
                 fi
 
-                # Ubuntu 24.04: reduce systemd-networkd-wait-online.service 2+ min timeout
-                if (lsb_release -r -s | grep -q 24); then
+                # Ubuntu 24+: reduce systemd-networkd-wait-online.service 2+ min timeout
+                if (lsb_release -r -s | grep -q "2[4-8]"); then
                   sed -i "s/systemd-networkd-wait-online$/& --timeout=3/g" /usr/lib/systemd/system/systemd-networkd-wait-online.service
                 else
                   rm -f /etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf
@@ -2106,7 +2128,9 @@ Resources:
                 apt-get install -q -y ./nice-dcv-server_*.deb
                 apt-get install -q -y ./nice-dcv-web-viewer_*.deb
                 usermod -aG video dcv
-                apt-get install -q -y ./nice-xdcv_*.deb
+                if (! lsb_release -r -s | grep -q "2[6-8]"); then
+                  apt-get install -q -y ./nice-xdcv_*.deb
+                fi
                 if (arch | grep -q x86); then
                   apt-get install -q -y ./nice-dcv-gltest_*.deb
                 fi
@@ -2153,8 +2177,8 @@ Resources:
                 sed -i "s/Prompt=lts/Prompt=never/g" /etc/update-manager/release-upgrades
                 chown -R ubuntu:ubuntu /home/ubuntu/.config
 
-                # Ubuntu 24.04: reduce systemd-networkd-wait-online.service 2+ min timeout
-                if (lsb_release -r -s | grep -q 24); then
+                # Ubuntu 24+: reduce systemd-networkd-wait-online.service 2+ min timeout
+                if (lsb_release -r -s | grep -q "2[4-8]"); then
                   sed -i "s/systemd-networkd-wait-online$/& --timeout=3/g" /usr/lib/systemd/system/systemd-networkd-wait-online.service
                 fi
                 systemctl daemon-reload
@@ -2437,7 +2461,9 @@ Resources:
                 apt-get update -q
                 apt-get install -q -y nvidia-open
                 apt-get install -q -y nvidia-settings
-                apt-get install -q -y nvidia-xconfig
+                if (! lsb_release -r -s | grep -q "2[6-8]"); then
+                  apt-get install -q -y nvidia-xconfig
+                fi
 
                 # P instance: https://repost.aws/articles/ARWGxLArMBQ4y1MKoSHTq3gQ/
                 if ( ec2-metadata -t | grep -q " p[0-9]" ); then
@@ -2560,47 +2586,63 @@ Resources:
               group: "root"
     Properties:
       ImageId:
-        # https://ubuntu.com/server/docs/cloud-images/amazon-ec2 https://ubuntu.com/blog/ubuntu-pro-is-now-part-of-the-aws-ec2-console
+        # https://ubuntu.com/aws/docs/aws-how-to/instances/find-ubuntu-images/ https://ubuntu.com/blog/ubuntu-pro-is-now-part-of-the-aws-ec2-console
         !If [
-          useUbuntu2404x86,
-          "{{resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
+          useUbuntu2604x86,
+          "{{resolve:ssm:/aws/service/canonical/ubuntu/server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
           !If [
-            useUbuntu2404arm64,
-            "{{resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
+            useUbuntu2604arm64,
+            "{{resolve:ssm:/aws/service/canonical/ubuntu/server/26.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
             !If [
-              useUbuntu2204x86,
-              "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+              useUbuntu2404x86,
+              "{{resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
               !If [
-                useUbuntu2204arm64,
-                "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                useUbuntu2404arm64,
+                "{{resolve:ssm:/aws/service/canonical/ubuntu/server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
                 !If [
-                  useUbuntu2004x86,
-                  "{{resolve:ssm:/aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                  useUbuntu2204x86,
+                  "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
                   !If [
-                    useUbuntu1804x86,
-                    "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                    useUbuntu2204arm64,
+                    "{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
                     !If [
-                      useUbuntu1804arm64,
-                      "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                      useUbuntu2004x86,
+                      "{{resolve:ssm:/aws/service/canonical/ubuntu/server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
                       !If [
-                        useUbuntuPro2404x86,
-                        "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
+                        useUbuntu1804x86,
+                        "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
                         !If [
-                          useUbuntuPro2404arm64,
-                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
+                          useUbuntu1804arm64,
+                          "{{resolve:ssm:/aws/service/canonical/ubuntu/server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
                           !If [
-                            useUbuntuPro2204x86,
-                            "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                            useUbuntuPro2604x86,
+                            "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/26.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
                             !If [
-                              useUbuntuPro2204arm64,
-                              "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                              useUbuntuPro2604arm64,
+                              "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/26.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
                               !If [
-                                useUbuntuPro2004x86,
-                                "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                                useUbuntuPro2404x86,
+                                "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id}}",
                                 !If [
-                                  useUbuntuPro1804x86,
-                                  "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
-                                  "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}"
+                                  useUbuntuPro2404arm64,
+                                  "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/24.04/stable/current/arm64/hvm/ebs-gp3/ami-id}}",
+                                  !If [
+                                    useUbuntuPro2204x86,
+                                    "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                                    !If [
+                                      useUbuntuPro2204arm64,
+                                      "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/22.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}",
+                                      !If [
+                                        useUbuntuPro2004x86,
+                                        "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/20.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                                        !If [
+                                          useUbuntuPro1804x86,
+                                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}",
+                                          "{{resolve:ssm:/aws/service/canonical/ubuntu/pro-server/18.04/stable/current/arm64/hvm/ebs-gp2/ami-id}}"
+                                        ]
+                                      ]
+                                    ]
+                                  ]
                                 ]
                               ]
                             ]
@@ -2934,7 +2976,7 @@ Resources:
         HttpVersion: http2and3
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-          MinimumProtocolVersion: TLSv1.2_2021
+          MinimumProtocolVersion: TLSv1.3_2025
         DefaultCacheBehavior:
           AllowedMethods: !Split [",", "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE"]
           CachedMethods:
@@ -2989,14 +3031,14 @@ Outputs:
   DCVUrl:
     Description: DCV URL (login as ubuntu)
     Value: !Sub
-      - "https://${IpAddress}:${listenPort}/?username=ubuntu     ( dcv://ubuntu:@${IpAddress}:${listenPort} )"
+      - "https://${IpAddress}:${listenPort}/?username=ubuntu    ( dcv://ubuntu@${IpAddress}:${listenPort} )"
       - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
 
   DCVhttpsUrl:
     Condition: installReverseProxy
     Description: DCV Reverse Proxy URL (login as ubuntu)
     Value: !Sub
-      - "https://${IpAddress}/?username=ubuntu     ( dcv://ubuntu:@${IpAddress}:443 )"
+      - "https://${IpAddress}/?username=ubuntu     ( dcv://ubuntu@${IpAddress}:443 )"
       - IpAddress: !If [displayPublicIP, !GetAtt ec2Instance.PublicIp, !GetAtt ec2Instance.PrivateIp]
 
   DCVagaUrl:
