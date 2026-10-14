@@ -89,7 +89,7 @@ In most cases, the default values are sufficient. You will need to specify value
     - Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
   - `virtual-with-*-GPU_Sharing` (x86_64 NVIDIA [GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)) :  install NVIDIA drivers with [GPU sharing](https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html) enabled
 
-*For Linux with X11, templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual*` session, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types. Linux with Wayland supports virtual session only with graphical.target*
+*For [Linux with X11](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-x11.html), templates configure *multi-user.target* [run level](https://tldp.org/LDP/sag/html/run-levels-intro.html) for `virtual` sessions, and  *graphical.target* run level for `console*` and `virtual*GPU_sharing` session types. [Linux with Wayland](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-wayland.html) supports virtual sessions only with graphical.target*
 
 *Due to various combinations of drivers, OSs and instance types, GPU driver installation may not work. You can [troubleshoot](#troubleshooting) the installation, or select `console` or `virtual` option to install driver manually. Refer to [Prerequisites for Linux DCV servers](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-gpu) for GPU driver installation and configuration guidance.*
 
