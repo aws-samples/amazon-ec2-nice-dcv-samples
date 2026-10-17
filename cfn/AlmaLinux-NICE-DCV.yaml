@@ -169,7 +169,7 @@ Parameters:
       - AlmaLinux OS 10 (x86_64)
       - AlmaLinux OS 9 (x86_64)
       - AlmaLinux OS 8 (x86_64)
-    Default: AlmaLinux OS 9 (arm64)
+    Default: AlmaLinux OS 10 (arm64)
 
   ec2Name:
     Type: String
@@ -196,7 +196,7 @@ Parameters:
 
   sessionType:
     Type: String
-    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
+    Description: AlmaLinux 10+ supports virtual sessions only. https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html
     AllowedValues:
       - "virtual"
       - "console-(Xdcv)"
@@ -1269,7 +1269,7 @@ Resources:
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          DestinationPrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+          DestinationPrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, Ipv6PrefixList]
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName
@@ -1711,7 +1711,7 @@ Resources:
 
                 SESSION="${sessionType}"
                 # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
-                if ( which nvidia-xconfig ); then                  
+                if ( which nvidia-xconfig ); then
                   case $SESSION in
                     virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
                       nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
@@ -1784,7 +1784,7 @@ Resources:
                 fi
 
                 # IP address cert
-                if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                if ( echo "${allowWebServerPorts}" | grep -q -i "^HTTP$\|HTTP-and" ); then
                   if [ "${displayPublicIP}" = "Yes" ]; then
                     # Some Regions create Elastic IP after EC2 instance is created
                     python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
@@ -2102,7 +2102,7 @@ Resources:
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')                
                 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
-                if (! echo $OS_VERSION | grep -q "1[0-9]" ); then
+                if [ -f /etc/gdm/custom.conf ]; then
                   sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
                 fi
 
