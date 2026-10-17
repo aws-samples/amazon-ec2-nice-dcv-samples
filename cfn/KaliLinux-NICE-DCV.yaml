@@ -1199,7 +1199,7 @@ Resources:
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          DestinationPrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+          DestinationPrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, Ipv6PrefixList]
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName
@@ -1652,7 +1652,7 @@ Resources:
                 fi
 
                 # IP address cert
-                if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                if ( echo "${allowWebServerPorts}" | grep -q -i "^HTTP$\|HTTP-and" ); then
                   if [ "${displayPublicIP}" = "Yes" ]; then
                     # Some Regions create Elastic IP after EC2 instance is created
                     python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}
@@ -1794,6 +1794,22 @@ Resources:
                         }
                     }
                 }
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/etc/systemd/system/cloud-init-local.service.d/override.conf":
+              content: |
+                [Service]
+                TimeoutStartSec=5
+
+              mode: "000644"
+              owner: "root"
+              group: "root"
+            "/etc/systemd/system/cloud-init-network.service.d/override.conf":
+              content: |
+                [Service]
+                TimeoutStartSec=5
+
               mode: "000644"
               owner: "root"
               group: "root"
@@ -1950,7 +1966,7 @@ Resources:
                     # tweaks for installation on Kali xfce
                     mkdir -p /etc/lightdm/lightdm.conf.d
                     ;;
-                  *gnome*)
+                  *GNOME*)
                     apt-get install -q -y kali-desktop-gnome
                     apt-get install -q -y gnome-software
                     ;;
@@ -2432,7 +2448,7 @@ Resources:
         HttpVersion: http2and3
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-          MinimumProtocolVersion: TLSv1.2_2021
+          MinimumProtocolVersion: TLSv1.3_2025
         DefaultCacheBehavior:
           AllowedMethods: !Split [",", "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE"]
           CachedMethods:
