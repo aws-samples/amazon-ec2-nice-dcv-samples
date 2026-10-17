@@ -1222,7 +1222,7 @@ Resources:
           IpProtocol: icmp
           FromPort: -1
           ToPort: -1
-          DestinationPrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, PrefixList]
+          DestinationPrefixListId: !FindInMap [CFprefixMap, !Ref AWS::Region, Ipv6PrefixList]
       Tags:
         - Key: StackName
           Value: !Ref AWS::StackName
@@ -1599,14 +1599,15 @@ Resources:
                 do
                   while IFS= read -r dcvUser; do
                     if (getent passwd "$dcvUser" >/dev/null); then
-                      if (! /usr/bin/dcv list-sessions | grep -q "$dcvUser"); then
+                      if (! /usr/bin/dcv describe-session "$dcvUser" | grep owner | grep -q "$dcvUser"); then
                         /usr/bin/dcv create-session "$dcvUser" --owner "$dcvUser" --storage-root %home% --type virtual
+                        /usr/bin/dcv describe-session "$dcvUser"
                       fi
                     fi
                   done < /opt/dcv/dcv-users.txt
                   date
-                  /usr/bin/dcv list-sessions
-                  sleep 5
+                  
+                  sleep 2
                 done
               mode: "000740"
               owner: "root"
@@ -1719,7 +1720,7 @@ Resources:
                 fi
 
                 # IP address cert
-                if ( echo "${allowWebServerPorts}" | grep -q -i "HTTP" ); then
+                if ( echo "${allowWebServerPorts}" | grep -q -i "^HTTP$\|HTTP-and" ); then
                   if [ "${displayPublicIP}" = "Yes" ]; then
                     # Some Regions create Elastic IP after EC2 instance is created
                     python3 /usr/local/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region}

@@ -1554,14 +1554,15 @@ Resources:
                 do
                   while IFS= read -r dcvUser; do
                     if (getent passwd "$dcvUser" >/dev/null); then
-                      if (! /usr/bin/dcv list-sessions | grep -q "$dcvUser"); then
+                      if (! /usr/bin/dcv describe-session "$dcvUser" | grep owner | grep -q "$dcvUser"); then
                         /usr/bin/dcv create-session "$dcvUser" --owner "$dcvUser" --storage-root %home% --type virtual
+                        /usr/bin/dcv describe-session "$dcvUser"
                       fi
                     fi
                   done < /opt/dcv/dcv-users.txt
                   date
-                  /usr/bin/dcv list-sessions
-                  sleep 5
+                  
+                  sleep 2
                 done
               mode: "000740"
               owner: "root"
