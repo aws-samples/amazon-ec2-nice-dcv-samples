@@ -1553,6 +1553,9 @@ Resources:
                 while true;
                 do
                   while IFS= read -r dcvUser; do
+                    if ( echo "$dcvUser" | grep -q "^[[:space:]#]" ); then
+                      continue
+                    fi
                     if (getent passwd "$dcvUser" >/dev/null); then
                       if (! /usr/bin/dcv describe-session "$dcvUser" | grep owner | grep -q "$dcvUser"); then
                         /usr/bin/dcv create-session "$dcvUser" --owner "$dcvUser" --storage-root %home% --type virtual
@@ -1560,8 +1563,6 @@ Resources:
                       fi
                     fi
                   done < /opt/dcv/dcv-users.txt
-                  date
-                  
                   sleep 2
                 done
               mode: "000740"
