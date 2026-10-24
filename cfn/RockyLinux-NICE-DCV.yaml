@@ -1922,9 +1922,9 @@ Resources:
                 cd /tmp/cfn
 
                 # Change password
-                PWD=$(cat /var/lib/cloud/data/instance-id)
+                PASSWD=$(cat /var/lib/cloud/data/instance-id)
                 USER=rocky
-                echo "$USER:$PWD" | chpasswd
+                echo "$USER:$PASSWD" | chpasswd
 
                 # EPEL: https://docs.fedoraproject.org/en-US/epel/
                 # Rocky Linux: https://wiki.rockylinux.org/rocky/repo/#extra-repositories

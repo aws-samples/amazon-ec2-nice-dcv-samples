@@ -1823,9 +1823,9 @@ Resources:
                 export DEBIAN_FRONTEND=noninteractive
 
                 # Change password
-                PWD=$(cat /var/lib/cloud/data/instance-id)
+                PASSWD=$(cat /var/lib/cloud/data/instance-id)
                 USER=kali
-                echo "$USER:$PWD" | chpasswd
+                echo "$USER:$PASSWD" | chpasswd
 
                 # Update OS
                 apt-get update

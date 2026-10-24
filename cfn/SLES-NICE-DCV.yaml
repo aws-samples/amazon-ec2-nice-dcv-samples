@@ -1771,9 +1771,9 @@ Resources:
                 cd /tmp/cfn
 
                 # Change password
-                PWD=$(cat /var/lib/cloud/data/instance-id)
+                PASSWD=$(cat /var/lib/cloud/data/instance-id)
                 USER=ec2-user
-                echo "$USER:$PWD" | chpasswd
+                echo "$USER:$PASSWD" | chpasswd
 
                 # Update OS
                 zypper -n update -y

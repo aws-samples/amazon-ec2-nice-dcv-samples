@@ -1836,9 +1836,9 @@ Resources:
                 export DEBIAN_FRONTEND=noninteractive
 
                 # Change password
-                PWD=$(cat /var/lib/cloud/data/instance-id)
+                PASSWD=$(cat /var/lib/cloud/data/instance-id)
                 USER=ubuntu
-                echo "$USER:$PWD" | chpasswd
+                echo "$USER:$PASSWD" | chpasswd
 
                 # Update OS
                 apt-get update -q

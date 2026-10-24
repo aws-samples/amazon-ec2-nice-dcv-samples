@@ -1879,9 +1879,9 @@ Resources:
                 cd /tmp/cfn
 
                 # Change password
-                PWD=$(cat /var/lib/cloud/data/instance-id)
+                PASSWD=$(cat /var/lib/cloud/data/instance-id)
                 USER=ec2-user
-                echo "$USER:$PWD" | chpasswd
+                echo "$USER:$PASSWD" | chpasswd
 
                 # https://docs.aws.amazon.com/linux/al2023/ug/deterministic-upgrades-usage.html#deterministic-upgrade-override-persist
                 dnf clean all

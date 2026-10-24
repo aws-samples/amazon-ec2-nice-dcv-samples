@@ -1874,9 +1874,9 @@ Resources:
                 export DEBIAN_FRONTEND=noninteractive
 
                 # Change password
-                PWD=$(cat /var/lib/cloud/data/instance-id)
+                PASSWD=$(cat /var/lib/cloud/data/instance-id)
                 USER=admin
-                echo "$USER:$PWD" | chpasswd
+                echo "$USER:$PASSWD" | chpasswd
 
                 # Snap: https://snapcraft.io/install/snap-store/debian
                 apt-get install -q -y snapd
