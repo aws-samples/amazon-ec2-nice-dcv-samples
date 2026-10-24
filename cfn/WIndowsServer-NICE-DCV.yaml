@@ -1481,7 +1481,7 @@ Resources:
                 sc config AmazonCloudWatchAgent start=auto
 
                 @echo ** https://docs.chocolatey.org/en-us/choco/setup
-                @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
+                @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command "[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))" && SET "PATH=%PATH%;%ALLDCVUSERSPROFILE%\chocolatey\bin"
 
                 @echo ** install AWSCLI
                 choco install --no-progress -y awscli
@@ -1540,22 +1540,22 @@ Resources:
                 )
 
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-start.html#managing-sessions-start-auto
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
+                reg add HKEY_DCVUSERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management /v create-session /t REG_DWORD /d 1 /f
+                reg add HKEY_DCVUSERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v owner /t REG_SZ /d "administrator" /f
 
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-storage.html
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
+                reg add HKEY_DCVUSERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\session-management\automatic-console-session /v storage-root /t REG_SZ /d C:/Users/Administrator/ /f
 
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/enable-quic.html
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
+                reg add HKEY_DCVUSERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v enable-quic-frontend /t REG_DWORD /d 1 /f
 
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v web-port /t REG_DWORD /d ${listenPort} /f
-                reg add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v quic-port /t REG_DWORD /d ${listenPort} /f
+                reg add HKEY_DCVUSERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v web-port /t REG_DWORD /d ${listenPort} /f
+                reg add HKEY_DCVUSERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity /v quic-port /t REG_DWORD /d ${listenPort} /f
 
                 @echo ** https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html#display
-                reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
-                reg.exe add HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
+                reg.exe add HKEY_DCVUSERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v web-client-max-head-resolution /t REG_SZ /d "(0, 0)" /f
+                reg.exe add HKEY_DCVUSERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\display /v console-session-default-layout /t REG_SZ /d "[{'w':<1920>, 'h':<1080>, 'x':<0>, 'y': <0>}]" /f
 
                 IF ${installReverseProxy} EQU Yes (
                   @echo ** Port forward HTTPS TCP 443 to DCV
@@ -2238,7 +2238,7 @@ Outputs:
   RDPconnect:
     Description: Fleet Manager Remote Desktop
     Value: !Sub
-      - "https://${AWS::Region}.${url}/systems-manager/fleet-manager/remote-desktop?region=${AWS::Region}&nodeIds=${ec2Instance}&authType=USER_CREDENTIALS"
+      - "https://${AWS::Region}.${url}/systems-manager/fleet-manager/remote-desktop?region=${AWS::Region}&nodeIds=${ec2Instance}&authType=DCVUSER_CREDENTIALS"
       - url: !FindInMap [ConsoleUrl, !Ref "AWS::Partition", url, {DefaultValue: "console.aws.amazon.com"}]
 
   EC2console:

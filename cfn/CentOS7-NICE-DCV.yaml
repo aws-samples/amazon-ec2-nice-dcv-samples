@@ -1682,9 +1682,9 @@ Resources:
                 cd /tmp/cfn
 
                 # Change password
-                PASSWD=$(cat /var/lib/cloud/data/instance-id)
-                USER=centos
-                echo "$USER:$PASSWD" | chpasswd
+                DCVPASSWORD=$(cat /var/lib/cloud/data/instance-id)
+                DCVUSER=centos
+                echo "$DCVUSER:$DCVPASSWORD" | chpasswd
 
                 # EPEL: https://docs.fedoraproject.org/en-US/epel/
                 yum install -q -y epel-release
@@ -1736,22 +1736,22 @@ Resources:
                   yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
                   yum install -q -y docker-ce
                   systemctl enable docker
-                  usermod -aG docker $USER
+                  usermod -aG docker $DCVUSER
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
                 yum remove -q -y awscli
                 sudo snap install aws-cli --classic
                 if [ -e /snap/bin/aws ]; then
-                  rm -f /home/$USER/update-awscli
+                  rm -f /home/$DCVUSER/update-awscli
                 else
-                  /home/$USER/update-awscli
+                  /home/$DCVUSER/update-awscli
                 fi
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/$USER/.bashrc
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/$DCVUSER/.bashrc
 
                 # Separate AWS profile to use EC2 metadata: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-metadata.html
-                su - $USER -c "aws configure set --profile EC2 credential_source Ec2InstanceMetadata"
-                su - $USER -c "aws configure set --profile EC2 region ${AWS::Region}"
+                su - $DCVUSER -c "aws configure set --profile EC2 credential_source Ec2InstanceMetadata"
+                su - $DCVUSER -c "aws configure set --profile EC2 region ${AWS::Region}"
 
                 # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
                 sudo snap install certbot --classic
@@ -1831,12 +1831,12 @@ Resources:
                 yum install -q -y xorg-x11-drv-dummy
 
                 # User
-                USER=centos
+                DCVUSER=centos
 
                 # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
-                sed -i "/^\[session-management\/automatic-console-session/a owner=\"$USER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
+                sed -i "/^\[session-management\/automatic-console-session/a owner=\"$DCVUSER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
                 rm -f ${!0}
               mode: "000740"

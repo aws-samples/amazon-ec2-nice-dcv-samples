@@ -287,11 +287,11 @@ The login user name depends on Linux distributions as follows:
 To configure multiple virtual sessions, create additional user (e.g. `newuser`), append user name to `/opt/dcv/dcv-users.txt`, and set a strong password
 
 ```
-USER=newuser
+DCVUSER=newuser
 
-sudo useradd -m -s /bin/bash $USER
-echo $USER | sudo tee -a /opt/dcv/dcv-users.txt
-sudo passwd $USER
+sudo useradd -m -s /bin/bash $DCVUSER
+echo $DCVUSER | sudo tee -a /opt/dcv/dcv-users.txt
+sudo passwd $DCVUSER
 ```
 
 To verify that the virtual sessions have been created

@@ -1771,9 +1771,9 @@ Resources:
                 cd /tmp/cfn
 
                 # Change password
-                PASSWD=$(cat /var/lib/cloud/data/instance-id)
-                USER=ec2-user
-                echo "$USER:$PASSWD" | chpasswd
+                DCVPASSWORD=$(cat /var/lib/cloud/data/instance-id)
+                DCVUSER=ec2-user
+                echo "$DCVUSER:$DCVPASSWORD" | chpasswd
 
                 # Update OS
                 zypper -n update -y
@@ -1811,7 +1811,7 @@ Resources:
                 # Docker is part of SLES install
                 if [ "${installDocker}" = "Yes" ]; then
                   systemctl enable docker
-                  usermod -aG docker $USER
+                  usermod -aG docker $DCVUSER
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
@@ -1820,11 +1820,11 @@ Resources:
                 curl -s https://awscli.amazonaws.com/awscli-exe-linux-$(arch).zip -o awscliv2.zip
                 unzip -q -o awscliv2.zip
                 ./aws/install -b /usr/bin
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/$USER/.bashrc
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/$DCVUSER/.bashrc
 
                 # Separate AWS profile to use EC2 metadata: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-metadata.html
-                su - $USER -c "aws configure set --profile EC2 credential_source Ec2InstanceMetadata"
-                su - $USER -c "aws configure set --profile EC2 region ${AWS::Region}"
+                su - $DCVUSER -c "aws configure set --profile EC2 credential_source Ec2InstanceMetadata"
+                su - $DCVUSER -c "aws configure set --profile EC2 region ${AWS::Region}"
 
                 # Certbot on SLES 15 is version 1.22
                 # Install Certbot via Python 3.11: https://www.suse.com/c/python-3-11-stack-for-suse-linux-enterprise-15/
@@ -2010,12 +2010,12 @@ Resources:
                 zypper -n install -y xf86-video-dummy
 
                 # User
-                USER=ec2-user
+                DCVUSER=ec2-user
 
                 # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
-                sed -i "/^\[session-management\/automatic-console-session/a owner=\"$USER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
+                sed -i "/^\[session-management\/automatic-console-session/a owner=\"$DCVUSER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
                 # Nginx reverse proxy to DCV
                 if [ "${installReverseProxy}" = "Yes" ]; then

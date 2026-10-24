@@ -1823,9 +1823,9 @@ Resources:
                 export DEBIAN_FRONTEND=noninteractive
 
                 # Change password
-                PASSWD=$(cat /var/lib/cloud/data/instance-id)
-                USER=kali
-                echo "$USER:$PASSWD" | chpasswd
+                DCVPASSWORD=$(cat /var/lib/cloud/data/instance-id)
+                DCVUSER=kali
+                echo "$DCVUSER:$DCVPASSWORD" | chpasswd
 
                 # Update OS
                 apt-get update
@@ -1870,23 +1870,23 @@ Resources:
                 if [ "${installDocker}" = "Yes" ]; then
                   apt-get install -q -y docker.io
                   systemctl enable docker
-                  usermod -aG docker $USER
+                  usermod -aG docker $DCVUSER
                 fi
 
                 # AWS CLI: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
                 apt-get remove -q -y awscli
                 sudo snap install aws-cli --classic
                 if [ -e /snap/bin/aws ]; then
-                  rm -f /home/$USER/update-awscli
+                  rm -f /home/$DCVUSER/update-awscli
                   ln -s /snap/bin/aws /usr/bin/aws
                 else
-                  /home/$USER/update-awscli
+                  /home/$DCVUSER/update-awscli
                 fi
-                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/$USER/.zshrc
+                echo "export AWS_CLI_AUTO_PROMPT=on-partial" >> /home/$DCVUSER/.zshrc
 
                 # Separate AWS profile to use EC2 metadata: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-metadata.html
-                su - $USER -c "aws configure set --profile EC2 credential_source Ec2InstanceMetadata"
-                su - $USER -c "aws configure set --profile EC2 region ${AWS::Region}"
+                su - $DCVUSER -c "aws configure set --profile EC2 credential_source Ec2InstanceMetadata"
+                su - $DCVUSER -c "aws configure set --profile EC2 region ${AWS::Region}"
 
                 # Certbot: https://eff-certbot.readthedocs.io/en/stable/install.html#snap-recommended
                 sudo snap install certbot --classic
@@ -2025,12 +2025,12 @@ Resources:
                 apt-get install -q -y xserver-xorg-video-dummy
 
                 # User
-                USER=kali
+                DCVUSER=kali
 
                 # Higher web client max resolution: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
                 sed -i "/^\[display/a web-client-max-head-resolution=(4096, 2160)" /etc/dcv/dcv.conf
                 # Console session support
-                sed -i "/^\[session-management\/automatic-console-session/a owner=\"$USER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
+                sed -i "/^\[session-management\/automatic-console-session/a owner=\"$DCVUSER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
                 # Nginx reverse proxy to DCV
                 if [ "${installReverseProxy}" = "Yes" ]; then
