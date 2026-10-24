@@ -1605,6 +1605,9 @@ Resources:
                 if (! echo $OS_VERSION | grep -q "2[6-8]"); then
                   sudo apt-get install -y ./nice-xdcv_*.deb
                 fi
+                if (apt info nice-dcv-gnome-shell-extension | grep -iq installed); then
+                  sudo apt-get install -y ./nice-dcv-gnome-shell-extension*.deb
+                fi
                 if (arch | grep -q x86); then
                   sudo apt-get install -y ./nice-dcv-gltest_*.deb
                 fi
@@ -1726,7 +1729,7 @@ Resources:
                 fi
 
                 # Ubuntu 26+ is Wayland
-                OS_VERSION=$(lsb_release -r -s)               
+                OS_VERSION=$(lsb_release -r -s)
                 systemctl isolate multi-user.target
 
                 # Wayland: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-wayland-prerequisites.html
@@ -2133,6 +2136,9 @@ Resources:
                 usermod -aG video dcv
                 if (! echo $OS_VERSION | grep -q "2[6-8]"); then
                   apt-get install -q -y ./nice-xdcv_*.deb
+                fi
+                if [ -f ./nice-dcv-gnome-shell-extension_*.deb ]; then
+                  sudo apt-get install -y ./nice-dcv-gnome-shell-extension_*.deb
                 fi
                 if (arch | grep -q x86); then
                   apt-get install -q -y ./nice-dcv-gltest_*.deb

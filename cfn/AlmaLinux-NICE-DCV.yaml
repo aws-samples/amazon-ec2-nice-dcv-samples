@@ -1604,6 +1604,9 @@ Resources:
                 if (! echo $OS_VERSION | grep -q "1[0-9]" ); then 
                   sudo dnf install -y ./nice-xdcv-*.rpm
                 fi
+                if (dnf info nice-dcv-gnome-shell-extension | grep -iq installed); then
+                  sudo dnf install -y ./nice-dcv-gnome-shell-extension*.rpm
+                fi
                 if (arch | grep -q x86); then
                   sudo dnf install -y ./nice-dcv-gltest-*.rpm
                 fi
@@ -2115,6 +2118,9 @@ Resources:
                 tar -xzf nice-dcv-el$OS_VERSION-$(arch).tgz && cd nice-dcv-*-el$OS_VERSION-$(arch)
                 dnf install -q -y ./nice-dcv-server-*.rpm
                 dnf install -q -y ./nice-dcv-web-viewer-*.rpm
+                if [ -f ./nice-dcv-gnome-shell-extension* ]; then
+                  dnf install -q -y ./nice-dcv-gnome-shell-extension*.rpm
+                fi
                 if (! echo $OS_VERSION | grep -q "1[0-9]" ); then
                   dnf install -q -y ./nice-xdcv-*.rpm
                 fi
