@@ -1598,17 +1598,20 @@ Resources:
                 cd /tmp
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\.//g')
                 sudo rm -f /tmp/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
+                rm -rf /tmp/nice-dcv-*-ubuntu$OS_VERSION-$(arch)
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
                 tar -xvzf nice-dcv-ubuntu$OS_VERSION-$(arch).tgz && cd nice-dcv-*-ubuntu$OS_VERSION-$(arch)
                 sudo apt-get install -y ./nice-dcv-server_*.deb
-                sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
-                if (! echo $OS_VERSION | grep -q "2[6-8]"); then
+                if (apt info nice-dcv-web-viewer | grep -iq installed); then
+                  sudo apt-get install -y ./nice-dcv-web-viewer*.deb
+                fi
+                if (apt info nice-xdcv | grep -iq installed); then
                   sudo apt-get install -y ./nice-xdcv_*.deb
                 fi
                 if (apt info nice-dcv-gnome-shell-extension | grep -iq installed); then
                   sudo apt-get install -y ./nice-dcv-gnome-shell-extension*.deb
                 fi
-                if (arch | grep -q x86); then
+                if (apt info nice-dcv-gltest | grep -iq installed); then
                   sudo apt-get install -y ./nice-dcv-gltest_*.deb
                 fi
                 if (apt info nice-dcv-gl | grep -iq installed); then
@@ -2134,14 +2137,14 @@ Resources:
                 apt-get install -q -y ./nice-dcv-server_*.deb
                 apt-get install -q -y ./nice-dcv-web-viewer_*.deb
                 usermod -aG video dcv
-                if (! echo $OS_VERSION | grep -q "2[6-8]"); then
-                  apt-get install -q -y ./nice-xdcv_*.deb
+                if [ -f ./nice-xdcv* ]; then
+                  apt-get install -q -y ./nice-xdcv*.deb
                 fi
-                if [ -f ./nice-dcv-gnome-shell-extension_*.deb ]; then
-                  sudo apt-get install -y ./nice-dcv-gnome-shell-extension_*.deb
+                if [ -f ./nice-dcv-gnome-shell-extension* ]; then
+                  apt-get install -q -y ./nice-dcv-gnome-shell-extension*.deb
                 fi
-                if (arch | grep -q x86); then
-                  apt-get install -q -y ./nice-dcv-gltest_*.deb
+                if [ -f ./nice-dcv-gltest* ]; then
+                  apt-get install -q -y ./nice-dcv-gltest*.deb
                 fi
                 if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
                   apt-get install -q -y ./nice-dcv-gl_*.deb
@@ -2185,6 +2188,10 @@ Resources:
                 # Disable upgrade prompt: https://help.ubuntu.com/community/Upgrades#Upgrade_policy
                 sed -i "s/Prompt=lts/Prompt=never/g" /etc/update-manager/release-upgrades
                 chown -R ubuntu:ubuntu /home/ubuntu/.config
+                # 
+                if ( apt info gnome-initial-setup | grep -i -q install ); then
+                  apt-get remove -q -y gnome-initial-setup
+                fi
 
                 # Ubuntu 24+: reduce systemd-networkd-wait-online.service 2+ min timeout
                 if (echo $OS_VERSION | grep -q "2[4-8]"); then

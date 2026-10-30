@@ -1475,6 +1475,7 @@ Resources:
                 cd /tmp
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
                 sudo rm -f /tmp/nice-dcv-sles$OS_VERSION-$(arch).tgz
+                rm -rf /tmp/nice-dcv-*-sles$OS_VERSION-$(arch)
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-sles$OS_VERSION-$(arch).tgz
                 tar -xvzf nice-dcv-sles$OS_VERSION-$(arch).tgz && cd nice-dcv-*-sles$OS_VERSION-$(arch)
                 sudo zypper install -y ./nice-dcv-server-*.rpm

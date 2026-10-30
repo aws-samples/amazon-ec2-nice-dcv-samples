@@ -1596,12 +1596,17 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 sudo rm -f /tmp/nice-dcv-amzn2023-$(arch).tgz
+                rm -rf /tmp/nice-dcv-*-amzn2023-$(arch)/
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-amzn2023-$(arch).tgz
                 tar -xvzf nice-dcv-amzn2023-$(arch).tgz && cd nice-dcv-*-amzn2023-$(arch)
                 sudo dnf install -y ./nice-dcv-server-*.rpm
-                sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
-                sudo dnf install -y ./nice-xdcv-*.rpm
-                if (arch | grep -q x86); then
+                if (dnf info nice-dcv-web-viewer | grep -iq installed); then
+                  sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
+                fi
+                if (dnf info nice-xdcv | grep -iq installed); then
+                  sudo dnf install -y ./nice-xdcv-*.rpm
+                fi
+                if (dnf info nice-dcv-gltest | grep -iq installed); then
                   sudo dnf install -y ./nice-dcv-gltest-*.rpm
                 fi
                 if (dnf info nice-dcv-gl | grep -iq installed); then
@@ -2069,9 +2074,11 @@ Resources:
                 tar -xzf nice-dcv-amzn2023-$(arch).tgz && cd nice-dcv-*-amzn2023-$(arch)
                 dnf install -q -y ./nice-dcv-server-*.rpm
                 dnf install -q -y ./nice-dcv-web-viewer-*.rpm
-                dnf install -q -y ./nice-xdcv-*.rpm
-                if (arch | grep -q x86); then
-                  dnf install -q -y ./nice-dcv-gltest-*.rpm
+                if [ -f ./nice-xdcv* ]; then
+                  dnf install -q -y ./nice-xdcv-*.rpm
+                fi
+                if [ -f ./nice-dcv-gltest* ]; then
+                  dnf install -q -y ./nice-dcv-gltest*.rpm
                 fi
                 # GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then

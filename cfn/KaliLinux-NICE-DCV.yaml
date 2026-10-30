@@ -1508,13 +1508,24 @@ Resources:
                 #!/bin/bash
                 cd /tmp
                 sudo rm -f /tmp/nice-dcv-ubuntu2404-$(arch).tgz
+                rm -rf /tmp/nice-dcv-*-$(arch)
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu2404-$(arch).tgz
                 tar -xvzf nice-dcv-ubuntu2404-$(arch).tgz && cd nice-dcv-*-$(arch)
                 sudo apt-get install -y ./nice-dcv-server_*.deb
-                sudo apt-get install -y ./nice-dcv-web-viewer_*.deb
-                sudo apt-get install -y ./nice-xdcv_*.deb
-                if (arch | grep -q x86); then
+                if (apt info nice-dcv-web-viewer | grep -iq installed); then
+                  sudo apt-get install -y ./nice-dcv-web-viewer*.deb
+                fi
+                if (apt info nice-xdcv | grep -iq installed); then
+                  sudo apt-get install -y ./nice-xdcv_*.deb
+                fi
+                if (apt info nice-dcv-gnome-shell-extension | grep -iq installed); then
+                  sudo apt-get install -y ./nice-dcv-gnome-shell-extension*.deb
+                fi
+                if (apt info nice-dcv-gltest | grep -iq installed); then
                   sudo apt-get install -y ./nice-dcv-gltest_*.deb
+                fi
+                if (apt info nice-dcv-gl | grep -iq installed); then
+                  sudo apt-get install -y ./nice-dcv-gl_*.deb
                 fi
                 sudo systemctl daemon-reload
               mode: "000755"
@@ -1996,9 +2007,11 @@ Resources:
                 usermod -aG video dcv
                 # from /etc/lightdm/lightdm.conf.d
                 # sed -i '/^\[Seat\:\*\]/a display-setup-script=/usr/lib/x86_64-linux-gnu/dcv/dcvlightdm' /etc/lightdm/lightdm.conf
-                apt-get install -q -y ./nice-xdcv_*.deb
-                if (arch | grep -q x86); then
-                  apt-get install -q -y ./nice-dcv-gltest_*.deb
+                if [ -f ./nice-xdcv* ]; then
+                  apt-get install -q -y ./nice-xdcv*.deb
+                fi
+                if [ -f ./nice-dcv-gltest* ]; then
+                  apt-get install -q -y ./nice-dcv-gltest*.deb
                 fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html

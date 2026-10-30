@@ -1465,23 +1465,6 @@ Resources:
         00_setup:
           # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
-            "/home/centos/update-dcv":
-              content: |
-                #!/bin/bash
-                cd /tmp
-                sudo rm -f nice-dcv-el7-$(arch).tgz
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el7-$(arch).tgz
-                tar -xvzf nice-dcv-el7-$(arch).tgz && cd nice-dcv-*-el7-$(arch)
-                sudo yum install -y ./nice-dcv-server-*.rpm
-                sudo yum install -y ./nice-dcv-web-viewer-*.rpm
-                sudo yum install -y ./nice-xdcv-*.rpm
-                if (arch | grep -q x86); then
-                  sudo yum install -y ./nice-dcv-gltest-*.rpm
-                fi
-                sudo systemctl daemon-reload
-              mode: "000755"
-              owner: "centos"
-              group: "centos"
             "/home/centos/update-awscli":
               content: |
                 #!/bin/bash
@@ -1783,7 +1766,7 @@ Resources:
                 yum update -q -y
 
                 # Support discontinued: https://docs.aws.amazon.com/dcv/latest/adminguide/doc-history-release-notes.html#dcv-2024-0-17979
-                rm -f /home/centos/update-dcv
+                # rm -f /home/centos/update-dcv
 
                 # DCV prereq: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html
                 yum groupinstall -q -y "GNOME Desktop" --skip-broken
@@ -1802,9 +1785,11 @@ Resources:
                 yum install -q -y ./nice-dcv-server-*.rpm
                 yum install -q -y ./nice-dcv-web-viewer-*.rpm
                 usermod -aG video dcv
-                yum install -q -y ./nice-xdcv-*.rpm
-                if (arch | grep -q x86); then
-                  yum install -q -y ./nice-dcv-gltest-*.rpm
+                if [ -f ./nice-xdcv* ]; then
+                  yum install -q -y ./nice-xdcv*.rpm
+                fi
+                if [ -f ./nice-dcv-gltest* ]; then
+                  yum install -q -y ./nice-dcv-gltest*.rpm
                 fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html

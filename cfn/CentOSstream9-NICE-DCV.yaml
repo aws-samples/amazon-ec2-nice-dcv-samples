@@ -1485,13 +1485,21 @@ Resources:
                 cd /tmp
                 OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
                 sudo rm -f /tmp/nice-dcv-el$OS_VERSION-$(arch).tgz
+                rm -rf /tmp/nice-dcv-*-el$OS_VERSION-$(arch)
                 wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-el$OS_VERSION-$(arch).tgz
                 tar -xvzf nice-dcv-el$OS_VERSION-$(arch).tgz && cd nice-dcv-*-el$OS_VERSION-$(arch)
                 sudo dnf install -y ./nice-dcv-server-*.rpm
-                sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
-                sudo dnf install -y ./nice-xdcv-*.rpm
-                if (arch | grep -q x86); then
+                if (dnf info nice-dcv-web-viewer | grep -iq installed); then
+                  sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
+                fi
+                if (dnf info nice-xdcv | grep -iq installed); then
+                  sudo dnf install -y ./nice-xdcv-*.rpm
+                fi
+                if (dnf info nice-dcv-gltest | grep -iq installed); then
                   sudo dnf install -y ./nice-dcv-gltest-*.rpm
+                fi
+                if (dnf info nice-dcv-gl | grep -iq installed); then
+                  sudo dnf install -y ./nice-dcv-gl-*.rpm
                 fi
                 sudo systemctl daemon-reload
               mode: "000755"
@@ -1888,9 +1896,11 @@ Resources:
                 tar -xzf nice-dcv-el$OS_VERSION-$(arch).tgz && cd nice-dcv-*-el$OS_VERSION-$(arch)
                 dnf install -q -y ./nice-dcv-server-*.rpm
                 dnf install -q -y ./nice-dcv-web-viewer-*.rpm
-                dnf install -q -y ./nice-xdcv-*.rpm
-                if (arch | grep -q x86); then
-                  dnf install -q -y ./nice-dcv-gltest-*.rpm
+                if [ -f ./nice-xdcv* ]; then
+                  dnf install -q -y ./nice-xdcv*.rpm
+                fi
+                if [ -f ./nice-dcv-gltest* ]; then
+                  dnf install -q -y ./nice-dcv-gltest*.rpm
                 fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html

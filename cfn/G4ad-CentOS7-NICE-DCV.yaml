@@ -1927,8 +1927,10 @@ Resources:
                 yum install -q -y ./nice-dcv-server-*.rpm
                 yum install -q -y ./nice-dcv-web-viewer-*.rpm
                 usermod -aG video dcv
-                yum install -q -y ./nice-xdcv-*.rpm
-                yum install -q -y ./nice-dcv-gltest-*.rpm
+                if [ -f ./nice-xdcv* ]; then
+                  yum install -q -y ./nice-xdcv*.rpm
+                fi
+                yum install -q -y ./nice-dcv-gltest*.rpm
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
                 yum install -q -y cups

@@ -1528,26 +1528,6 @@ Resources:
         00_setup:
           # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
-            "/home/ec2-user/update-dcv":
-              content: |
-                #!/bin/bash
-                cd /tmp
-                sudo rm -f /tmp/nice-dcv-amzn2-$(arch).tgz
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-amzn2-$(arch).tgz
-                tar -xvzf nice-dcv-amzn2-$(arch).tgz && cd nice-dcv-*-amzn2-$(arch)
-                sudo yum install -y ./nice-dcv-server-*.rpm
-                sudo yum install -y ./nice-dcv-web-viewer-*.rpm
-                sudo yum install -y ./nice-xdcv-*.rpm
-                if (arch | grep -q x86); then
-                  sudo yum install -y ./nice-dcv-gltest-*.rpm
-                fi
-                if (yum info nice-dcv-gl | grep -iq installed); then
-                  sudo yum install -y ./nice-dcv-gl-*.rpm
-                fi
-                sudo systemctl daemon-reload
-              mode: "000755"
-              owner: "ec2-user"
-              group: "ec2-user"
             "/home/ec2-user/update-awscli":
               content: |
                 #!/bin/bash
@@ -1942,14 +1922,16 @@ Resources:
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
                 # AL2 has EOL: https://docs.aws.amazon.com/AL2/latest/relnotes/relnotes-20260710.html
-                rm -f /home/ec2-user/update-dcv
+                # rm -f /home/ec2-user/update-dcv
                 curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/2025.0/Servers/nice-dcv-2025.0-20103-amzn2-$(arch).tgz
                 tar -xvzf nice-dcv-*-amzn2-$(arch).tgz && cd nice-dcv-*-amzn2-$(arch)
                 yum install -q -y ./nice-dcv-server-*.rpm
                 yum install -q -y ./nice-dcv-web-viewer-*.rpm
-                yum install -q -y ./nice-xdcv-*.rpm
-                if (arch | grep -q x86); then
-                  yum install -q -y ./nice-dcv-gltest-*.rpm
+                if [ -f ./nice-xdcv* ]; then
+                  yum install -q -y ./nice-xdcv*.rpm
+                fi
+                if [ -f ./nice-dcv-gltest* ]; then
+                  yum install -q -y ./nice-dcv-gltest*.rpm
                 fi
                 if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
                   yum install -q -y ./nice-dcv-gl-*.rpm
