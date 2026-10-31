@@ -751,14 +751,13 @@ Conditions:
   useAlmaLinux9arm64: !Equals [!Ref osVersion, "AlmaLinux OS 9 (arm64)"]
   useAlmaLinux9x86: !Equals [!Ref osVersion, "AlmaLinux OS 9 (x86_64)"]
   useAlmaLinux8x86: !Equals [!Ref osVersion, "AlmaLinux OS 8 (x86_64)"]
-  isNotEL10: !Not [!Or [!Condition useAlmaLinux10arm64, !Condition useAlmaLinux10x86]]
 
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   useElasticIP: !And [!Condition displayPublicIP, !Equals [!Ref assignStaticIP, "Yes"]]
   enableProtection: !Equals [!Ref ec2TerminationProtection, "Yes"]
   isGPUinstall: !Not [!Or [!Equals [!Ref sessionType, "console"], !Equals [!Ref sessionType, "virtual"]]]
 
-  hasEIC: !And [!Condition isNotEL10, !Not [!Equals [!FindInMap [EICprefixMap, !Ref AWS::Region, IpPrefix, {DefaultValue: 127.0.0.1/32}], 127.0.0.1/32]]]
+  hasEIC: !Not [!Equals [!FindInMap [EICprefixMap, !Ref AWS::Region, IpPrefix, {DefaultValue: 127.0.0.1/32}], 127.0.0.1/32]]
   createSgEIC: !And [!Condition hasEIC, !Condition displayPublicIP]
   createSgHTTP: !Or [!Equals [!Ref allowWebServerPorts, HTTP], !Equals [!Ref allowWebServerPorts, HTTP-and-HTTPS]]
   installReverseProxy: !Equals [!Ref installReverseProxy, "Yes"]
@@ -2527,15 +2526,11 @@ Resources:
           else
             ARCH=arm64
           fi
-          if ( cat /etc/os-release | grep -q 8\. ); then
-            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_$ARCH/ec2-instance-connect.rhel8.rpm
-            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
-            dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
-          else
-            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_$ARCH/ec2-instance-connect.rpm
-            curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
-            dnf install -q -y ./ec2-instance-connect.rpm ./ec2-instance-connect-selinux.noarch.rpm
-          fi
+          OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
+          EIC_VERSION="2.0.0-6"
+          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_$ARCH/ec2-instance-connect-$EIC_VERSION.rhel$OS_VERSION.$(arch).rpm
+          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_$ARCH/ec2-instance-connect-selinux-$EIC_VERSION.noarch.rpm
+          dnf install -q -y ./ec2-instance-connect-$EIC_VERSION.rhel$OS_VERSION.$(arch).rpm ./ec2-instance-connect-selinux-$EIC_VERSION.noarch.rpm
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
           if (! systemctl list-units | grep -q amazon-ssm-agent); then

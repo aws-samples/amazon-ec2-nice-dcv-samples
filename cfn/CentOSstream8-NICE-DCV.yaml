@@ -2062,9 +2062,11 @@ Resources:
           else
             ARCH=arm64
           fi
-          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_$ARCH/ec2-instance-connect.rhel8.rpm
-          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_amd64/ec2-instance-connect-selinux.noarch.rpm
-          dnf install -q -y ./ec2-instance-connect.rhel8.rpm ./ec2-instance-connect-selinux.noarch.rpm
+          OS_VERSION=8
+          EIC_VERSION="2.0.0-6"
+          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_$ARCH/ec2-instance-connect-$EIC_VERSION.rhel$OS_VERSION.$(arch).rpm
+          curl -s -L -O https://amazon-ec2-instance-connect-us-west-2.s3.us-west-2.amazonaws.com/latest/linux_$ARCH/ec2-instance-connect-selinux-$EIC_VERSION.noarch.rpm
+          dnf install -q -y ./ec2-instance-connect-$EIC_VERSION.rhel$OS_VERSION.$(arch).rpm ./ec2-instance-connect-selinux-$EIC_VERSION.noarch.rpm
 
           # SSM agent: https://docs.aws.amazon.com/systems-manager/latest/userguide/agent-install-rhel.html
           if (! systemctl list-units | grep -q amazon-ssm-agent); then
