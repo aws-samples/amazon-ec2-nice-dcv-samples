@@ -1676,45 +1676,60 @@ Resources:
                   fi
                 fi
 
-                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
                 SESSION="${sessionType}"
-                case $SESSION in
-                  virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
-                    ;;
-                  *GPU_sharing*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                  console-*-NVIDIA_GRID*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
-                    ;;
-                  console-*-NVIDIA*)
-                    nvidia-xconfig --preserve-busid --enable-all-gpus
-                    ;;
-                esac
+                # virtual, console or GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
+                if ( which nvidia-xconfig ); then
+                  case $SESSION in
+                    virtual-with-NVIDIA_GRID_Driver-GPU_sharing)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                      ;;
+                    *GPU_sharing*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                      ;;
+                    console-*-NVIDIA_GRID*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus --connected-monitor=DFP-0,DFP-1,DFP-2,DFP-3
+                      ;;
+                    console-*-NVIDIA*)
+                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                      ;;
+                  esac
+                fi
 
+                # EL 10+ is Wayland
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
                 systemctl isolate multi-user.target
-                case $SESSION in
-                  console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-rhel
-                    systemctl enable --now xdcv-console-update.service
-                    systemctl enable xdcv-console.path
-                    ;;
-                esac
 
-                # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
-                case $SESSION in
-                  *GPU_sharing*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                  console*)
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
-                  virtual*)
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                esac
+                # Wayland: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-wayland-prerequisites.html
+                if (echo $OS_VERSION | grep -q "1[0-9]" ); then
+                  systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                  systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                  if [ -f /etc/X11/xorg.conf ]; then
+                    rm /etc/X11/xorg.conf
+                  fi
+                else
+                  case $SESSION in
+                    console-*Xdcv*) # https://docs.aws.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-rhel
+                      systemctl enable --now xdcv-console-update.service
+                      systemctl enable xdcv-console.path
+                      ;;
+                  esac
+
+                  # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
+                  case $SESSION in
+                    *GPU_sharing*)
+                      systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                      systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                      ;;
+                    console*)
+                      systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                      sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                      ;;
+                    virtual*)
+                      systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                      ;;
+                  esac
+                fi
+
                 systemctl enable dcvserver && systemctl restart dcvserver
 
                 # NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
@@ -2026,6 +2041,8 @@ Resources:
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
 
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
+
                 # Update OS
                 dnf update -q -y
 
@@ -2036,19 +2053,21 @@ Resources:
                 dnf install -q -y gnome-software
 
                 # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
-                if (cat /etc/os-release | grep -q 8\.); then
+                if (echo $OS_VERSION | grep -q 8); then
                   dnf install -q -y pulseaudio pulseaudio-utils
                 else
                   dnf install -q -y pipewire pipewire-utils
                 fi
                 dnf install -q -y gnome-tweaks
-                if (! cat /etc/os-release | grep -q 8\.); then
+                if (! echo $OS_VERSION | grep -q 8); then
                   dnf install -q -y gnome-extensions-app
                 fi
                 dnf install -q -y firefox
 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
-                sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
+                if [ -f /etc/gdm/custom.conf ]; then
+                  sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm/custom.conf
+                fi
 
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
@@ -2067,7 +2086,9 @@ Resources:
                   dnf install -q -y ./nice-dcv-gltest*.rpm
                 fi
                 if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
-                  dnf install -q -y ./nice-dcv-gl-*.rpm
+                  if [ -f ./nice-dcv-gl* ]; then
+                    dnf install -q -y ./nice-dcv-gl*.rpm
+                  fi
                 fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
@@ -2091,7 +2112,9 @@ Resources:
                 sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
                 # X11 dummy driver for non GPU instance console session
-                dnf install -q -y xorg-x11-drv-dummy
+                if ( ! echo $OS_VERSION | grep -q "1[0-9]" ); then
+                  dnf install -q -y xorg-x11-drv-dummy
+                fi
 
                 # User
                 DCVUSER=ec2-user
@@ -2134,7 +2157,6 @@ Resources:
                 else
                   rm -f /opt/ReverseProxy
                 fi
-
 
                 rm -f ${!0}
               mode: "000740"
@@ -2333,9 +2355,15 @@ Resources:
                 fi
                 dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 dnf clean all
-                dnf -q -y module install nvidia-driver:open-dkms
+                if ( dnf module list | grep nvidia-driver | grep -q open-dkms ); then
+                  dnf module enable -y nvidia-driver:open-dkms
+                else
+                  dnf install -q -y nvidia-open
+                fi
+                if ( dnf search nvidia-xconfig | grep -q nvidia-xconfig ); then
+                  dnf install -q -y nvidia-xconfig
+                fi
                 dnf install -q -y nvidia-settings
-                dnf install -q -y nvidia-xconfig
 
                 # P instance: https://repost.aws/articles/ARpmJcNiCtST2A3hrrM_4R4A/
                 if ( ec2-metadata -t | grep -q " p[0-9]" ); then
@@ -2743,7 +2771,7 @@ Resources:
         HttpVersion: http2and3
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-          MinimumProtocolVersion: TLSv1.2_2021
+          MinimumProtocolVersion: TLSv1.3_2025
         DefaultCacheBehavior:
           AllowedMethods: !Split [",", "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE"]
           CachedMethods:

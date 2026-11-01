@@ -1735,15 +1735,18 @@ Resources:
                   esac
                 fi
 
-                # RHEL 10+ is Wayland
-                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')               
+                # EL 10+ is Wayland
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
                 systemctl isolate multi-user.target
 
                 # Wayland: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-wayland-prerequisites.html
                 if (echo $OS_VERSION | grep -q "1[0-9]" ); then
                   systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
                   systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                else 
+                  if [ -f /etc/X11/xorg.conf ]; then
+                    rm /etc/X11/xorg.conf
+                  fi
+                else
                   case $SESSION in
                     console-*Xdcv*) # https://docs.aws.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-rhel
                       systemctl enable --now xdcv-console-update.service
@@ -2084,6 +2087,8 @@ Resources:
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
 
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')
+
                 # Update OS
                 dnf update -q -y
 
@@ -2094,19 +2099,16 @@ Resources:
                 dnf install -q -y gnome-software
 
                 # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
-                if (cat /etc/os-release | grep -q 8\.); then
+                if (echo $OS_VERSION | grep -q 8); then
                   dnf install -q -y pulseaudio pulseaudio-utils
                 else
                   dnf install -q -y pipewire pipewire-utils
                 fi
                 dnf install -q -y gnome-tweaks
-                if (! cat /etc/os-release | grep -q 8\.); then
+                if (! echo $OS_VERSION | grep -q 8); then
                   dnf install -q -y gnome-extensions-app
                 fi
                 dnf install -q -y firefox
-
-                # RHEL 10+ is Wayland
-                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\..*//g')                
                 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
                 if [ -f /etc/gdm/custom.conf ]; then
@@ -2130,7 +2132,9 @@ Resources:
                   dnf install -q -y ./nice-dcv-gltest*.rpm
                 fi
                 if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
-                  dnf install -q -y ./nice-dcv-gl-*.rpm
+                  if [ -f ./nice-dcv-gl* ]; then
+                    dnf install -q -y ./nice-dcv-gl*.rpm
+                  fi
                 fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
@@ -2154,7 +2158,9 @@ Resources:
                 sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
                 # X11 dummy driver for non GPU instance console session
-                dnf install -q -y xorg-x11-drv-dummy
+                if ( ! echo $OS_VERSION | grep -q "1[0-9]" ); then
+                  dnf install -q -y xorg-x11-drv-dummy
+                fi
 
                 # User
                 DCVUSER=ec2-user
@@ -2397,8 +2403,9 @@ Resources:
                 dnf clean all
                 if ( dnf module list | grep nvidia-driver | grep -q open-dkms ); then
                   dnf module enable -y nvidia-driver:open-dkms
+                else
+                  dnf install -q -y nvidia-open
                 fi
-                dnf install -q -y nvidia-open
                 if ( dnf search nvidia-xconfig | grep -q nvidia-xconfig ); then
                   dnf install -q -y nvidia-xconfig
                 fi
