@@ -154,14 +154,14 @@ Parameters:
     Type: String
     #Description: Version and processor architecture
     AllowedValues:
-      - Amazon Linux 2027 (arm64) [kernel 7.2]
-      - Amazon Linux 2027 (x86_64) [kernel 7.2]
-    Default: Amazon Linux 2027 (arm64) [kernel 7.2]
+      - Amazon Linux 2027 (arm64)
+      - Amazon Linux 2027 (x86_64)
+    Default: Amazon Linux 2027 (arm64)
 
   ec2Name:
     Type: String
     #Description: EC2 instance name
-    Default: Amazon Linux 2027
+    Default: Amazon Linux 2027 Preview
   ec2KeyPair:
     Type: AWS::EC2::KeyPair::KeyName
     Description: https://console.aws.amazon.com/ec2/#KeyPairs
@@ -188,6 +188,7 @@ Parameters:
       - "virtual"
       - "virtual-with-NVIDIA_GRID_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
+      - "virtual-with-AmazonLinux_repo_Driver"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
@@ -697,8 +698,7 @@ Parameters:
     Default: "Yes"
 
 Conditions:
-  useAl2023arm64k72: !Equals [!Ref osVersion, "Amazon Linux 2027 (arm64) [kernel 7.2]"]
-  useAl2023x86k72: !Equals [!Ref osVersion, "Amazon Linux 2027 (x86_64) [kernel 7.2]"]
+  useAl2023arm64: !Equals [!Ref osVersion, "Amazon Linux 2027 (arm64)"]
 
   displayPublicIP: !Equals [!Ref displayPublicIP, "Yes"]
   useElasticIP: !And [!Condition displayPublicIP, !Equals [!Ref assignStaticIP, "Yes"]]
@@ -1515,8 +1515,8 @@ Resources:
             - 05_gpu_nvidia_repo_install
           virtual-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
-          virtual-with-AL2027_repo_Driver:
-            - 07_gpu_al2023_repo_install
+          virtual-with-AmazonLinux_repo_Driver:
+            - 07_gpu_amazonlinux_repo_install
         00_setup:
           # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -2246,7 +2246,7 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
-        07_gpu_al2023_repo_install:
+        07_gpu_amazonlinux_repo_install:
           files:
             "/opt/install-gpu-driver":
               content: !Sub |
@@ -2254,10 +2254,8 @@ Resources:
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
 
-                dnf install -q -y nvidia-release
-                dnf clean expire-cache
-                NVIDIA-VERSION=$(dnf search nvidia-driver | grep " nvidia-driver-.*-repo-cdn" | cut -d "-" -f3 | sort -r | head -1)
-                dnf install -q -y nvidia-driver-$NVIDIA-VERSION-repo-cdn
+                dnf install -q -y nvidia-release-driver-latest
+                dnf install -q -y nvidia-driver-cuda
 
                 # P instance: https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/
                 if ( ec2-metadata -t | grep -q " p[0-9]" ); then
@@ -2281,9 +2279,9 @@ Resources:
     Properties:
       ImageId:
         !If [
-          useAl2023arm64k72,
-          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2027-preview-ami-kernel-7.2-arm64}}",
-          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2027-preview-ami-kernel-7.2-x86_64}}"
+          useAl2023arm64,
+          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2027-preview-ami-kernel-default-arm64}}",
+          "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2027-preview-ami-kernel-default-x86_64}}"
         ]
       InstanceType: !Ref instanceType
       IamInstanceProfile: !Ref instanceProfile
@@ -2332,7 +2330,7 @@ Resources:
 
           export SESSION="${sessionType}"
           case $SESSION in
-            *AL2027*) # install from AL2027 repo
+            *AmazonLinux*) # install from AL2027 repo
               systemctl disable dcv-post-reboot
 
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
