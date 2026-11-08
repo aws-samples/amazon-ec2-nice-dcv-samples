@@ -83,7 +83,7 @@ In most cases, the default values are sufficient. You will need to specify value
   - `*-with-NVIDIA_GRID_Driver` (G instance family) : install [NVIDIA GRID](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html) driver ([NVIDIA RTX Virtual Workstation (vWS)](https://www.nvidia.com/en-us/design-visualization/virtual-workstation/) mode)
   - `console-with-NVIDIA_Gaming_Driver` ([G7](https://aws.amazon.com/ec2/instance-types/g7/), [G7e](https://aws.amazon.com/ec2/instance-types/g7e/), [G6](https://aws.amazon.com/ec2/instance-types/g6/), [G6e](https://aws.amazon.com/ec2/instance-types/g6e/), [G5](https://aws.amazon.com/ec2/instance-types/g5/), [G4dn](https://aws.amazon.com/ec2/instance-types/g4/#Amazon_EC2_G4dn_Instances) instance) : install [NVIDIA Gaming](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html) driver
   - `*-with-NVIDIA_repo_Driver` ([NVIDIA GPU](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type) instance, e.g. [P4](https://aws.amazon.com/ec2/instance-types/p4/), [G5g](https://aws.amazon.com/ec2/instance-types/g5g/)) : install latest [NVIDIA Tesla](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/public-nvidia-driver.html) (also know as NVIDIA Data Center GPU) driver from [NVIDIA repository](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html). Refer to [NVIDIA Driver Installation Guide](https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/introduction.html) for supported OS (`$distro`) and architecture (`$arch`)
-  - `*-with-AL2023_repo_Driver` (x86_64 Amazon Linux 2023): install NVIDIA drivers from [AL2023](https://docs.aws.amazon.com/linux/al2023/release-notes/relnotes-2023.7.20250331.html) repository
+  - `*-with-AmazonLinux_repo_Driver` (x86_64 Amazon Linux): install NVIDIA drivers from [Amazon Linux](https://docs.aws.amazon.com/linux/al2023/release-notes/relnotes-2023.7.20250331.html) repository
   - `*-with-Ubuntu_repo_Driver` (Ubuntu) : install [pre-compiled NVIDIA modules](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/#installing-the-pre-compiled-nvidia-modules-for-your-kernel) from [Ubuntu repository](https://documentation.ubuntu.com/server/how-to/graphics/install-nvidia-drivers/)
   - `*-with-NVIDIA_runfile_Driver` (NVIDIA [GPU instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-instance-type)) : install NVIDIA Tesla driver using [runfile installer](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#runfile-installation) from [driver downloads](https://www.nvidia.com/Download/Find.aspx).
     - Use `teslaDriverVersion` to specify the [driver version](https://docs.nvidia.com/datacenter/tesla/index.html) to install
@@ -311,7 +311,7 @@ On [GPU EC2 instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/insta
 There are limits to display resolution and multi-screen support for Xorg console sessions depending on `sessionType` option:
 
 - `console`: one display of up to 4K resolution. You can [modify](https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-nongpu) `/etc/X11/xorg.conf` to support other resolutions and more than one display
-- Tesla driver (`console-with-NVIDIA_repo_Driver`, `console-with-NVIDIA_runfile_Driver`, `console-with-Ubuntu_repo_Driver`, `console-with-AL2023_repo_Driver`) : one display of up to [2560x1600 resolution](https://docs.nvidia.com/datacenter/tesla/tesla-release-notes-580-65-06/index.html#virtualization)
+- Tesla driver (`console-with-NVIDIA_repo_Driver`, `console-with-NVIDIA_runfile_Driver`, `console-with-Ubuntu_repo_Driver`, `console-with_AmazonLinux_repo_Driver`) : one display of up to [2560x1600 resolution](https://docs.nvidia.com/datacenter/tesla/tesla-release-notes-580-65-06/index.html#virtualization)
 - Gaming driver (`console-with-NVIDIA_Gaming_Driver`) : one display of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 - GRID driver (`console-with-NVIDIA_GRID_Driver`) : four displays of up to [4K resolution](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-driver-types)
 
@@ -321,7 +321,7 @@ Select `console-(Xdcv)-with-NVIDIA*` or `virtual-with-NVIDIA-*` when using GPU p
 
 [CUDA® Toolkit](https://developer.nvidia.com/cuda-toolkit) may be installed on GPU EC2 instances with the following `sessionType` options:
 
-- `*-AL2023_repo_*` : `sudo dnf install -y cuda-toolkit`
+- `*-AmazonLinux_repo_*` : `sudo dnf install -y cuda-toolkit`
 - `*-NVIDIA_repo_*`, `*-NVIDIA_GRID*`, `*-NVIDIA_Gaming*`, `*-NVIDIA_runfile*`, `*-Ubuntu_repo_*` : `sudo <packmgr_cli> install -y cuda-toolkit`
   - where  `<packmgr_cli>` is the OS package manager command-line tool, i.e.`apt` and `yum`/`dnf` for Ubuntu, and other Linux OSs respectively. *Refer to [CUDA documentation](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#) for [installation options](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#additional-package-manager-capabilities) and [post-installation actions](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#post-installation-actions)*
   

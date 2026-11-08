@@ -193,18 +193,18 @@ Parameters:
       - "console-with-NVIDIA_GRID_Driver"
       - "console-with-NVIDIA_Gaming_Driver"
       - "console-with-NVIDIA_repo_Driver"
-      - "console-with-AL2023_repo_Driver"
+      - "console-with-AmazonLinux_repo_Driver"
       - "console-with-NVIDIA_runfile_Driver"
       - "console-(Xdcv)-with-NVIDIA_repo_Driver"
-      - "console-(Xdcv)-with-AL2023_repo_Driver"
+      - "console-(Xdcv)-with-AmazonLinux_repo_Driver"
       - "console-(Xdcv)-with-NVIDIA_runfile_Driver"
       - "virtual-with-NVIDIA_GRID_Driver"
       - "virtual-with-NVIDIA_repo_Driver"
-      - "virtual-with-AL2023_repo_Driver"
+      - "virtual-with-AmazonLinux_repo_Driver"
       - "virtual-with-NVIDIA_runfile_Driver"
       - "virtual-with-NVIDIA_GRID_Driver-GPU_sharing"
       - "virtual-with-NVIDIA_repo_Driver-GPU_sharing"
-      - "virtual-with-AL2023_repo_Driver-GPU_sharing"
+      - "virtual-with-AmazonLinux_repo_Driver-GPU_sharing"
     Default: "virtual"
   teslaDriverVersion:
     Type: String
@@ -1555,14 +1555,14 @@ Resources:
             - 06_gpu_nvidia_runfile_install
           virtual-with-NVIDIA_runfile_Driver:
             - 06_gpu_nvidia_runfile_install
-          console-with-AL2023_repo_Driver:
-            - 07_gpu_al2023_repo_install
-          console-(Xdcv)-with-AL2023_repo_Driver:
-            - 07_gpu_al2023_repo_install
-          virtual-with-AL2023_repo_Driver:
-            - 07_gpu_al2023_repo_install
-          virtual-with-AL2023_repo_Driver-GPU_sharing:
-            - 07_gpu_al2023_repo_install
+          console-with-AmazonLinux_repo_Driver:
+            - 07_gpu_amazonlinux_repo_install
+          console-(Xdcv)-with-AmazonLinux_repo_Driver:
+            - 07_gpu_amazonlinux_repo_install
+          virtual-with-AmazonLinux_repo_Driver:
+            - 07_gpu_amazonlinux_repo_install
+          virtual-with-AmazonLinux_repo_Driver-GPU_sharing:
+            - 07_gpu_amazonlinux_repo_install
         00_setup:
           # in the following order: packages, groups, users, sources, files, commands, and then services.
           files:
@@ -1570,10 +1570,11 @@ Resources:
               content: |
                 #!/bin/bash
                 cd /tmp
-                sudo rm -f /tmp/nice-dcv-amzn2023-$(arch).tgz
-                rm -rf /tmp/nice-dcv-*-amzn2023-$(arch)/
-                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-amzn2023-$(arch).tgz
-                tar -xvzf nice-dcv-amzn2023-$(arch).tgz && cd nice-dcv-*-amzn2023-$(arch)
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+                sudo rm -f /tmp/nice-dcv-$DISTRO-$(arch).tgz
+                rm -rf /tmp/nice-dcv-*-$DISTRO-$(arch)/
+                wget https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-$DISTRO-$(arch).tgz
+                tar -xvzf nice-dcv-$DISTRO-$(arch).tgz && cd nice-dcv-*-$DISTRO-$(arch)
                 sudo dnf install -y ./nice-dcv-server-*.rpm
                 if (dnf info nice-dcv-web-viewer | grep -iq installed); then
                   sudo dnf install -y ./nice-dcv-web-viewer-*.rpm
@@ -1964,9 +1965,13 @@ Resources:
 
                 # Certbot PIP: https://certbot.eff.org/instructions?ws=other&os=pip
                 # Certbot: https://github.com/amazonlinux/amazon-linux-2023/issues/444
-                dnf install -q -y python3.14 python3.14-pip
-                dnf install -q -y python3.14-devel augeas-devel
-                python3.14 -m venv /opt/certbot
+                PY_VER=python3.14
+                dnf install -q -y $PY_VER $PY_VER-{pip,devel}
+                # AL2023 python3-augeas version is 1.1.0
+                # https://github.com/certbot/certbot/blob/main/tools/requirements.txt: python-augeas==1.2.0 ; python_version >= "3.10
+                dnf install -q -y gcc augeas-devel augeas-libs
+
+                $PY_VER -m venv /opt/certbot
                 /opt/certbot/bin/pip install --upgrade pip
                 /opt/certbot/bin/pip install certbot
                 /opt/certbot/bin/pip install certbot-dns-route53
@@ -2074,6 +2079,8 @@ Resources:
                 mkdir -p /tmp/cfn
                 cd /tmp/cfn
 
+                DISTRO=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+
                 # Update OS
                 dnf update -q -y
 
@@ -2089,8 +2096,8 @@ Resources:
 
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 rpm --import https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
-                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-amzn2023-$(arch).tgz
-                tar -xzf nice-dcv-amzn2023-$(arch).tgz && cd nice-dcv-*-amzn2023-$(arch)
+                curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-$DISTRO-$(arch).tgz
+                tar -xzf nice-dcv-$DISTRO-$(arch).tgz && cd nice-dcv-*-$DISTRO-$(arch)
                 dnf install -q -y ./nice-dcv-server-*.rpm
                 dnf install -q -y ./nice-dcv-web-viewer-*.rpm
                 if [ -f ./nice-xdcv* ]; then
@@ -2100,7 +2107,9 @@ Resources:
                   dnf install -q -y ./nice-dcv-gltest*.rpm
                 fi
                 if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
-                  dnf install -q -y ./nice-dcv-gl-*.rpm
+                  if [ -f ./nice-dcv-gl* ]; then
+                    dnf install -q -y ./nice-dcv-gl-*.rpm
+                  fi
                 fi
 
                 # Printer redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-printer.html
@@ -2155,7 +2164,9 @@ Resources:
                   # HTTPS proxy
                   mv /opt/ReverseProxy /etc/nginx/sites-available/ReverseProxy
                   ln -s /etc/nginx/sites-available/ReverseProxy /etc/nginx/sites-enabled/ReverseProxy
-
+                  # SELINUX
+                  setsebool -P httpd_can_network_connect 1                
+                  
                   systemctl enable --now nginx
                 else
                   rm -f /opt/ReverseProxy
@@ -2225,7 +2236,7 @@ Resources:
                 export SESSION="${sessionType}"
                 case $SESSION in
                   *NVIDIA*) # install GPU driver after reboot
-                    dnf install -q -y vulkan-devel libglvnd-devel elfutils-libelf-devel xorg-x11-server-Xorg
+                    dnf install -q -y vulkan-devel libglvnd-devel elfutils-libelf-devel
                     ;;
                 esac
 
@@ -2274,7 +2285,7 @@ Resources:
                 else
                   ARCH=sbsa
                 fi
-                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2324,7 +2335,7 @@ Resources:
                 else
                   ARCH=sbsa
                 fi
-                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
@@ -2348,7 +2359,7 @@ Resources:
                 else
                   ARCH=sbsa
                 fi
-                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 dnf clean expire-cache
                 dnf module enable -y nvidia-driver:open-dkms
                 dnf install -q -y nvidia-open
@@ -2401,7 +2412,7 @@ Resources:
                 else
                   ARCH=sbsa
                 fi
-                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/amzn2023/$ARCH/cuda-amzn2023.repo
+                dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/$DISTRO/$ARCH/cuda-$DISTRO.repo
                 dnf clean expire-cache
 
                 # P instance: https://repost.aws/articles/ARwfQMxiC-QMOgWykD9mco1w/
@@ -2427,7 +2438,7 @@ Resources:
               mode: "000755"
               owner: "root"
               group: "root"
-        07_gpu_al2023_repo_install:
+        07_gpu_amazonlinux_repo_install:
           files:
             "/opt/install-gpu-driver":
               content: !Sub |
@@ -2534,7 +2545,7 @@ Resources:
 
           export SESSION="${sessionType}"
           case $SESSION in
-            *AL2023*) # install from AL2023 repo
+            *AmazonLinux*) # install from AL2023 repo
               systemctl disable dcv-post-reboot
 
               $CFN_INIT -v --stack ${AWS::StackName} --resource ec2Instance --region ${AWS::Region} -c dcv_gpu_install
