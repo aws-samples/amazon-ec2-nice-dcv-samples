@@ -71,7 +71,7 @@ DCV installation scripts are available from the following [re:Post](https://repo
 
 - [Install GUI (graphical desktop) on Amazon EC2 instances running Amazon Linux 2023 (AL2023)](https://repost.aws/articles/ARq0LbVvRwTRukVpS6Zt1uZw/install-gui-graphical-desktop-on-amazon-ec2-instances-running-amazon-linux-2023-al2023)
 - [Install GUI (graphical desktop) on Amazon EC2 instances running Amazon Linux 2 (AL2)](https://repost.aws/articles/ARuqicSphdQ8-GiwZC2-QOXg/install-gui-graphical-desktop-on-amazon-ec2-instances-running-amazon-linux-2-al2)
-- [Install GUI (graphical desktop) on Amazon EC2 instances running RHEL/Rocky Linux 8/9/10](https://repost.aws/articles/AR4Nbl3SxTSIW3WpFSUJhzXg/install-gui-graphical-desktop-on-amazon-ec2-instances-running-rhel-rocky-linux-8-9-10)
+- [Install GUI (graphical desktop) on Amazon EC2 instances running RHEL/Rocky Linux](https://repost.aws/articles/AR4Nbl3SxTSIW3WpFSUJhzXg/install-gui-graphical-desktop-on-amazon-ec2-instances-running-rhel-rocky-linux)
 - [Install GUI (graphical desktop) on Amazon EC2 instances running SUSE Linux Enterprise Server 15 (SLES 15)](https://repost.aws/articles/ARGF6bVA19QC6IVcaUy-69Ag/install-gui-graphical-desktop-on-amazon-ec2-instances-running-suse-linux-enterprise-server-15-sles-15)
 - [Install GUI (graphical desktop) on Amazon EC2 instances running Ubuntu Linux](https://repost.aws/articles/ARJtZxRiOURwWI2qSWjl4AaQ/install-gui-graphical-desktop-on-amazon-ec2-instances-running-ubuntu-linux)
 
