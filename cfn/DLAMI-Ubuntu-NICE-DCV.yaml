@@ -146,47 +146,53 @@ Metadata:
 Parameters:
   imageId:
     Type: String
-    Description: https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html https://aws.amazon.com/releasenotes/dlami-support-policy/
+    Description: https://docs.aws.amazon.com/dlami/latest/devguide/appendix-ami-release-notes.html https://docs.aws.amazon.com/dlami/latest/devguide/support-policy.html
     AllowedValues:
       # aws ssm get-parameters-by-path --recursive --path /aws/service/neuron/dlami | jq -r  ".Parameters[].Name" | grep ubuntu
       # aws ssm get-parameters-by-path --recursive --path /aws/service/deeplearning/ami | jq -r  ".Parameters[].Name" | grep ubuntu
+      - Ubuntu 26.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-26.04/latest/image_id
       - Ubuntu 24.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-24.04/latest/image_id
       - Ubuntu 22.04 (Neuron Base) |/aws/service/neuron/dlami/base/ubuntu-22.04/latest/image_id
 
-      - Ubuntu 24.04 (Neuron JAX 0.9) |/aws/service/neuron/dlami/jax-0.9/ubuntu-24.04/latest/image_id
-      - Ubuntu 24.04 (Neuron JAX 0.7) |/aws/service/neuron/dlami/jax-0.7/ubuntu-24.04/latest/image_id
+      - Ubuntu 26.04 (Neuron JAX 0.10) |/aws/service/neuron/dlami/jax-0.10/ubuntu-26.04/latest/image_id
+      - Ubuntu 24.04 (Neuron JAX 0.10) |/aws/service/neuron/dlami/jax-0.10/ubuntu-24.04/latest/image_id
 
       - Ubuntu 24.04 (Neuron PyTorch 2.9) |/aws/service/neuron/dlami/pytorch-2.9/ubuntu-24.04/latest/image_id
       - Ubuntu 22.04 (Neuron PyTorch 2.8) |/aws/service/neuron/dlami/pytorch-2.8/ubuntu-22.04/latest/image_id
 
       - Ubuntu 24.04 (Neuron PyTorch Inference vLLM) |/aws/service/neuron/dlami/pytorch-inference-vllm/ubuntu-24.04/latest/image_id
 
+      - Ubuntu 26.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-26.04/latest/image_id
       - Ubuntu 24.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-24.04/latest/image_id
       - Ubuntu 22.04 (Neuron Multi) |/aws/service/neuron/dlami/multi-framework/ubuntu-22.04/latest/image_id
 
+      - Ubuntu 26.04 (TorchNeuron 2.14) |/aws/service/neuron/dlami/torch-neuronx-2.14.0/ubuntu-26.04/latest/image_id
+      - Ubuntu 24.04 (TorchNeuron 2.14) |/aws/service/neuron/dlami/torch-neuronx-2.14.0/ubuntu-24.04/latest/image_id
+
+      - Ubuntu 26.04 (Base GPU) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-26.04/latest/ami-id
       - Ubuntu 24.04 (Base GPU) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-24.04/latest/ami-id
       - Ubuntu 22.04 (Base GPU) |/aws/service/deeplearning/ami/x86_64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
 
       - Ubuntu 24.04 (Base with single CUDA) |/aws/service/deeplearning/ami/x86_64/base-with-single-cuda-ubuntu-24.04/latest/ami-id
       - Ubuntu 22.04 (Base with single CUDA) |/aws/service/deeplearning/ami/x86_64/base-with-single-cuda-ubuntu-22.04/latest/ami-id
 
-      - Ubuntu 24.04 (PyTorch 2.11) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.11-ubuntu-24.04/latest/ami-id
-      - Ubuntu 24.04 (PyTorch 2.10) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.10-ubuntu-24.04/latest/ami-id
-      - Ubuntu 24.04 (PyTorch 2.9) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.9-ubuntu-24.04/latest/ami-id
+      - Ubuntu 26.04 (PyTorch 2.14) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.14-ubuntu-26.04/latest/ami-id
+      - Ubuntu 26.04 (PyTorch 2.13) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.13-ubuntu-26.04/latest/ami-id
 
       - Ubuntu 22.04 (TensorFlow 2.18) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-tensorflow-2.18-ubuntu-22.04/latest/ami-id
 
+      - Ubuntu 26.04 (Base GPU) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-ubuntu-26.04/latest/ami-id
       - Ubuntu 24.04 (Base GPU) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-ubuntu-24.04/latest/ami-id
       - Ubuntu 22.04 (Base GPU) ARM64 |/aws/service/deeplearning/ami/arm64/base-oss-nvidia-driver-gpu-ubuntu-22.04/latest/ami-id
 
       - Ubuntu 24.04 (Base with single CUDA) ARM64 |/aws/service/deeplearning/ami/arm64/base-with-single-cuda-ubuntu-24.04/latest/ami-id
       - Ubuntu 22.04 (Base with single CUDA) ARM64 |/aws/service/deeplearning/ami/arm64/base-with-single-cuda-ubuntu-22.04/latest/ami-id
 
+      - Ubuntu 24.04 (PyTorch 2.12) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.12-ubuntu-24.04/latest/ami-id
       - Ubuntu 24.04 (PyTorch 2.11) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.11-ubuntu-24.04/latest/ami-id
       - Ubuntu 24.04 (PyTorch 2.10) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.10-ubuntu-24.04/latest/ami-id
-      - Ubuntu 24.04 (PyTorch 2.9) ARM64 |/aws/service/deeplearning/ami/arm64/oss-nvidia-driver-gpu-pytorch-2.9-ubuntu-24.04/latest/ami-id
 
-    Default: "Ubuntu 24.04 (PyTorch 2.10) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.10-ubuntu-24.04/latest/ami-id"
+    Default: "Ubuntu 26.04 (PyTorch 2.14) |/aws/service/deeplearning/ami/x86_64/oss-nvidia-driver-gpu-pytorch-2.14-ubuntu-26.04/latest/ami-id"
 
   ec2Name:
     Type: String
@@ -301,7 +307,7 @@ Parameters:
 
   sessionType:
     Type: String
-    Description: https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
+    Description: Ubuntu 26+ supports virtual sessions only. https://docs.aws.amazon.com/dcv/latest/adminguide/managing-sessions-intro.html
     AllowedValues:
       - "console"
       - "console-(Xdcv)"
@@ -1701,37 +1707,49 @@ Resources:
                   fi
                 fi
 
-                # Use NVIDIA for console and virtual (x86_64)
                 SESSION="${sessionType}"
                 # virtual or console session: https://docs.aws.amazon.com/dcv/latest/adminguide/config-param-ref.html
 
+                # Ubuntu 26+ is Wayland
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\.//g')
                 systemctl isolate multi-user.target
-                case $SESSION in
-                  console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-ubuntu
-                    dpkg-divert --package nice-xdcv --divert /usr/bin/Xorg.orig --rename /usr/bin/Xorg
-                    ln -sf /usr/bin/Xdcv-console /usr/bin/Xorg
-                    ;;
-                esac
 
-                case $SESSION in
-                  *GPU_sharing*)
-                    if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then  # GPU sharing
-                      nvidia-xconfig --preserve-busid --enable-all-gpus
+                # Wayland: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-wayland-prerequisites.html
+                if (echo $OS_VERSION | grep -q "2[6-8]"); then
+                  systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                  systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                  if [ -f /etc/X11/xorg.conf ]; then
+                    rm /etc/X11/xorg.conf
+                  fi
+                else
+                  case $SESSION in
+                    console-*Xdcv*) # https://docs.amazon.com/dcv/latest/adminguide/xdcv-console-sessions.html#xdcv-console-ubuntu
+                      dpkg-divert --package nice-xdcv --divert /usr/bin/Xorg.orig --rename /usr/bin/Xorg
+                      ln -sf /usr/bin/Xdcv-console /usr/bin/Xorg
+                      ;;
+                  esac
+
+                  case $SESSION in
+                    *GPU_sharing*)
+                      if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then  # GPU sharing
+                        nvidia-xconfig --preserve-busid --enable-all-gpus
+                        systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
+                      fi
+                      systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                      ;;
+                    console*)
+                      if (which nvidia-xconfig); then
+                        nvidia-xconfig --preserve-busid --enable-all-gpus
+                      fi
                       systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    fi
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                  console*)
-                    if (which nvidia-xconfig); then
-                      nvidia-xconfig --preserve-busid --enable-all-gpus
-                    fi
-                    systemctl set-default graphical.target && systemctl isolate graphical.target && sleep 2
-                    sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
-                    ;;
-                  virtual*)
-                    systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
-                    ;;
-                esac
+                      sed -i "s/^#create-session/create-session/g" /etc/dcv/dcv.conf
+                      ;;
+                    virtual*)
+                      systemctl enable dcv-virtual-session && systemctl restart dcv-virtual-session
+                      ;;
+                  esac
+                fi
+
                 systemctl enable dcvserver && systemctl restart dcvserver
 
                 # IP address cert
@@ -1828,7 +1846,7 @@ Resources:
               group: "root"
             "/etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf":
               content: |
-                
+
                 [Service]
                 ExecStart=
                 ExecStart=/usr/lib/systemd/systemd-networkd-wait-online --timeout=3
@@ -1897,8 +1915,8 @@ Resources:
                   apt-get install -q -y python3-certbot python3-certbot-apache python3-certbot-nginx python3-certbot-dns-route53
                 fi
 
-                # Ubuntu 24.04: reduce systemd-networkd-wait-online.service 2+ min timeout
-                if (lsb_release -r -s | grep -q 24); then
+                # Ubuntu 24.04+: reduce systemd-networkd-wait-online.service 2+ min timeout
+                if (lsb_release -r -s | grep -q "2[4-8]"); then
                   sed -i "s/systemd-networkd-wait-online$/& --timeout=3/g" /usr/lib/systemd/system/systemd-networkd-wait-online.service
                 else
                   rm -f /etc/systemd/system/systemd-networkd-wait-online.service.d/override.conf
@@ -1941,7 +1959,7 @@ Resources:
                 if (arch | grep -q x86); then
                   # Google Chrome: https://www.google.com/linuxrepositories/
                   curl -fSsL https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /usr/share/keyrings/google-chrome.gpg > /dev/null
-                  echo deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main | sudo tee /etc/apt/sources.list.d/google-chrome.list
+                  echo deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] https://dl.google.com/linux/chrome/deb/ stable main | sudo tee /etc/apt/sources.list.d/google-chrome.list
                   apt-get update -q
                   apt-get install -q -y google-chrome-stable
 
@@ -2011,6 +2029,8 @@ Resources:
                 cd /tmp/cfn
                 export DEBIAN_FRONTEND=noninteractive
 
+                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\.//g')
+
                 # Update OS
                 apt-get update -q
                 apt-get upgrade -q -y
@@ -2022,7 +2042,9 @@ Resources:
                 apt-get install -q -y gnome-software
 
                 # Disable the Wayland protocol: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-prereq.html#linux-prereq-wayland
-                sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/custom.conf
+                if [ -f /etc/gdm3/custom.conf ]; then
+                  sed -i '/^\[daemon\]/a WaylandEnable=false' /etc/gdm3/custom.conf
+                fi
 
                 # resolve "/var/lib/dpkg/info/nice-dcv-server.postinst: 8: dpkg-architecture: not found" when installing dcv-server
                 apt-get install -q -y dpkg-dev
@@ -2030,12 +2052,14 @@ Resources:
                 # Microphone redirection: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 apt-get install -q -y pulseaudio-utils
                 apt-get install -q -y gnome-tweaks gnome-shell-extension-ubuntu-dock
-                apt-get install -q -y gnome-shell-extension-manager
+                if (echo $OS_VERSION | grep -q "2[2-8]"); then
+                  apt-get install -q -y gnome-shell-extension-manager
+                fi
 
                 # DCV: https://docs.aws.amazon.com/dcv/latest/adminguide/setting-up-installing-linux-server.html
                 curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/NICE-GPG-KEY
                 gpg --import NICE-GPG-KEY
-                OS_VERSION=$(. /etc/os-release;echo $VERSION_ID | sed -e 's/\.//g')
+
                 curl -s -L -O https://d1uj6qtbmh3dt5.cloudfront.net/nice-dcv-ubuntu$OS_VERSION-$(arch).tgz
                 tar -xvzf nice-dcv-ubuntu*.tgz && cd nice-dcv-*-$(arch)
                 apt-get install -q -y ./nice-dcv-server_*.deb
@@ -2062,9 +2086,9 @@ Resources:
                 systemctl isolate multi-user.target
 
                 # GPU sharing: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-gpu.html
-                if  ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
-                  if ( (which nvidia-xconfig) && (arch | grep -q x86) ); then
-                    apt-get install -q -y ./nice-dcv-gl*.deb
+                if ( echo "${sessionType}" | grep -qi "GPU_sharing" ); then
+                  if [ -f ./nice-dcv-gl* ]; then
+                    apt-get install -q -y ./nice-dcv-gl_*.deb
                   fi
                 fi
 
@@ -2089,7 +2113,9 @@ Resources:
                 sed -i "/^\[connectivity\]/a quic-port=${listenPort}" /etc/dcv/dcv.conf
 
                 # X11 dummy driver for non GPU instance console session
-                apt-get install -q -y xserver-xorg-video-dummy
+                if ( ! echo $OS_VERSION | grep -q "2[6-8]"); then
+                  apt-get install -q -y xserver-xorg-video-dummy
+                fi
 
                 # User
                 DCVUSER=ubuntu
@@ -2100,12 +2126,16 @@ Resources:
                 sed -i "/^\[session-management\/automatic-console-session/a owner=\"$DCVUSER\"\nstorage-root=\"%home%\"" /etc/dcv/dcv.conf
 
                 # Disable reporting : https://wiki.ubuntu.com/Apport
-                sed -i "s/enabled=1/enable=0/g" /etc/default/apport
+                sed -i "s/enabled=1/enabled=0/g" /etc/default/apport
                 apt-get remove -q -y ubuntu-report whoopsie apport
                 apt-get autoremove -q -y
                 # Disable upgrade prompt: https://help.ubuntu.com/community/Upgrades#Upgrade_policy
                 sed -i "s/Prompt=lts/Prompt=never/g" /etc/update-manager/release-upgrades
                 chown -R ubuntu:ubuntu /home/ubuntu/.config
+                # 
+                if ( apt info gnome-initial-setup | grep -i -q install ); then
+                  apt-get remove -q -y gnome-initial-setup
+                fi
 
                 # Match kernel GCC version
                 if (which nvidia-smi); then
@@ -2252,6 +2282,7 @@ Resources:
           sleep 10
           pkill apt
           pkill dpkg
+          apt-get install -q -y wget tmux unzip tar curl sed
 
           # CfN scripts: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-helper-scripts-reference.html
           if (lsb_release -r -s | grep -q 22); then # Use Python2 due to errors with Python3
@@ -2514,7 +2545,7 @@ Resources:
         HttpVersion: http2and3
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
-          MinimumProtocolVersion: TLSv1.2_2021
+          MinimumProtocolVersion: TLSv1.3_2025
         DefaultCacheBehavior:
           AllowedMethods: !Split [",", "GET,HEAD,OPTIONS,PUT,PATCH,POST,DELETE"]
           CachedMethods:
