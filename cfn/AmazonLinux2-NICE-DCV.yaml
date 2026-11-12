@@ -2050,7 +2050,7 @@ Resources:
           files:
             "/opt/install-gpu-driver":
               # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
@@ -2093,7 +2093,7 @@ Resources:
           files:
             "/opt/install-gpu-driver":
               # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-nvidia-driver.html#nvidia-gaming-driver
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
@@ -2145,7 +2145,7 @@ Resources:
             # https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#rhel-7-centos-7
             "/opt/install-gpu-driver":
               # https://docs.nvidia.com/datacenter/tesla/tesla-installation-notes/index.html#centos7
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
@@ -2227,6 +2227,7 @@ Resources:
             Encrypted: true
       MetadataOptions:
         HttpTokens: required
+      PropagateTagsToVolumeOnCreation: true
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash

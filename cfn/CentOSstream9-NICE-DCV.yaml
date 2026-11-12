@@ -2029,6 +2029,7 @@ Resources:
             Encrypted: true
       MetadataOptions:
         HttpTokens: required
+      PropagateTagsToVolumeOnCreation: true
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash

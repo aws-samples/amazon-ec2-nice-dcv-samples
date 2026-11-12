@@ -1813,7 +1813,7 @@ Resources:
             # https://aws.amazon.com/blogs/compute/deep-dive-on-the-new-amazon-ec2-g4ad-instances/
             "/opt/install-gpu-driver":
               # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/install-amd-driver.html#download-amd-driver
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
@@ -1991,6 +1991,7 @@ Resources:
             Encrypted: true
       MetadataOptions:
         HttpTokens: required
+      PropagateTagsToVolumeOnCreation: true
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash

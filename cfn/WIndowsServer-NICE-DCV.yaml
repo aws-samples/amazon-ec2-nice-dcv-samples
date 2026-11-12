@@ -1955,6 +1955,7 @@ Resources:
             Encrypted: true
       MetadataOptions:
         HttpTokens: required
+      PropagateTagsToVolumeOnCreation: true
       UserData: !Base64
         Fn::Sub: |
           <script>

@@ -2256,7 +2256,7 @@ Resources:
           files:
             "/opt/install-gpu-driver":
               # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-GRID-driver.html
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
@@ -2298,7 +2298,7 @@ Resources:
           files:
             "/opt/install-gpu-driver":
               # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvidia-gaming-driver.html
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
@@ -2348,7 +2348,7 @@ Resources:
           files:
             # https://docs.nvidia.com/datacenter/tesla/driver-installation-guide/index.html#network-repo-installation-for-amazon
             "/opt/install-gpu-driver":
-              content: |
+              content: !Sub |
                 #!/bin/bash
                 mkdir -p /tmp/gpu
                 cd /tmp/gpu
@@ -2517,6 +2517,7 @@ Resources:
             Encrypted: true
       MetadataOptions:
         HttpTokens: required
+      PropagateTagsToVolumeOnCreation: true
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
