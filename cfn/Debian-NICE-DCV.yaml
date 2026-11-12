@@ -2266,7 +2266,7 @@ Resources:
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
+                rm -f ${!0}
                 reboot
               mode: "000755"
               owner: "root"
@@ -2318,7 +2318,7 @@ Resources:
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
+                rm -f ${!0}
                 reboot
               mode: "000755"
               owner: "root"
@@ -2365,7 +2365,7 @@ Resources:
 
                 systemctl enable dcv-post-reboot
                 rm -f /etc/systemd/system/dcv-gpu-install.service
-                rm -f ${0}
+                rm -f ${!0}
                 reboot
               mode: "000755"
               owner: "root"
