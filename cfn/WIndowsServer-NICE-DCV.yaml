@@ -1762,7 +1762,7 @@ Resources:
                 @echo off
                 C:\ProgramData\chocolatey\bin\choco install -y awscli
                 "C:\Program Files\Amazon\AWSCLIV2\aws.exe" configure set --profile EC2 credential_source Ec2InstanceMetadata
-                "C:\Program Files\Amazon\AWSCLIV2\aws.exe"  configure set --profile EC2 region ${AWS::Region}"
+                "C:\Program Files\Amazon\AWSCLIV2\aws.exe" configure set --profile EC2 region ${AWS::Region}"
                 setx /M AWS_REGION ${AWS::Region}
 
                 schtasks /delete /tn "Configure AWS Profile" /f
@@ -1823,7 +1823,7 @@ Resources:
                   $cert = New-PACertificate $certNames -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name $acmeName
                   $cert | Format-List
 
-                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.pem -ItemType SymbolicLink -Value $cert.CertFile -Force
+                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.pem -ItemType SymbolicLink -Value $cert.FullChainFile -Force
                   New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.key -ItemType SymbolicLink -Value $cert.KeyFile -Force
                 }
                 else {
