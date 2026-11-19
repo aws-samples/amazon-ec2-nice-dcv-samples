@@ -182,7 +182,7 @@ Parameters:
     Description: https://docs.nvidia.com/datacenter/tesla/index.html
     AllowedPattern: ^[\d\.]+$
     ConstraintDescription: Specify valid driver version
-    Default: 582.16
+    Default: 621.14
   listenPort:
     Type: Number
     Description: "Number must be higher than 1024: https://docs.aws.amazon.com/dcv/latest/adminguide/manage-port-addr.html"
@@ -1762,7 +1762,7 @@ Resources:
             c:\\windows\\temp\\configure-aws.cmd:
               content: !Sub |
                 @echo off
-                C:\ProgramData\chocolatey\bin\choco install -y awscli
+                C:\ProgramData\chocolatey\bin\choco install --no-progress -y awscli
                 "C:\Program Files\Amazon\AWSCLIV2\aws.exe" configure set --profile EC2 credential_source Ec2InstanceMetadata
                 "C:\Program Files\Amazon\AWSCLIV2\aws.exe" configure set --profile EC2 region ${AWS::Region}"
                 setx /M AWS_REGION ${AWS::Region}
@@ -1818,27 +1818,37 @@ Resources:
 
                 $acmeName = "DCV-Cert"
                 $cert = Get-PACertificate -Name $acmeName
+                # Request/Renew IP address cert
                 if (!$cert) {
                   New-PAAccount -AcceptTOS -Force
                   $PublicIp = (Invoke-WebRequest -UseBasicParsing -Uri 'https://checkip.amazonaws.com').Content.Trim()
                   $certNames = @($PublicIp)
                   $cert = New-PACertificate $certNames -Plugin WebSelfHost -Profile shortlived -AcceptTOS -Name $acmeName
-                  $cert | Format-List
-
-                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.pem -ItemType SymbolicLink -Value $cert.FullChainFile -Force
-                  New-Item -Path C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv\dcv.key -ItemType SymbolicLink -Value $cert.KeyFile -Force
-                }
-                else {
+                } else {
                   Set-PAAccount
-                  Submit-Renewal -Name $acmeName
+                  $renewed = Submit-Renewal -Name $acmeName
                 }
+
                 $cert = Get-PACertificate -Name $acmeName
-                $password = ConvertTo-SecureString -String "poshacme" -AsPlainText -Force
-                Import-PfxCertificate -FilePath $cert.PfxFullChain -CertStoreLocation Cert:\LocalMachine\My -Password $password
-                $tsgs = gwmi -class "Win32_TSGeneralSetting" -Namespace root\cimv2\terminalservices -Filter "TerminalName='RDP-tcp'"
-                $thumb = $cert.Thumbprint
-                swmi -path $tsgs.__path -argument @{SSLCertificateSHA1Hash="$thumb"}
-                Restart-Service -Name TermService -Force
+                # DCV cert paths
+                $dcvDir = 'C:\Windows\System32\config\systemprofile\AppData\Local\NICE\dcv'
+                New-Item -Path "$dcvDir\dcv.pem" -ItemType SymbolicLink -Value $cert.FullChainFile -Force
+                New-Item -Path "$dcvDir\dcv.key" -ItemType SymbolicLink -Value $cert.KeyFile       -Force
+
+                # Import for RDP use only
+                if (-not (Test-Path "Cert:\LocalMachine\My\$($cert.Thumbprint)")) {
+                  Import-PfxCertificate -FilePath $cert.PfxFullChain -CertStoreLocation Cert:\LocalMachine\My -Password $cert.PfxPass
+                }
+                # Bind to RDP only if different. Remove old cert from store to avoid clutter
+                $tsgs = Get-CimInstance -Namespace root\cimv2\terminalservices -ClassName Win32_TSGeneralSetting -Filter "TerminalName='RDP-tcp'"
+                if ($tsgs.SSLCertificateSHA1Hash -ne $cert.Thumbprint) {
+                  $oldHash = $tsgs.SSLCertificateSHA1Hash
+                  Set-CimInstance -InputObject $tsgs -Property @{ SSLCertificateSHA1Hash = $cert.Thumbprint }
+                  Restart-Service -Name TermService -Force
+                  if (($renewed) -and (Test-Path "Cert:\LocalMachine\My\$($oldHash)")) {
+                    Get-ChildItem Cert:\LocalMachine\My\$($oldHash) | Remove-Item -Force
+                  }
+                }
                 exit
           commands:
             install-cert:
